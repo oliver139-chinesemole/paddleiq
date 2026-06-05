@@ -1,0 +1,184 @@
+"use client";
+
+import { useState } from "react";
+import { Users, Plus, Trophy, ChevronRight, Crown, UserPlus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+const DEMO_TEAM = {
+  name: "Thunder Dragons",
+  coach: "Coach Sarah Leung",
+  members: [
+    { id: "m1", name: "Alex Chen", side: "Left", seat: 1, role: "Paddler", erg500: "1:58", streak: 12 },
+    { id: "m2", name: "Jordan Kim", side: "Right", seat: 2, role: "Paddler", erg500: "2:01", streak: 8 },
+    { id: "m3", name: "Sam Rivera", side: "Left", seat: 3, role: "Paddler", erg500: "1:55", streak: 15 },
+    { id: "m4", name: "Taylor Nguyen", side: "Right", seat: 4, role: "Paddler", erg500: "2:05", streak: 5 },
+    { id: "m5", name: "Morgan Liu", side: "Left", seat: 5, role: "Paddler", erg500: "2:00", streak: 10 },
+  ],
+  announcements: [
+    { id: "a1", text: "Practice this Saturday at 7am — all paddlers required. Bring race gear.", time: "2 hours ago", author: "Coach Sarah" },
+    { id: "a2", text: "Erg test scores due by Friday. Upload your 500m result to the team page.", time: "1 day ago", author: "Coach Sarah" },
+    { id: "a3", text: "Great practice yesterday everyone! The starts are looking much better. Let's keep the energy for Saturday.", time: "2 days ago", author: "Coach Sarah" },
+  ],
+};
+
+export default function TeamPage() {
+  const [tab, setTab] = useState<"roster" | "leaderboard" | "announcements" | "create">("roster");
+  const [hasTeam] = useState(true);
+
+  if (!hasTeam) {
+    return (
+      <div className="py-6 flex flex-col gap-5 animate-fade-in">
+        <h1 className="text-2xl font-black text-[#F1F5F9]">Team</h1>
+        <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#1E293B] flex items-center justify-center">
+            <Users size={28} className="text-[#475569]" />
+          </div>
+          <h2 className="text-lg font-bold text-[#F1F5F9]">No team yet</h2>
+          <p className="text-sm text-[#64748B] max-w-xs">Create a team to manage your squad, assign workouts, and track team progress.</p>
+          <Button className="w-full max-w-xs">
+            <Plus size={16} /> Create a Team
+          </Button>
+          <Button variant="outline" className="w-full max-w-xs">
+            <UserPlus size={16} /> Join with Team Code
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-6 flex flex-col gap-5 animate-fade-in">
+      {/* Team Header */}
+      <div className="rounded-2xl bg-gradient-to-br from-[#F97316]/20 to-[#0D1528] border border-[#F97316]/30 p-5">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-12 h-12 rounded-xl bg-[#F97316]/30 flex items-center justify-center">
+            <span className="text-2xl">🐉</span>
+          </div>
+          <div>
+            <h1 className="text-lg font-black text-[#F1F5F9]">{DEMO_TEAM.name}</h1>
+            <div className="flex items-center gap-1.5">
+              <Crown size={12} className="text-[#F59E0B]" />
+              <span className="text-xs text-[#94A3B8]">{DEMO_TEAM.coach}</span>
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-4 text-center mt-3">
+          <div>
+            <div className="text-lg font-bold text-[#F1F5F9]">{DEMO_TEAM.members.length}</div>
+            <div className="text-[10px] text-[#64748B]">Athletes</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-[#10B981]">4/5</div>
+            <div className="text-[10px] text-[#64748B]">Active</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-[#0EA5E9]">3</div>
+            <div className="text-[10px] text-[#64748B]">New PRs</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-[#0D1528] border border-[#1E293B] rounded-xl p-1">
+        {(["roster", "leaderboard", "announcements"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`flex-1 text-xs font-semibold py-2 rounded-lg transition-colors cursor-pointer capitalize ${
+              tab === t ? "bg-[#1E293B] text-[#F1F5F9]" : "text-[#475569] hover:text-[#94A3B8]"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* Roster Tab */}
+      {tab === "roster" && (
+        <div className="flex flex-col gap-3">
+          {DEMO_TEAM.members.map((member) => (
+            <div key={member.id} className="flex items-center gap-4 rounded-xl border border-[#1E293B] bg-[#0D1528] p-4">
+              <div className="w-10 h-10 rounded-full bg-[#1E293B] flex items-center justify-center text-sm font-bold text-[#94A3B8] shrink-0">
+                {member.name.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-[#F1F5F9]">{member.name}</span>
+                  <Badge variant="secondary" className="text-[10px]">Seat {member.seat}</Badge>
+                  <Badge variant={member.side === "Left" ? "default" : "cyan"} className="text-[10px]">
+                    {member.side}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-2 mt-1 text-xs text-[#64748B]">
+                  <span>500m: {member.erg500}</span>
+                  <span>·</span>
+                  <span>🔥 {member.streak} day streak</span>
+                </div>
+              </div>
+              <ChevronRight size={14} className="text-[#475569]" />
+            </div>
+          ))}
+          <Button variant="secondary" className="w-full gap-2">
+            <UserPlus size={16} /> Invite Athlete
+          </Button>
+        </div>
+      )}
+
+      {/* Leaderboard Tab */}
+      {tab === "leaderboard" && (
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Trophy size={16} className="text-[#F59E0B]" />
+            <h2 className="text-sm font-bold text-[#F1F5F9]">500m Erg Leaderboard</h2>
+          </div>
+          {[...DEMO_TEAM.members]
+            .sort((a, b) => a.erg500.localeCompare(b.erg500))
+            .map((member, i) => (
+              <div key={member.id} className={`flex items-center gap-4 rounded-xl border p-4 ${
+                i === 0 ? "border-[#F59E0B]/30 bg-[#F59E0B]/10" : "border-[#1E293B] bg-[#0D1528]"
+              }`}>
+                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-black shrink-0 ${
+                  i === 0 ? "bg-[#F59E0B] text-[#0A0F1E]" :
+                  i === 1 ? "bg-[#94A3B8] text-[#0A0F1E]" :
+                  i === 2 ? "bg-[#CD7C2B] text-[#0A0F1E]" :
+                  "bg-[#1E293B] text-[#64748B]"
+                }`}>
+                  {i + 1}
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-[#F1F5F9]">{member.name}</div>
+                  <div className="text-xs text-[#64748B]">Seat {member.seat} · {member.side}</div>
+                </div>
+                <div className="text-right">
+                  <div className={`text-base font-black ${i === 0 ? "text-[#F59E0B]" : "text-[#F1F5F9]"}`}>{member.erg500}</div>
+                  <div className="text-[10px] text-[#64748B]">500m erg</div>
+                </div>
+              </div>
+            ))}
+        </div>
+      )}
+
+      {/* Announcements Tab */}
+      {tab === "announcements" && (
+        <div className="flex flex-col gap-3">
+          {DEMO_TEAM.announcements.map((ann) => (
+            <div key={ann.id} className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Crown size={12} className="text-[#F59E0B]" />
+                <span className="text-xs font-semibold text-[#94A3B8]">{ann.author}</span>
+                <span className="text-[10px] text-[#475569] ml-auto">{ann.time}</span>
+              </div>
+              <p className="text-sm text-[#F1F5F9] leading-relaxed">{ann.text}</p>
+            </div>
+          ))}
+          <div className="rounded-xl border border-dashed border-[#334155] p-4">
+            <Input placeholder="Write an announcement…" />
+            <Button className="w-full mt-2" size="sm">Post Announcement</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
