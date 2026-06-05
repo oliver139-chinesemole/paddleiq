@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { BookOpen, ChevronRight, ChevronDown, Star, Check } from "lucide-react";
+import Link from "next/link";
+import { BookOpen, ChevronRight, ChevronDown, Star, Check, Video } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { techniqueLessons } from "@/lib/data/seed";
@@ -93,8 +94,15 @@ export default function TechniquePage() {
             <span className="text-2xl">▶</span>
           </div>
           <div className="text-sm font-semibold text-[#64748B]">Video Tutorial</div>
-          <div className="text-xs text-[#475569] mt-1">Video library coming soon</div>
+          <div className="text-xs text-[#475569] mt-1">Record and review your technique below.</div>
         </div>
+
+        <Link href="/technique/video">
+          <div className="flex items-center gap-3 rounded-xl border border-[#0EA5E9]/20 bg-[#0EA5E9]/10 p-3 hover:bg-[#0EA5E9]/15 transition-colors cursor-pointer">
+            <Video size={18} className="text-[#0EA5E9]" />
+            <span className="text-sm font-semibold text-[#0EA5E9]">Open Video Review →</span>
+          </div>
+        </Link>
 
         <Button
           onClick={() => setWeeklyFocus(lesson.id)}
@@ -145,6 +153,20 @@ export default function TechniquePage() {
           </button>
         </div>
       )}
+
+      {/* Video Review card */}
+      <Link href="/technique/video">
+        <div className="flex items-center gap-4 rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4 hover:border-[#334155] transition-colors cursor-pointer">
+          <div className="w-11 h-11 rounded-xl bg-[#0EA5E9]/20 flex items-center justify-center shrink-0">
+            <Video size={22} className="text-[#0EA5E9]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-[#F1F5F9]">Video Review</h3>
+            <p className="text-xs text-[#64748B] mt-0.5">Record clips, review in slow motion, annotate your technique</p>
+          </div>
+          <ChevronRight size={16} className="text-[#475569] shrink-0" />
+        </div>
+      </Link>
 
       {/* Category Filter */}
       <div className="flex gap-2 overflow-x-auto pb-1">
