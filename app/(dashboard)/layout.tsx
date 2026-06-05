@@ -1,5 +1,6 @@
 import { BottomNav } from "@/components/nav/bottom-nav";
 import { TopNav } from "@/components/nav/top-nav";
+import { InstallBanner } from "@/components/ui/install-banner";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {children}
       </main>
       <BottomNav />
+      <InstallBanner />
     </div>
   );
 }

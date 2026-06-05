@@ -5,6 +5,7 @@
  * Safe to call concurrently; uses a mutex flag.
  */
 import { getLocalDB, type SyncQueueItem } from "./schema";
+import { formatTime } from "@/lib/utils";
 
 // Fields that exist only in the local Dexie row and must not reach Supabase
 const LOCAL_ONLY = new Set(["localId", "userId", "serverId", "synced"]);
@@ -63,6 +64,11 @@ export async function flushQueue(): Promise<void> {
 
         // Mark local row as synced
         await markLocalSynced(item.table, item.payload.localId as string);
+
+        // After erg/water insert: check if a PR was set by the DB trigger → post to team feed
+        if (item.operation === "insert" && (item.table === "erg_sessions" || item.table === "water_sessions")) {
+          await maybePostPRToFeed(supabase, item.table, remote).catch(() => { /* non-fatal */ });
+        }
       } catch {
         // Increment retry counter; exponential backoff handled at next flush
         if (item.id != null) {
@@ -73,6 +79,54 @@ export async function flushQueue(): Promise<void> {
   } finally {
     _syncing = false;
   }
+}
+
+async function maybePostPRToFeed(
+  supabase: Awaited<ReturnType<typeof import("@/lib/supabase/client").createClient>>,
+  table: "erg_sessions" | "water_sessions",
+  remote: Record<string, unknown>,
+): Promise<void> {
+  const user_id  = remote.user_id  as string;
+  const distance = remote.distance_m as number;
+  if (!user_id || !distance) return;
+
+  const category = table === "erg_sessions" ? "erg" : "water";
+
+  // Query PR — the Supabase trigger already ran synchronously
+  const { data: pr } = await supabase
+    .from("personal_records")
+    .select("time_sec, previous_time_sec, improvement_sec")
+    .eq("user_id", user_id)
+    .eq("category", category)
+    .eq("distance_m", distance)
+    .maybeSingle();
+
+  if (!pr) return;
+  const isNewPR = pr.improvement_sec > 0 || pr.previous_time_sec == null;
+  if (!isNewPR) return;
+
+  // Get user profile + team_id
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name, team_id")
+    .eq("id", user_id)
+    .maybeSingle();
+
+  if (!profile?.team_id) return;
+
+  const distLabel = distance >= 1000 ? `${distance / 1000}k` : `${distance}m`;
+  const typeLabel = category === "erg" ? "erg" : "water";
+  const timeLabel = formatTime(pr.time_sec);
+  const delta     = pr.improvement_sec > 0 ? ` (−${pr.improvement_sec}s)` : " (first time!)";
+  const content   = `${profile.full_name} set a new ${typeLabel} ${distLabel} PR: ${timeLabel}${delta} 🏆`;
+
+  await supabase.from("team_feed").insert({
+    team_id:   profile.team_id,
+    author_id: user_id,
+    post_type: "pr",
+    content,
+    metadata: { category, distance_m: distance, time_sec: pr.time_sec },
+  });
 }
 
 async function markLocalSynced(table: SyncQueueItem["table"], localId: string): Promise<void> {
