@@ -4,7 +4,7 @@
 
 PaddleIQ is the all-in-one training platform for dragon boat athletes. Track erg sessions, water time trials, team practices, and strength training — whether you're a competitive racer, a beginner, or training solo.
 
-**Live App:** [Coming soon after Render deployment]  
+**Live App:** https://paddleiq.onrender.com  
 **GitHub:** https://github.com/oliver139-chinesemole/paddleiq
 
 ---
