@@ -7,11 +7,6 @@ import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-const IS_CONFIGURED =
-  typeof window !== "undefined"
-    ? true // evaluated at runtime — read from process.env below
-    : false;
-
 export default function LoginPage() {
   const router = useRouter();
   const [showPw, setShowPw] = useState(false);

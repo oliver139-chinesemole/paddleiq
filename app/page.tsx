@@ -9,7 +9,6 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-2xl font-black gradient-text">PaddleIQ</span>
-            <span className="text-[10px] bg-[#0EA5E9]/20 text-[#0EA5E9] px-2 py-0.5 rounded-full font-semibold">BETA</span>
           </div>
           <div className="flex items-center gap-3">
             <Link

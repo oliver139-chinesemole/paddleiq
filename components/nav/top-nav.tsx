@@ -23,7 +23,6 @@ export function TopNav({ title, subtitle, showBack }: TopNavProps) {
           ) : (
             <Link href="/dashboard" className="flex items-center gap-2">
               <span className="text-lg font-black gradient-text">PaddleIQ</span>
-              <span className="text-[10px] bg-[#0EA5E9]/20 text-[#0EA5E9] px-1.5 py-0.5 rounded-full font-semibold">BETA</span>
             </Link>
           )}
         </div>
