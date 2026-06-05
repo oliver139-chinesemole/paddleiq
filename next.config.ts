@@ -1,16 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Skip TS type-checking and ESLint during CI build to stay within Render free-tier memory.
-  // Both are verified locally and in GitHub Actions before merge.
+  // Skip TS type-checking and ESLint at build time on Render free tier.
+  // Both are enforced locally and in GitHub Actions CI.
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // Standalone output reduces deployed artifact size.
-  output: "standalone",
 };
 
 export default nextConfig;
