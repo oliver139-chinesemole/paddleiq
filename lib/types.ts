@@ -149,22 +149,87 @@ export interface TechniqueLesson {
   difficulty: "beginner" | "intermediate" | "advanced";
 }
 
+export type RoleInTeam = "paddler" | "drummer" | "steersperson" | "caller" | "coach";
+export type PerformanceRole = "pacer_stroke" | "engine_room" | "rocket" | "tech";
+export type EventType = "practice" | "race" | "time_trial" | "tryout" | "social";
+export type RsvpStatus = "yes" | "no" | "maybe";
+export type FeedPostType = "announcement" | "pr" | "milestone" | "new_member" | "pin";
+
 export interface Team {
   id: string;
   name: string;
   description?: string;
   coach_id: string;
+  invite_code: string;
   created_at: string;
   members: TeamMember[];
 }
 
 export interface TeamMember {
+  id: string;
   user_id: string;
+  team_id: string;
   full_name: string;
-  role: UserRole;
+  email?: string;
+  role_in_team: RoleInTeam;
   paddle_side: PaddleSide;
   seat_number?: number;
+  performance_role?: PerformanceRole;
+  weight_kg?: number;
   joined_at: string;
+}
+
+export interface TeamEvent {
+  id: string;
+  team_id: string;
+  title: string;
+  event_date: string;       // ISO date
+  event_time?: string;      // HH:MM
+  location?: string;
+  event_type: EventType;
+  description?: string;
+  created_by: string;
+  created_at: string;
+}
+
+export interface EventRsvp {
+  id: string;
+  event_id: string;
+  user_id: string;
+  status: RsvpStatus;
+  updated_at: string;
+}
+
+export interface SeatAssignment {
+  seat: number | "drummer" | "steerer";
+  side: "left" | "right" | "drummer" | "steerer";
+  user_id?: string;
+  name?: string;
+}
+
+export interface TeamLineup {
+  id: string;
+  team_id: string;
+  event_id?: string;
+  name: string;
+  boat_size: number;
+  assignments: SeatAssignment[];
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FeedPost {
+  id: string;
+  team_id: string;
+  author_id: string;
+  author_name?: string;
+  post_type: FeedPostType;
+  content: string;
+  metadata: Record<string, unknown>;
+  is_pinned: boolean;
+  reactions: Record<string, string[]>;  // { kudos: ['uuid1', 'uuid2'] }
+  created_at: string;
 }
 
 export interface DashboardStats {

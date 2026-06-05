@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteCode = searchParams.get("invite");
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
@@ -18,14 +20,15 @@ export default function SignupPage() {
     !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
     !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  const afterSignup = inviteCode ? `/invite/${inviteCode}` : "/onboarding";
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     if (!supabaseConfigured) {
-      // Demo mode — go straight to onboarding
-      router.push("/onboarding");
+      router.push(afterSignup);
       return;
     }
 
@@ -41,10 +44,8 @@ export default function SignupPage() {
         setError(authError.message);
         setLoading(false);
       } else {
-        // Supabase sends a confirmation email by default.
-        // If email confirmation is disabled in project settings, user is signed in immediately.
         setDone(true);
-        setTimeout(() => router.push("/onboarding"), 1500);
+        setTimeout(() => router.push(afterSignup), 1500);
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -62,7 +63,9 @@ export default function SignupPage() {
         <p className="text-[#64748B] text-sm text-center">
           Check your email for a confirmation link, then come back to finish setup.
         </p>
-        <p className="text-[#475569] text-xs">Redirecting to onboarding…</p>
+        <p className="text-[#475569] text-xs">
+          {inviteCode ? "Redirecting to team invite…" : "Redirecting to onboarding…"}
+        </p>
       </div>
     );
   }
@@ -72,7 +75,9 @@ export default function SignupPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/"><span className="text-3xl font-black gradient-text">PaddleIQ</span></Link>
-          <p className="text-[#64748B] text-sm mt-2">Create your athlete profile</p>
+          <p className="text-[#64748B] text-sm mt-2">
+            {inviteCode ? "Create an account to join your team" : "Create your athlete profile"}
+          </p>
         </div>
 
         <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-6">
@@ -106,5 +111,17 @@ export default function SignupPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0A0F1E] flex items-center justify-center">
+        <span className="h-8 w-8 rounded-full border-2 border-[#0EA5E9]/30 border-t-[#0EA5E9] animate-spin" />
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }

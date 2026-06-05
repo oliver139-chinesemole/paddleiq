@@ -31,7 +31,7 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  // /onboarding is a setup page — must stay accessible even when authenticated
+  // /onboarding and /invite are setup/entry pages — accessible regardless of auth state
   const isLoginSignup = ["/login", "/signup"].some((p) => pathname.startsWith(p));
   const isDashboard = ["/dashboard", "/train", "/analytics", "/technique", "/team", "/profile", "/records", "/plans", "/ai-coach"].some((p) => pathname.startsWith(p));
 
