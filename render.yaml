@@ -4,20 +4,25 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: npm ci && npm run build
+    startCommand: node .next/standalone/server.js
     healthCheckPath: /
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=400"
+      - key: NPM_CONFIG_FUND
+        value: "false"
+      - key: NPM_CONFIG_AUDIT
+        value: "false"
+      - key: NEXT_PUBLIC_APP_URL
+        value: https://paddleiq.onrender.com
+      - key: NEXT_PUBLIC_APP_NAME
+        value: PaddleIQ
       - key: NEXT_PUBLIC_SUPABASE_URL
         sync: false
       - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-      - key: NEXT_PUBLIC_APP_URL
-        fromService:
-          type: web
-          name: paddleiq
-          property: host
