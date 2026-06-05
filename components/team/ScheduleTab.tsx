@@ -102,7 +102,7 @@ function EventCard({
               myRsvp === "no" ? "bg-[#EF4444]/20 text-[#EF4444]" :
               "bg-[#F59E0B]/20 text-[#F59E0B]"
             }`}>
-              {myRsvp === "yes" ? "✓ Going" : myRsvp === "no" ? "✗ Can't go" : "? Maybe"}
+              {myRsvp === "yes" ? "✓ Going" : myRsvp === "no" ? "✗ Can&apos;t go" : "? Maybe"}
             </div>
           )}
           {expanded ? <ChevronUp size={14} className="text-[#475569] shrink-0" /> : <ChevronDown size={14} className="text-[#475569] shrink-0" />}
@@ -138,7 +138,7 @@ function EventCard({
                     }`}
                   >
                     {s === "yes" ? <Check size={12} /> : s === "no" ? <X size={12} /> : <HelpCircle size={12} />}
-                    {s === "yes" ? "Going" : s === "no" ? "Can't go" : "Maybe"}
+                    {s === "yes" ? "Going" : s === "no" ? "Can&apos;t go" : "Maybe"}
                   </button>
                 ))}
               </div>
@@ -156,7 +156,7 @@ function EventCard({
                 </div>
                 <div>
                   <div className="text-base font-black text-[#EF4444]">{summary.no}</div>
-                  <div className="text-[9px] text-[#64748B]">Can't go</div>
+                  <div className="text-[9px] text-[#64748B]">Can&apos;t go</div>
                 </div>
                 <div>
                   <div className="text-base font-black text-[#F59E0B]">{summary.maybe}</div>
@@ -243,20 +243,14 @@ export default function ScheduleTab({
   isDemoMode: boolean;
   members: Member[];
 }) {
-  const [events, setEvents] = useState<TeamEvent[]>([]);
-  const [summaries, setSummaries] = useState<Record<string, RsvpSummary>>({});
-  const [myRsvps, setMyRsvps] = useState<Record<string, RsvpStatus>>({});
+  const [events, setEvents] = useState<TeamEvent[]>(isDemoMode ? DEMO_EVENTS as TeamEvent[] : []);
+  const [summaries, setSummaries] = useState<Record<string, RsvpSummary>>(isDemoMode ? DEMO_RSVPS : {});
+  const [myRsvps, setMyRsvps] = useState<Record<string, RsvpStatus>>(isDemoMode ? { e1: "yes" } : {});
   const [loading, setLoading] = useState(!isDemoMode);
   const [showCreate, setShowCreate] = useState(false);
 
   const loadSchedule = useCallback(async () => {
-    if (isDemoMode) {
-      setEvents(DEMO_EVENTS);
-      setSummaries(DEMO_RSVPS);
-      setMyRsvps({ e1: "yes" });
-      return;
-    }
-    setLoading(true);
+    if (isDemoMode) return;
     try {
       const { createClient } = await import("@/lib/supabase/client");
       const sb = createClient();
@@ -269,13 +263,16 @@ export default function ScheduleTab({
         .order("event_date", { ascending: true });
       setEvents((evtsData ?? []) as TeamEvent[]);
 
-      const eventIds = (evtsData ?? []).map((e: any) => e.id);
+      type EvtRow = { id: string };
+      type RsvpMineRow = { event_id: string; status: string };
+      type RsvpAllRow = { event_id: string; user_id: string; status: string };
+      const eventIds = (evtsData ?? [] as EvtRow[]).map((e: EvtRow) => e.id);
       if (eventIds.length === 0) return;
 
       // Load own RSVPs
       const { data: mine } = await sb.from("event_rsvp").select("event_id, status").eq("user_id", userId).in("event_id", eventIds);
       const myMap: Record<string, RsvpStatus> = {};
-      (mine ?? []).forEach((r: any) => { myMap[r.event_id] = r.status as RsvpStatus; });
+      (mine ?? [] as RsvpMineRow[]).forEach((r: RsvpMineRow) => { myMap[r.event_id] = r.status as RsvpStatus; });
       setMyRsvps(myMap);
 
       // Coach: load all RSVPs and compute side balance
@@ -283,7 +280,7 @@ export default function ScheduleTab({
         const { data: all } = await sb.from("event_rsvp").select("event_id, user_id, status").in("event_id", eventIds);
         const smap: Record<string, RsvpSummary> = {};
         eventIds.forEach((id: string) => { smap[id] = { yes: 0, no: 0, maybe: 0, leftYes: 0, rightYes: 0 }; });
-        (all ?? []).forEach((r: any) => {
+        (all ?? [] as RsvpAllRow[]).forEach((r: RsvpAllRow) => {
           const s = smap[r.event_id];
           if (!s) return;
           s[r.status as RsvpStatus]++;

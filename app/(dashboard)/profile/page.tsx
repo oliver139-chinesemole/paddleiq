@@ -54,18 +54,7 @@ export default function ProfilePage() {
   );
 
   useEffect(() => {
-    if (isDemoMode) {
-      setStats(mockStats);
-      setTopPRs([
-        { label: "2k Erg",     time_sec: 512 },
-        { label: "500m Erg",   time_sec: 118 },
-        { label: "500m Water", time_sec: 145 },
-        { label: "1k Erg",     time_sec: 248 },
-      ]);
-      setPrCount(mockPRs.length);
-      setEarnedBadges(new Set(["always", "has500", "ten_sessions", "pr_improved", "erg_warrior"] as BadgeKey[]));
-      return;
-    }
+    if (isDemoMode) return;
     (async () => {
       const [{ getAllSessionsForUser }, { getLocalDB }, { computeDashboardStats }] = await Promise.all([
         import("@/lib/db/sessions"),

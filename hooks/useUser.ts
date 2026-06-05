@@ -25,15 +25,11 @@ export const DEMO_USER: User = {
 } as unknown as User;
 
 export function useUser() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(IS_CONFIGURED ? null : DEMO_USER);
+  const [loading, setLoading] = useState(IS_CONFIGURED);
 
   useEffect(() => {
-    if (!IS_CONFIGURED) {
-      setUser(DEMO_USER);
-      setLoading(false);
-      return;
-    }
+    if (!IS_CONFIGURED) return;
 
     let cancelled = false;
 

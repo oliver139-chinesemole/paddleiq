@@ -14,21 +14,20 @@ type State =
   | { id: "already_member"; teamName: string }
   | { id: "error"; msg: string };
 
+const IS_CONFIGURED =
+  typeof window !== "undefined" &&
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 export default function InvitePage() {
   const router = useRouter();
   const { code } = useParams<{ code: string }>();
-  const [state, setState] = useState<State>({ id: "loading" });
-
-  const IS_CONFIGURED =
-    typeof window !== "undefined" &&
-    !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
-    !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const [state, setState] = useState<State>(() =>
+    IS_CONFIGURED ? { id: "loading" } : { id: "not_found" }
+  );
 
   useEffect(() => {
-    if (!IS_CONFIGURED) {
-      setState({ id: "not_found" });
-      return;
-    }
+    if (!IS_CONFIGURED) return;
     (async () => {
       const { createClient } = await import("@/lib/supabase/client");
       const sb = createClient();
@@ -104,14 +103,14 @@ export default function InvitePage() {
               <span className="text-3xl">🐉</span>
             </div>
             <div>
-              <h1 className="text-xl font-black text-[#F1F5F9]">You've been invited!</h1>
+              <h1 className="text-xl font-black text-[#F1F5F9]">You&apos;ve been invited!</h1>
               <p className="text-[#64748B] text-sm mt-1">Join <span className="text-[#F1F5F9] font-semibold">{state.teamName}</span> on PaddleIQ</p>
             </div>
             <Button onClick={join} className="w-full">
               <Users size={16} /> Accept Invite
             </Button>
             <p className="text-xs text-[#475569]">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <button onClick={() => router.push(`/signup?invite=${code}`)} className="text-[#0EA5E9] hover:underline">
                 Sign up first
               </button>
@@ -131,7 +130,7 @@ export default function InvitePage() {
             <div className="w-16 h-16 rounded-full bg-[#10B981]/20 flex items-center justify-center">
               <CheckCircle size={32} className="text-[#10B981]" />
             </div>
-            <h1 className="text-xl font-black text-[#F1F5F9]">You're in!</h1>
+            <h1 className="text-xl font-black text-[#F1F5F9]">You&apos;re in!</h1>
             <p className="text-[#64748B] text-sm">Welcome to <span className="text-[#F1F5F9] font-semibold">{state.teamName}</span>.</p>
             <p className="text-xs text-[#475569]">Redirecting to team…</p>
           </>
@@ -143,7 +142,7 @@ export default function InvitePage() {
               <CheckCircle size={32} className="text-[#0EA5E9]" />
             </div>
             <h1 className="text-xl font-black text-[#F1F5F9]">Already a member</h1>
-            <p className="text-[#64748B] text-sm">You're already on <span className="text-[#F1F5F9] font-semibold">{state.teamName}</span>.</p>
+            <p className="text-[#64748B] text-sm">You&apos;re already on <span className="text-[#F1F5F9] font-semibold">{state.teamName}</span>.</p>
             <Button onClick={() => router.push("/team")} className="w-full">Go to Team</Button>
           </>
         )}
@@ -154,7 +153,7 @@ export default function InvitePage() {
               <XCircle size={32} className="text-[#EF4444]" />
             </div>
             <h1 className="text-xl font-black text-[#F1F5F9]">Invalid invite</h1>
-            <p className="text-[#64748B] text-sm">This invite link has expired or doesn't exist.</p>
+            <p className="text-[#64748B] text-sm">This invite link has expired or doesn&apos;t exist.</p>
             <Button variant="outline" onClick={() => router.push("/")} className="w-full">Go Home</Button>
           </>
         )}

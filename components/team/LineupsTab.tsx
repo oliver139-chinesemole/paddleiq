@@ -183,7 +183,7 @@ export default function LineupsTab({
     setSavedLineups((data ?? []) as SavedLineup[]);
   }, [teamId, isDemoMode, isCoach]);
 
-  useEffect(() => { loadSaved(); }, [loadSaved]);
+  useEffect(() => { void (async () => { await loadSaved(); })(); }, [loadSaved]);
 
   // ── DnD ──────────────────────────────────────────────────────────────────
   function handleDragEnd({ active, over }: DragEndEvent) {

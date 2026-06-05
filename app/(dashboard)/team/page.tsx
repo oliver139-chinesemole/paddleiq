@@ -314,7 +314,6 @@ export default function TeamPage() {
 
   const loadTeam = useCallback(async () => {
     if (isDemoMode) return;
-    setLoading(true);
     try {
       const { createClient } = await import("@/lib/supabase/client");
       const sb = createClient();
@@ -331,7 +330,13 @@ export default function TeamPage() {
 
       if (!teamData) { setTeam(null); return; }
 
-      const members: Member[] = (membersData ?? []).map((m: any) => ({
+      type MemberRow = {
+        id: string; user_id: string; seat_number: number | null;
+        paddle_side: string | null; role_in_team: string | null;
+        performance_role: string | null; weight_kg: number | null;
+        joined_at: string; profiles: { full_name: string | null } | null;
+      };
+      const members: Member[] = (membersData ?? []).map((m: MemberRow) => ({
         id: m.id,
         user_id: m.user_id,
         full_name: m.profiles?.full_name ?? "Athlete",

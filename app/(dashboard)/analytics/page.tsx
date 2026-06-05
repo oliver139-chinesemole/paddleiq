@@ -29,13 +29,7 @@ export default function AnalyticsPage() {
   );
 
   useEffect(() => {
-    if (isDemoMode) {
-      setStats(mockStats);
-      setErgSessions(mockErgSessions as unknown as LocalErgSession[]);
-      setVolumeData(weeklyVolumeData.map(d => ({ week: d.week, distance: d.distance })));
-      setProgressData(ergProgressData.map(d => ({ date: d.date, split: d.split })));
-      return;
-    }
+    if (isDemoMode) return;
     (async () => {
       const [{ getAllSessionsForUser }, { computeDashboardStats, computeWeeklyVolume, computeErgProgress }] =
         await Promise.all([

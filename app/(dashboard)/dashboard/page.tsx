@@ -68,13 +68,7 @@ export default function DashboardPage() {
   );
 
   useEffect(() => {
-    if (isDemoMode) {
-      setStats(mockStats);
-      setRecent(DEMO_RECENT);
-      setPrs(mockPRs as unknown as PRDisplay[]);
-      setVolumeData(weeklyVolumeData.map(d => ({ week: d.week, distance: d.distance })));
-      return;
-    }
+    if (isDemoMode) return;
     (async () => {
       const [{ getAllSessionsForUser }, { getLocalDB }, { computeDashboardStats, computeWeeklyVolume }] =
         await Promise.all([

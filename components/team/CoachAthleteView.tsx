@@ -44,21 +44,16 @@ export default function CoachAthleteView({
   athleteName: string;
   isDemoMode: boolean;
 }) {
-  const [flags, setFlags] = useState<RenderedInsight[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [flags, setFlags] = useState<RenderedInsight[] | null>(isDemoMode ? DEMO_FLAGS : null);
+  const [loading, setLoading] = useState(!isDemoMode);
   const [showAssign, setShowAssign] = useState(false);
   const [assignments, setAssignments] = useState<{ id: string; title: string; workout_type: WorkoutType; target_date?: string; completed: boolean }[]>([]);
   const [form, setForm] = useState({ title: "", type: "erg" as WorkoutType, date: "", notes: "" });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (isDemoMode) {
-      setFlags(DEMO_FLAGS);
-      setLoading(false);
-      return;
-    }
+    if (isDemoMode) return;
     (async () => {
-      setLoading(true);
       try {
         const { createClient } = await import("@/lib/supabase/client");
         const sb = createClient();
@@ -75,23 +70,27 @@ export default function CoachAthleteView({
 
         setAssignments((assignRes.data ?? []) as typeof assignments);
 
+        type ErgRow = { date: string; rpe: number | null; duration_sec: number; distance_m: number; split_sec: number | null };
+        type WaterRow = { date: string; rpe: number | null; duration_sec: number; distance_m: number; avg_pace_sec: number | null };
+        type MinRow = { date: string; rpe: number | null; duration_min: number };
+        type PRRow = { category: string; distance_m: number; time_sec: number };
         const { runCoachEngine } = await import("@/lib/coach/engine");
         const result = runCoachEngine({
-          ergSessions: (ergRes.data ?? []).map((s: any) => ({
+          ergSessions: (ergRes.data ?? [] as ErgRow[]).map((s: ErgRow) => ({
             date: s.date, rpe: s.rpe ?? 7, duration_sec: s.duration_sec,
             distance_m: s.distance_m, split_sec: s.split_sec ?? 0,
           })),
-          waterSessions: (waterRes.data ?? []).map((s: any) => ({
+          waterSessions: (waterRes.data ?? [] as WaterRow[]).map((s: WaterRow) => ({
             date: s.date, rpe: s.rpe ?? 6, duration_sec: s.duration_sec,
             distance_m: s.distance_m, avg_pace_sec: s.avg_pace_sec ?? 0,
           })),
-          drylandSessions: (drylandRes.data ?? []).map((s: any) => ({
+          drylandSessions: (drylandRes.data ?? [] as MinRow[]).map((s: MinRow) => ({
             date: s.date, rpe: s.rpe ?? 6, duration_min: s.duration_min ?? 0,
           })),
-          teamSessions: (teamRes.data ?? []).map((s: any) => ({
+          teamSessions: (teamRes.data ?? [] as MinRow[]).map((s: MinRow) => ({
             date: s.date, rpe: s.rpe ?? 6, duration_min: s.duration_min ?? 0,
           })),
-          prs: (prRes.data ?? []).map((p: any) => ({
+          prs: (prRes.data ?? [] as PRRow[]).map((p: PRRow) => ({
             category: p.category, distance_m: p.distance_m, time_sec: p.time_sec,
           })),
         });
@@ -125,7 +124,7 @@ export default function CoachAthleteView({
           description: form.notes || null,
           target_date: form.date || null,
         }).select("id, title, workout_type, target_date, completed").single();
-        if (data) setAssignments(prev => [data as any, ...prev]);
+        if (data) setAssignments(prev => [data as typeof assignments[number], ...prev]);
       } else {
         setAssignments(prev => [{
           id: `demo-${Date.now()}`, title: form.title, workout_type: form.type,

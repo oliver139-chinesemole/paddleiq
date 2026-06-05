@@ -76,16 +76,7 @@ export default function RecordsPage() {
   );
 
   useEffect(() => {
-    if (isDemoMode) {
-      setPrs(mockPRs as unknown as LocalPR[]);
-      setOtherRecords([
-        { label: "Longest Paddle",   value: "12.4 km",   sub: "Jun 2, 2026"  },
-        { label: "Best Avg Pace",    value: "1:56/500m", sub: "May 31, 2026" },
-        { label: "Peak Stroke Rate", value: "92 spm",    sub: "May 30, 2026" },
-        { label: "Best Watts (Erg)", value: "285 W",     sub: "May 30, 2026" },
-      ]);
-      return;
-    }
+    if (isDemoMode) return;
     (async () => {
       const [{ getLocalDB }, { getAllSessionsForUser }] = await Promise.all([
         import("@/lib/db/schema"),

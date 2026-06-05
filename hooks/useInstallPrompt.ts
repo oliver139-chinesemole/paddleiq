@@ -7,42 +7,42 @@ type InstallState =
   | { status: "android"; prompt: () => Promise<void> }  // beforeinstallprompt captured
   | { status: "ios" };                  // iOS — must use manual share sheet
 
+type BeforeInstallPromptEvent = Event & {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
+
+function detectInitialInstallState(): InstallState {
+  if (typeof window === "undefined") return { status: "unavailable" };
+  const nav = navigator as Navigator & { standalone?: boolean };
+  if (window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true) {
+    return { status: "unavailable" };
+  }
+  const isIOS =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (isIOS) return { status: "ios" };
+  return { status: "unavailable" };
+}
+
 export function useInstallPrompt(): { install: InstallState; dismiss: () => void; dismissed: boolean } {
-  const [install, setInstall] = useState<InstallState>({ status: "unavailable" });
-  const [dismissed, setDismissed] = useState(false);
+  const [install, setInstall] = useState<InstallState>(detectInitialInstallState);
+  const [dismissed, setDismissed] = useState(
+    () => typeof window !== "undefined" && !!sessionStorage.getItem("install-banner-dismissed")
+  );
 
   useEffect(() => {
+    // Only wire up the Android beforeinstallprompt listener
     if (typeof window === "undefined") return;
+    if (dismissed || install.status !== "unavailable") return;
 
-    // Check if already installed (standalone display mode)
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as any).standalone === true;
-    if (isStandalone) return;
-
-    // Check if user already dismissed the banner this session
-    if (sessionStorage.getItem("install-banner-dismissed")) {
-      setDismissed(true);
-      return;
-    }
-
-    // iOS detection — must use Share sheet manually
-    const isIOS =
-      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    if (isIOS) {
-      setInstall({ status: "ios" });
-      return;
-    }
-
-    // Android / Chrome — capture beforeinstallprompt
     const handler = (e: Event) => {
       e.preventDefault();
-      const deferredPrompt = e as any;
+      const deferredPrompt = e as BeforeInstallPromptEvent;
       setInstall({
         status: "android",
         prompt: async () => {
-          deferredPrompt.prompt();
+          await deferredPrompt.prompt();
           const { outcome } = await deferredPrompt.userChoice;
           if (outcome === "accepted") setInstall({ status: "unavailable" });
         },
@@ -50,7 +50,7 @@ export function useInstallPrompt(): { install: InstallState; dismiss: () => void
     };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
+  }, [dismissed, install.status]);
 
   function dismiss() {
     setDismissed(true);

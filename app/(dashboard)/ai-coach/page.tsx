@@ -62,9 +62,10 @@ export default function AICoachPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   async function loadInsights() {
-    setLoading(true);
     try {
       if (isDemoMode) {
+        // Yield to the event loop before setting state so this is not synchronous
+        await Promise.resolve();
         setData(DEMO_OUTPUT);
         return;
       }
@@ -127,7 +128,7 @@ export default function AICoachPage() {
     }
   }
 
-  useEffect(() => { loadInsights(); }, [userId]);
+  useEffect(() => { void (async () => { await loadInsights(); })(); }, [userId]);
 
   return (
     <div className="py-6 flex flex-col gap-5 animate-fade-in">
@@ -140,7 +141,7 @@ export default function AICoachPage() {
           <h1 className="text-xl font-black text-[#F1F5F9]">Coach</h1>
           <p className="text-xs text-[#64748B]">Rules-based insights from your own data</p>
         </div>
-        <button onClick={loadInsights} disabled={loading} className="text-[#475569] hover:text-[#94A3B8] transition-colors">
+        <button onClick={() => { setLoading(true); void loadInsights(); }} disabled={loading} className="text-[#475569] hover:text-[#94A3B8] transition-colors">
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
         </button>
         <Badge variant="secondary" className="text-[10px]">No AI · No API</Badge>

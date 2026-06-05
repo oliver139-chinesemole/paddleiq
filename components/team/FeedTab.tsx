@@ -114,14 +114,21 @@ export default function FeedTab({
   isCoach: boolean;
   isDemoMode: boolean;
 }) {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>(isDemoMode ? DEMO_POSTS : []);
   const [loading, setLoading] = useState(!isDemoMode);
   const [text, setText] = useState("");
   const [posting, setPosting] = useState(false);
 
+  type FeedRow = {
+    id: string; post_type: string; author_id: string | null; content: string;
+    created_at: string; is_pinned: boolean;
+    reactions: { kudos: string[] } | null;
+    metadata: Record<string, unknown> | null;
+    profiles: { full_name: string | null } | null;
+  };
+
   const loadPosts = useCallback(async () => {
-    if (isDemoMode) { setPosts(DEMO_POSTS); return; }
-    setLoading(true);
+    if (isDemoMode) return;
     try {
       const { createClient } = await import("@/lib/supabase/client");
       const sb = createClient();
@@ -133,7 +140,7 @@ export default function FeedTab({
         .order("created_at", { ascending: false })
         .limit(50);
 
-      setPosts((data ?? []).map((p: any) => ({
+      setPosts((data ?? [] as FeedRow[]).map((p: FeedRow) => ({
         id: p.id,
         post_type: p.post_type as FeedPostType,
         author_id: p.author_id,
