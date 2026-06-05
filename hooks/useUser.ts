@@ -9,7 +9,7 @@
 import { useState, useEffect } from "react";
 import type { User } from "@supabase/supabase-js";
 
-const IS_CONFIGURED =
+export const IS_CONFIGURED =
   typeof window !== "undefined" &&
   !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
   !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

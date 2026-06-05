@@ -12,8 +12,13 @@ import { Progress } from "@/components/ui/progress";
 import { mockStats, mockErgSessions, mockPRs, weeklyVolumeData } from "@/lib/data/seed";
 import { formatTime, formatDistance, formatRelativeDate } from "@/lib/utils";
 import { VolumeChart } from "@/components/charts/volume-chart";
-import { useUser } from "@/hooks/useUser";
+import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
 import type { DashboardStats } from "@/lib/types";
+
+const EMPTY_STATS: DashboardStats = {
+  weekly_distance_m: 0, weekly_time_min: 0, weekly_sessions: 0,
+  avg_stroke_rate: 0, current_streak: 0, total_sessions: 0,
+};
 
 type PRDisplay = {
   id: string | number;
@@ -55,15 +60,21 @@ const WEEKLY_GOAL_KM = 20;
 
 export default function DashboardPage() {
   const { userId, isDemoMode } = useUser();
-  const [stats, setStats] = useState<DashboardStats>(mockStats);
-  const [recent, setRecent] = useState<RecentItem[]>(DEMO_RECENT);
-  const [prs, setPrs] = useState<PRDisplay[]>(mockPRs);
+  const [stats, setStats] = useState<DashboardStats>(IS_CONFIGURED ? EMPTY_STATS : mockStats);
+  const [recent, setRecent] = useState<RecentItem[]>(IS_CONFIGURED ? [] : DEMO_RECENT);
+  const [prs, setPrs] = useState<PRDisplay[]>(IS_CONFIGURED ? [] : (mockPRs as unknown as PRDisplay[]));
   const [volumeData, setVolumeData] = useState<{ week: string; distance: number }[]>(
-    weeklyVolumeData.map(d => ({ week: d.week, distance: d.distance }))
+    IS_CONFIGURED ? [] : weeklyVolumeData.map(d => ({ week: d.week, distance: d.distance }))
   );
 
   useEffect(() => {
-    if (isDemoMode) return;
+    if (isDemoMode) {
+      setStats(mockStats);
+      setRecent(DEMO_RECENT);
+      setPrs(mockPRs as unknown as PRDisplay[]);
+      setVolumeData(weeklyVolumeData.map(d => ({ week: d.week, distance: d.distance })));
+      return;
+    }
     (async () => {
       const [{ getAllSessionsForUser }, { getLocalDB }, { computeDashboardStats, computeWeeklyVolume }] =
         await Promise.all([

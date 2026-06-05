@@ -31,14 +31,15 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   const pathname = request.nextUrl.pathname;
-  const isAuthPage = ["/login", "/signup", "/onboarding"].some((p) => pathname.startsWith(p));
+  // /onboarding is a setup page — must stay accessible even when authenticated
+  const isLoginSignup = ["/login", "/signup"].some((p) => pathname.startsWith(p));
   const isDashboard = ["/dashboard", "/train", "/analytics", "/technique", "/team", "/profile", "/records", "/plans", "/ai-coach"].some((p) => pathname.startsWith(p));
 
   if (!user && isDashboard) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (user && isAuthPage) {
+  if (user && isLoginSignup) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

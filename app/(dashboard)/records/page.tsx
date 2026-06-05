@@ -5,12 +5,19 @@ import { Trophy, TrendingUp, Calendar, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { mockPRs } from "@/lib/data/seed";
 import { formatTime, formatDate, formatPace } from "@/lib/utils";
-import { useUser } from "@/hooks/useUser";
+import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
 import type { LocalPR } from "@/lib/db/schema";
 
 const ALL_DISTANCES = [200, 250, 500, 1000, 2000];
 
 type OtherRecord = { label: string; value: string; sub: string };
+
+const EMPTY_OTHER: OtherRecord[] = [
+  { label: "Longest Paddle",   value: "—", sub: "No data yet" },
+  { label: "Best Avg Pace",    value: "—", sub: "No water sessions yet" },
+  { label: "Peak Stroke Rate", value: "—", sub: "No data yet" },
+  { label: "Best Watts (Erg)", value: "—", sub: "No data yet" },
+];
 
 function PRCard({ category, distance, prs }: { category: "erg" | "water"; distance: number; prs: LocalPR[] }) {
   const pr = prs.find((p) => p.category === category && p.distance_m === distance);
@@ -58,16 +65,27 @@ function PRCard({ category, distance, prs }: { category: "erg" | "water"; distan
 
 export default function RecordsPage() {
   const { userId, isDemoMode } = useUser();
-  const [prs, setPrs] = useState<LocalPR[]>(mockPRs as unknown as LocalPR[]);
-  const [otherRecords, setOtherRecords] = useState<OtherRecord[]>([
-    { label: "Longest Paddle", value: "12.4 km", sub: "Jun 2, 2026" },
-    { label: "Best Avg Pace", value: "1:56/500m", sub: "May 31, 2026" },
-    { label: "Peak Stroke Rate", value: "92 spm", sub: "May 30, 2026" },
-    { label: "Best Watts (Erg)", value: "285 W", sub: "May 30, 2026" },
-  ]);
+  const [prs, setPrs] = useState<LocalPR[]>(IS_CONFIGURED ? [] : (mockPRs as unknown as LocalPR[]));
+  const [otherRecords, setOtherRecords] = useState<OtherRecord[]>(
+    IS_CONFIGURED ? EMPTY_OTHER : [
+      { label: "Longest Paddle",   value: "12.4 km",    sub: "Jun 2, 2026"  },
+      { label: "Best Avg Pace",    value: "1:56/500m",  sub: "May 31, 2026" },
+      { label: "Peak Stroke Rate", value: "92 spm",     sub: "May 30, 2026" },
+      { label: "Best Watts (Erg)", value: "285 W",      sub: "May 30, 2026" },
+    ]
+  );
 
   useEffect(() => {
-    if (isDemoMode) return;
+    if (isDemoMode) {
+      setPrs(mockPRs as unknown as LocalPR[]);
+      setOtherRecords([
+        { label: "Longest Paddle",   value: "12.4 km",   sub: "Jun 2, 2026"  },
+        { label: "Best Avg Pace",    value: "1:56/500m", sub: "May 31, 2026" },
+        { label: "Peak Stroke Rate", value: "92 spm",    sub: "May 30, 2026" },
+        { label: "Best Watts (Erg)", value: "285 W",     sub: "May 30, 2026" },
+      ]);
+      return;
+    }
     (async () => {
       const [{ getLocalDB }, { getAllSessionsForUser }] = await Promise.all([
         import("@/lib/db/schema"),

@@ -8,9 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { mockStats, mockPRs } from "@/lib/data/seed";
 import { formatTime } from "@/lib/utils";
-import { useUser } from "@/hooks/useUser";
+import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
 import type { DashboardStats } from "@/lib/types";
 import type { LocalPR } from "@/lib/db/schema";
+
+const EMPTY_STATS: DashboardStats = {
+  weekly_distance_m: 0, weekly_time_min: 0, weekly_sessions: 0,
+  avg_stroke_rate: 0, current_streak: 0, total_sessions: 0,
+};
 
 const STATIC_BADGES = [
   { id: "b1", name: "First 500m Test",  icon: "🎯", key: "has500" },
@@ -34,20 +39,33 @@ export default function ProfilePage() {
   const router = useRouter();
   const { user, userId, isDemoMode } = useUser();
 
-  const [stats, setStats] = useState<DashboardStats>(mockStats);
-  const [topPRs, setTopPRs] = useState<PRDisplay[]>([
+  const [stats, setStats] = useState<DashboardStats>(IS_CONFIGURED ? EMPTY_STATS : mockStats);
+  const [topPRs, setTopPRs] = useState<PRDisplay[]>(IS_CONFIGURED ? [] : [
     { label: "2k Erg",     time_sec: 512 },
     { label: "500m Erg",   time_sec: 118 },
     { label: "500m Water", time_sec: 145 },
     { label: "1k Erg",     time_sec: 248 },
   ]);
-  const [prCount, setPrCount] = useState(mockPRs.length);
+  const [prCount, setPrCount] = useState(IS_CONFIGURED ? 0 : mockPRs.length);
   const [earnedBadges, setEarnedBadges] = useState<Set<BadgeKey>>(
-    new Set(["always", "has500", "ten_sessions", "pr_improved", "erg_warrior"] as BadgeKey[])
+    IS_CONFIGURED
+      ? new Set(["always"] as BadgeKey[])
+      : new Set(["always", "has500", "ten_sessions", "pr_improved", "erg_warrior"] as BadgeKey[])
   );
 
   useEffect(() => {
-    if (isDemoMode) return;
+    if (isDemoMode) {
+      setStats(mockStats);
+      setTopPRs([
+        { label: "2k Erg",     time_sec: 512 },
+        { label: "500m Erg",   time_sec: 118 },
+        { label: "500m Water", time_sec: 145 },
+        { label: "1k Erg",     time_sec: 248 },
+      ]);
+      setPrCount(mockPRs.length);
+      setEarnedBadges(new Set(["always", "has500", "ten_sessions", "pr_improved", "erg_warrior"] as BadgeKey[]));
+      return;
+    }
     (async () => {
       const [{ getAllSessionsForUser }, { getLocalDB }, { computeDashboardStats }] = await Promise.all([
         import("@/lib/db/sessions"),

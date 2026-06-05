@@ -8,23 +8,34 @@ import { VolumeChart } from "@/components/charts/volume-chart";
 import { ProgressChart } from "@/components/charts/progress-chart";
 import { mockStats, mockErgSessions, weeklyVolumeData, ergProgressData } from "@/lib/data/seed";
 import { formatTime, formatDistance, formatRelativeDate, formatPace } from "@/lib/utils";
-import { useUser } from "@/hooks/useUser";
+import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
 import type { DashboardStats } from "@/lib/types";
 import type { LocalErgSession } from "@/lib/db/schema";
 
+const EMPTY_STATS: DashboardStats = {
+  weekly_distance_m: 0, weekly_time_min: 0, weekly_sessions: 0,
+  avg_stroke_rate: 0, current_streak: 0, total_sessions: 0,
+};
+
 export default function AnalyticsPage() {
   const { userId, isDemoMode } = useUser();
-  const [stats, setStats] = useState<DashboardStats>(mockStats);
-  const [ergSessions, setErgSessions] = useState<LocalErgSession[]>(mockErgSessions as unknown as LocalErgSession[]);
+  const [stats, setStats] = useState<DashboardStats>(IS_CONFIGURED ? EMPTY_STATS : mockStats);
+  const [ergSessions, setErgSessions] = useState<LocalErgSession[]>(IS_CONFIGURED ? [] : (mockErgSessions as unknown as LocalErgSession[]));
   const [volumeData, setVolumeData] = useState<{ week: string; distance: number }[]>(
-    weeklyVolumeData.map(d => ({ week: d.week, distance: d.distance }))
+    IS_CONFIGURED ? [] : weeklyVolumeData.map(d => ({ week: d.week, distance: d.distance }))
   );
   const [progressData, setProgressData] = useState<{ date: string; split: number }[]>(
-    ergProgressData.map(d => ({ date: d.date, split: d.split }))
+    IS_CONFIGURED ? [] : ergProgressData.map(d => ({ date: d.date, split: d.split }))
   );
 
   useEffect(() => {
-    if (isDemoMode) return;
+    if (isDemoMode) {
+      setStats(mockStats);
+      setErgSessions(mockErgSessions as unknown as LocalErgSession[]);
+      setVolumeData(weeklyVolumeData.map(d => ({ week: d.week, distance: d.distance })));
+      setProgressData(ergProgressData.map(d => ({ date: d.date, split: d.split })));
+      return;
+    }
     (async () => {
       const [{ getAllSessionsForUser }, { computeDashboardStats, computeWeeklyVolume, computeErgProgress }] =
         await Promise.all([
