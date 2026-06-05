@@ -72,8 +72,12 @@ export default function InvitePage() {
     }
 
     try {
+      const { data: myProfile } = await sb.from("profiles").select("full_name").eq("id", user.id).single();
       await sb.from("team_members").insert({ team_id: state.teamId, user_id: user.id });
       await sb.from("profiles").update({ team_id: state.teamId }).eq("id", user.id);
+      // Auto-post welcome to feed
+      const joinerName = myProfile?.full_name ?? user.email?.split("@")[0] ?? "Someone";
+      try { await sb.from("team_feed").insert({ team_id: state.teamId, author_id: user.id, post_type: "new_member", content: `${joinerName} joined the team! Welcome 🐉`, metadata: {} }); } catch { /* non-fatal */ }
       setState({ id: "joined", teamName: state.teamName });
       setTimeout(() => router.push("/team"), 1800);
     } catch (e) {

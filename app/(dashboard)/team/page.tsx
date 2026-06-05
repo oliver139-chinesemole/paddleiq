@@ -14,6 +14,8 @@ import { formatTime } from "@/lib/utils";
 import type { PerformanceRole } from "@/lib/types";
 import ScheduleTab from "@/components/team/ScheduleTab";
 import LineupsTab from "@/components/team/LineupsTab";
+import CoachAthleteView from "@/components/team/CoachAthleteView";
+import FeedTab from "@/components/team/FeedTab";
 
 // ── Demo data ─────────────────────────────────────────────────────────────────
 const DEMO_TEAM = {
@@ -65,10 +67,13 @@ function perfRoleInfo(role?: PerformanceRole | null) {
 
 // ── Athlete modal ─────────────────────────────────────────────────────────────
 function AthleteModal({
-  member, isCoach, onClose, onRoleChange,
+  member, isCoach, teamId, coachId, isDemoMode, onClose, onRoleChange,
 }: {
   member: Member;
   isCoach: boolean;
+  teamId: string;
+  coachId: string;
+  isDemoMode: boolean;
   onClose: () => void;
   onRoleChange: (userId: string, role: PerformanceRole | null) => Promise<void>;
 }) {
@@ -124,10 +129,21 @@ function AthleteModal({
           </div>
         )}
 
+        {/* Coach: training flags + workout assignment */}
+        {isCoach && (
+          <CoachAthleteView
+            teamId={teamId}
+            coachId={coachId}
+            athleteId={member.user_id}
+            athleteName={member.full_name}
+            isDemoMode={isDemoMode}
+          />
+        )}
+
         {/* Role assignment (coach only) */}
         {isCoach && (
-          <div className="mt-4">
-            <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">Assign Performance Role</p>
+          <div className="mt-4 pt-4 border-t border-[#1E293B]">
+            <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">Performance Role</p>
             <div className="grid grid-cols-2 gap-2">
               {PERF_ROLES.map(r => (
                 <button
@@ -228,8 +244,12 @@ function NoTeamView({ userId, onJoined }: { userId: string; onJoined: () => void
       const sb = createClient();
       const { data: team } = await sb.from("teams").select("id, name").eq("invite_code", joinCode.trim().toLowerCase()).single();
       if (!team) { toast.error("Team code not found."); return; }
+      const { data: myProfile } = await sb.from("profiles").select("full_name").eq("id", userId).single();
       await sb.from("team_members").insert({ team_id: team.id, user_id: userId });
       await sb.from("profiles").update({ team_id: team.id }).eq("id", userId);
+      // Auto-post to team feed
+      const joinerName = myProfile?.full_name ?? "Someone";
+      try { await sb.from("team_feed").insert({ team_id: team.id, author_id: userId, post_type: "new_member", content: `${joinerName} joined the team! Welcome 🐉`, metadata: {} }); } catch { /* non-fatal */ }
       toast.success(`Joined ${team.name}!`);
       onJoined();
     } catch (e) {
@@ -284,13 +304,13 @@ function NoTeamView({ userId, onJoined }: { userId: string; onJoined: () => void
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function TeamPage() {
-  const { userId, isDemoMode } = useUser();
+  const { user, userId, isDemoMode } = useUser();
   const [tab, setTab] = useState<"roster" | "schedule" | "lineups" | "leaderboard" | "feed">("roster");
   const [team, setTeam] = useState<Team | null>(null);
-  const [leaderboard, setLeaderboard] = useState<LbEntry[]>([]);
+  const [leaderboard, setLeaderboard] = useState<Record<number, LbEntry[]>>({ 500: [], 2000: [] });
   const [loading, setLoading] = useState(!isDemoMode);
   const [selected, setSelected] = useState<Member | null>(null);
-  const [feedText, setFeedText] = useState("");
+  const [lbDist, setLbDist] = useState<500 | 2000>(500);
   const [copied, setCopied] = useState(false);
 
   const loadTeam = useCallback(async () => {
@@ -326,20 +346,22 @@ export default function TeamPage() {
 
       setTeam({ id: teamData.id, name: teamData.name, coach_id: teamData.coach_id, invite_code: teamData.invite_code ?? "", members });
 
-      // Load 500m erg leaderboard for all team members
+      // Load erg PR leaderboards for all team members (500m + 2k)
       const userIds = members.map(m => m.user_id);
       if (userIds.length > 0) {
+        const nameMap = Object.fromEntries(members.map(m => [m.user_id, m.full_name]));
         const { data: prs } = await sb
           .from("personal_records")
-          .select("user_id, time_sec")
+          .select("user_id, distance_m, time_sec")
           .in("user_id", userIds)
           .eq("category", "erg")
-          .eq("distance_m", 500)
+          .in("distance_m", [500, 2000])
           .order("time_sec", { ascending: true });
 
         if (prs && prs.length > 0) {
-          const nameMap = Object.fromEntries(members.map(m => [m.user_id, m.full_name]));
-          setLeaderboard(prs.map((p: any) => ({ user_id: p.user_id, name: nameMap[p.user_id] ?? "Athlete", time_sec: p.time_sec })));
+          const lb500 = prs.filter((p: any) => p.distance_m === 500).map((p: any) => ({ user_id: p.user_id, name: nameMap[p.user_id] ?? "Athlete", time_sec: p.time_sec }));
+          const lb2k  = prs.filter((p: any) => p.distance_m === 2000).map((p: any) => ({ user_id: p.user_id, name: nameMap[p.user_id] ?? "Athlete", time_sec: p.time_sec }));
+          setLeaderboard({ 500: lb500, 2000: lb2k });
         }
       }
     } finally {
@@ -360,15 +382,6 @@ export default function TeamPage() {
     await loadTeam();
     if (selected?.user_id === memberId) setSelected(s => s ? { ...s, performance_role: role ?? undefined } : null);
     toast.success("Role updated");
-  }
-
-  async function postToFeed(teamId: string) {
-    if (!feedText.trim()) return;
-    const { createClient } = await import("@/lib/supabase/client");
-    const sb = createClient();
-    await sb.from("team_feed").insert({ team_id: teamId, author_id: userId, content: feedText.trim() });
-    setFeedText("");
-    toast.success("Posted!");
   }
 
   function copyInviteLink(code: string) {
@@ -406,7 +419,16 @@ export default function TeamPage() {
     );
   }
 
-  const lbData = isDemoMode ? DEMO_LB : leaderboard;
+  const DEMO_2K = [
+    { user_id: "m3", name: "Sam Rivera",    time_sec: 472 },
+    { user_id: "m1", name: "Alex Chen",     time_sec: 480 },
+    { user_id: "m5", name: "Morgan Liu",    time_sec: 488 },
+    { user_id: "m2", name: "Jordan Kim",    time_sec: 492 },
+    { user_id: "m4", name: "Taylor Nguyen", time_sec: 510 },
+  ];
+  const DEMO_LB_MAP = { 500: DEMO_LB, 2000: DEMO_2K };
+  const lbMap = isDemoMode ? DEMO_LB_MAP : leaderboard;
+  const lbData = lbMap[lbDist] ?? [];
 
   return (
     <div className="py-6 flex flex-col gap-5 animate-fade-in">
@@ -449,7 +471,7 @@ export default function TeamPage() {
           </div>
           <div>
             <div className="text-lg font-bold text-[#10B981]">
-              {lbData.length > 0 ? formatTime(lbData[0].time_sec) : "—"}
+              {lbMap[500].length > 0 ? formatTime(lbMap[500][0].time_sec) : "—"}
             </div>
             <div className="text-[10px] text-[#64748B]">Top 500m</div>
           </div>
@@ -552,12 +574,28 @@ export default function TeamPage() {
       {/* ── Leaderboard Tab ──────────────────────────────────────────────── */}
       {tab === "leaderboard" && (
         <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Trophy size={16} className="text-[#F59E0B]" />
-            <h2 className="text-sm font-bold text-[#F1F5F9]">500m Erg Leaderboard</h2>
+          {/* Category picker */}
+          <div className="flex gap-1 p-1 bg-[#0D1528] border border-[#1E293B] rounded-xl">
+            {([500, 2000] as const).map(d => (
+              <button
+                key={d}
+                onClick={() => setLbDist(d)}
+                className={`flex-1 text-xs font-semibold py-2 rounded-lg transition-colors ${lbDist === d ? "bg-[#1E293B] text-[#F1F5F9]" : "text-[#475569]"}`}
+              >
+                {d >= 1000 ? `${d/1000}k Erg` : `${d}m Erg`}
+              </button>
+            ))}
           </div>
+
+          <div className="flex items-center gap-2">
+            <Trophy size={14} className="text-[#F59E0B]" />
+            <span className="text-xs font-bold text-[#F1F5F9]">
+              {lbDist >= 1000 ? `${lbDist/1000}k Erg` : `${lbDist}m Erg`} — Team Rankings
+            </span>
+          </div>
+
           {lbData.length === 0 ? (
-            <p className="text-sm text-[#475569] text-center py-6">No 500m erg results yet. Log erg sessions to appear here!</p>
+            <p className="text-sm text-[#475569] text-center py-6">No results yet. Log erg sessions to appear here!</p>
           ) : (
             lbData.map((entry, i) => (
               <div
@@ -571,23 +609,26 @@ export default function TeamPage() {
                   i === 1 ? "bg-[#94A3B8] text-[#0A0F1E]" :
                   i === 2 ? "bg-[#CD7C2B] text-[#0A0F1E]" :
                   "bg-[#1E293B] text-[#64748B]"
-                }`}>
-                  {i + 1}
-                </div>
+                }`}>{i + 1}</div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-bold text-[#F1F5F9] truncate">{entry.name}</div>
-                  {(() => { const perf = perfRoleInfo(activeTeam.members.find(m => m.user_id === entry.user_id)?.performance_role); return perf ? (
-                    <div className="flex items-center gap-1 mt-0.5">
-                      <perf.icon size={10} style={{ color: perf.color }} />
-                      <span className="text-[10px]" style={{ color: perf.color }}>{perf.label}</span>
-                    </div>
-                  ) : null; })()}
+                  {(() => {
+                    const perf = perfRoleInfo(activeTeam.members.find(m => m.user_id === entry.user_id)?.performance_role);
+                    return perf ? (
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <perf.icon size={10} style={{ color: perf.color }} />
+                        <span className="text-[10px]" style={{ color: perf.color }}>{perf.label}</span>
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
                 <div className="text-right shrink-0">
                   <div className={`text-base font-black ${i === 0 ? "text-[#F59E0B]" : "text-[#F1F5F9]"}`}>
                     {formatTime(entry.time_sec)}
                   </div>
-                  <div className="text-[10px] text-[#64748B]">500m erg</div>
+                  <div className="text-[10px] text-[#64748B]">
+                    {lbDist >= 1000 ? `${lbDist/1000}k` : `${lbDist}m`} split
+                  </div>
                 </div>
               </div>
             ))
@@ -595,48 +636,15 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* ── Feed Tab ─────────────────────────────────────────────────────── */}
+      {/* ── Feed Tab (Phase 2.6) ─────────────────────────────────────────── */}
       {tab === "feed" && (
-        <div className="flex flex-col gap-3">
-          {/* Post composer */}
-          <div className="rounded-xl border border-[#1E293B] bg-[#0D1528] p-4">
-            <textarea
-              value={feedText}
-              onChange={e => setFeedText(e.target.value)}
-              placeholder="Post an update to your team…"
-              rows={3}
-              className="w-full bg-transparent text-sm text-[#F1F5F9] placeholder-[#475569] resize-none outline-none"
-            />
-            <div className="flex justify-end mt-2">
-              <Button
-                size="sm"
-                disabled={!feedText.trim() || isDemoMode}
-                onClick={() => postToFeed(activeTeam.id)}
-              >
-                Post
-              </Button>
-            </div>
-          </div>
-
-          {isDemoMode ? (
-            [
-              { id: "f1", author: "Coach Sarah", time: "2 hours ago", text: "Practice this Saturday at 7am — all paddlers required. Bring race gear." },
-              { id: "f2", author: "Coach Sarah", time: "1 day ago",   text: "Erg test scores due by Friday. Upload your 500m result." },
-              { id: "f3", author: "Coach Sarah", time: "2 days ago",  text: "Great practice yesterday everyone! The starts are looking much better." },
-            ].map(post => (
-              <div key={post.id} className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Crown size={12} className="text-[#F59E0B]" />
-                  <span className="text-xs font-semibold text-[#94A3B8]">{post.author}</span>
-                  <span className="text-[10px] text-[#475569] ml-auto">{post.time}</span>
-                </div>
-                <p className="text-sm text-[#F1F5F9] leading-relaxed">{post.text}</p>
-              </div>
-            ))
-          ) : (
-            <p className="text-xs text-[#475569] text-center py-4">Be the first to post!</p>
-          )}
-        </div>
+        <FeedTab
+          teamId={activeTeam.id}
+          userId={userId}
+          authorName={user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Athlete"}
+          isCoach={isCoach}
+          isDemoMode={isDemoMode}
+        />
       )}
 
       {/* ── Athlete modal ─────────────────────────────────────────────────── */}
@@ -644,6 +652,9 @@ export default function TeamPage() {
         <AthleteModal
           member={selected}
           isCoach={isCoach}
+          teamId={activeTeam.id}
+          coachId={activeTeam.coach_id}
+          isDemoMode={isDemoMode}
           onClose={() => setSelected(null)}
           onRoleChange={updatePerfRole}
         />

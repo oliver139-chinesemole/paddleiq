@@ -436,3 +436,75 @@ CREATE POLICY "Authors and coaches can update posts"
     author_id = auth.uid()
     OR auth.uid() IN (SELECT coach_id FROM teams WHERE id = team_feed.team_id)
   );
+
+-- ==================== PHASE 2.5 — COACH READS ATHLETE SESSIONS ====================
+-- Coaches can query any team member's sessions for per-athlete coaching flags.
+-- Uses a sub-select: coach_id in any team that also contains the session owner.
+
+CREATE POLICY "Coaches can view team members erg sessions"
+  ON erg_sessions FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM teams t
+      JOIN team_members tm ON tm.team_id = t.id
+      WHERE t.coach_id = auth.uid() AND tm.user_id = erg_sessions.user_id
+    )
+  );
+
+CREATE POLICY "Coaches can view team members water sessions"
+  ON water_sessions FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM teams t
+      JOIN team_members tm ON tm.team_id = t.id
+      WHERE t.coach_id = auth.uid() AND tm.user_id = water_sessions.user_id
+    )
+  );
+
+CREATE POLICY "Coaches can view team members dryland sessions"
+  ON dryland_sessions FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM teams t
+      JOIN team_members tm ON tm.team_id = t.id
+      WHERE t.coach_id = auth.uid() AND tm.user_id = dryland_sessions.user_id
+    )
+  );
+
+CREATE POLICY "Coaches can view team members team sessions"
+  ON team_sessions FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM teams t
+      JOIN team_members tm ON tm.team_id = t.id
+      WHERE t.coach_id = auth.uid() AND tm.user_id = team_sessions.user_id
+    )
+  );
+
+-- ==================== WORKOUT ASSIGNMENTS ====================
+CREATE TABLE IF NOT EXISTS workout_assignments (
+  id            UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  team_id       UUID REFERENCES teams(id) ON DELETE CASCADE NOT NULL,
+  assigned_by   UUID REFERENCES profiles(id) NOT NULL,
+  assigned_to   UUID REFERENCES profiles(id),   -- NULL = whole team
+  title         TEXT NOT NULL,
+  workout_type  TEXT CHECK (workout_type IN ('erg','water','dryland','team','rest'))
+                  DEFAULT 'erg',
+  description   TEXT,
+  target_date   DATE,
+  completed     BOOLEAN DEFAULT FALSE,
+  completed_at  TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE workout_assignments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Athletes can view their own assignments"
+  ON workout_assignments FOR SELECT USING (
+    assigned_to = auth.uid() OR assigned_to IS NULL
+  );
+CREATE POLICY "Athletes can mark their assignment done"
+  ON workout_assignments FOR UPDATE USING (
+    assigned_to = auth.uid() AND completed = FALSE
+  );
+CREATE POLICY "Coaches can manage all assignments"
+  ON workout_assignments FOR ALL USING (
+    assigned_by = auth.uid() OR
+    auth.uid() IN (SELECT coach_id FROM teams WHERE id = workout_assignments.team_id)
+  );
