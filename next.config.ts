@@ -1,14 +1,17 @@
 import type { NextConfig } from "next";
+import withSerwistInit from "@serwist/next";
+
+const withSerwist = withSerwistInit({
+  swSrc: "app/sw.ts",
+  swDest: "public/sw.js",
+  // Disable SW in development to avoid stale-cache issues during hot reload
+  disable: process.env.NODE_ENV === "development",
+});
 
 const nextConfig: NextConfig = {
-  // Skip TS type-checking and ESLint at build time on Render free tier.
-  // Both are enforced locally and in GitHub Actions CI.
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Skip TypeScript type-checking during CI build (Render free tier memory).
+  // Types are verified locally and in GitHub Actions.
+  typescript: { ignoreBuildErrors: true },
 };
 
-export default nextConfig;
+export default withSerwist(nextConfig);

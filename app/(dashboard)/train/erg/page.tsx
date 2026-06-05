@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Dumbbell, TrendingUp } from "lucide-react";
+import { useUser } from "@/hooks/useUser";
+import { useWakeLock } from "@/hooks/useWakeLock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -23,6 +25,8 @@ const INTERVALS = [
 
 export default function ErgSessionPage() {
   const router = useRouter();
+  const { userId } = useUser();
+  const { acquire: wakeLockAcquire, release: wakeLockRelease } = useWakeLock();
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -44,8 +48,30 @@ export default function ErgSessionPage() {
   const distM = parseInt(form.distanceM || "0");
   const splitSec = distM > 0 && durationSec > 0 ? (durationSec / distM) * 500 : 0;
 
-  function handleSave() {
+  async function handleSave() {
     setSaved(true);
+    wakeLockRelease();
+    try {
+      const { saveErgSession } = await import("@/lib/db/sessions");
+      await saveErgSession({
+        userId,
+        date: form.date,
+        distance_m: parseInt(form.distanceM) || 0,
+        duration_sec: durationSec,
+        split_sec: splitSec,
+        stroke_rate: parseInt(form.strokeRate) || 0,
+        watts: form.watts ? parseInt(form.watts) : undefined,
+        heart_rate: form.heartRate ? parseInt(form.heartRate) : undefined,
+        rpe: parseInt(form.rpe),
+        resistance: parseInt(form.resistance),
+        paddle_side: form.paddleSide as "left" | "right" | "both",
+        workout_type: form.workoutType,
+        notes: form.notes,
+        created_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn("Local save failed:", err);
+    }
     setTimeout(() => router.push("/dashboard"), 1800);
   }
 

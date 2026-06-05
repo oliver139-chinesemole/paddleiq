@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useUser } from "@/hooks/useUser";
 
 export default function TeamSessionPage() {
   const router = useRouter();
+  const { userId } = useUser();
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -24,8 +26,28 @@ export default function TeamSessionPage() {
     notes: "",
   });
 
-  function handleSave() {
+  async function handleSave() {
     setSaved(true);
+    try {
+      const { saveTeamSession } = await import("@/lib/db/sessions");
+      await saveTeamSession({
+        userId,
+        team_id: "",
+        date: form.date,
+        duration_min: parseInt(form.durationMin) || 0,
+        distance_m: form.distanceM ? parseInt(form.distanceM) : undefined,
+        practice_type: form.practiceType as "endurance" | "starts" | "race_pieces" | "technique" | "intervals" | "mixed",
+        seat_position: form.seatNumber ? parseInt(form.seatNumber) : undefined,
+        paddle_side: form.paddleSide as "left" | "right",
+        role_in_boat: form.roleInBoat as "paddler" | "drummer" | "steersperson" | "caller",
+        stroke_rate: form.strokeRate ? parseInt(form.strokeRate) : undefined,
+        rpe: parseInt(form.rpe),
+        notes: form.notes,
+        created_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn("Local save failed:", err);
+    }
     setTimeout(() => router.push("/dashboard"), 1800);
   }
 

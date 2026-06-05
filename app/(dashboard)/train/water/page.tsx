@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/hooks/useUser";
 import { CheckCircle, Droplets, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ const DISTANCES = [
 
 export default function WaterSessionPage() {
   const router = useRouter();
+  const { userId } = useUser();
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -43,8 +45,29 @@ export default function WaterSessionPage() {
   const durationSec = parseInt(form.minutes || "0") * 60 + parseInt(form.seconds || "0");
   const split = calcPacePer500m(distM, durationSec);
 
-  function handleSave() {
+  async function handleSave() {
     setSaved(true);
+    try {
+      const { saveWaterSession } = await import("@/lib/db/sessions");
+      await saveWaterSession({
+        userId,
+        date: form.date,
+        distance_m: distM,
+        duration_sec: durationSec,
+        avg_pace_sec: split,
+        avg_speed_kmh: distM > 0 && durationSec > 0 ? (distM / 1000) / (durationSec / 3600) : 0,
+        max_speed_kmh: 0,
+        stroke_rate: form.strokeRate ? parseInt(form.strokeRate) : undefined,
+        rpe: parseInt(form.rpe),
+        boat_type: form.boatType,
+        water_condition: form.waterCondition as "flat" | "slight_chop" | "choppy" | "windy" | "current",
+        wind_speed: form.windSpeed ? parseInt(form.windSpeed) : undefined,
+        notes: form.notes,
+        created_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn("Local save failed:", err);
+    }
     setTimeout(() => router.push("/dashboard"), 1800);
   }
 

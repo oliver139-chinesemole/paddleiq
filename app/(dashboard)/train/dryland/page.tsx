@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Activity, Plus, X } from "lucide-react";
+import { useUser } from "@/hooks/useUser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,6 +27,7 @@ interface Exercise {
 
 export default function DrylandPage() {
   const router = useRouter();
+  const { userId } = useUser();
   const [saved, setSaved] = useState(false);
   const [exercises, setExercises] = useState<Exercise[]>([
     { name: "Pull-ups", sets: "3", reps: "10", weight: "", rpe: "7" },
@@ -49,8 +51,28 @@ export default function DrylandPage() {
     setExercises(exercises.map((ex, idx) => idx === i ? { ...ex, [field]: value } : ex));
   }
 
-  function handleSave() {
+  async function handleSave() {
     setSaved(true);
+    try {
+      const { saveDrylandSession } = await import("@/lib/db/sessions");
+      await saveDrylandSession({
+        userId,
+        date: form.date,
+        duration_min: parseInt(form.durationMin) || 0,
+        exercises: exercises.map((ex) => ({
+          name: ex.name,
+          sets: parseInt(ex.sets) || 0,
+          reps: ex.reps ? parseInt(ex.reps) : undefined,
+          weight_kg: ex.weight ? parseFloat(ex.weight) : undefined,
+          rpe: ex.rpe ? parseInt(ex.rpe) : undefined,
+        })),
+        rpe: parseInt(form.rpe),
+        notes: form.notes,
+        created_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.warn("Local save failed:", err);
+    }
     setTimeout(() => router.push("/dashboard"), 1800);
   }
 
