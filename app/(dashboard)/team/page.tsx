@@ -12,6 +12,8 @@ import { useUser } from "@/hooks/useUser";
 import { toast } from "sonner";
 import { formatTime } from "@/lib/utils";
 import type { PerformanceRole } from "@/lib/types";
+import ScheduleTab from "@/components/team/ScheduleTab";
+import LineupsTab from "@/components/team/LineupsTab";
 
 // ── Demo data ─────────────────────────────────────────────────────────────────
 const DEMO_TEAM = {
@@ -283,7 +285,7 @@ function NoTeamView({ userId, onJoined }: { userId: string; onJoined: () => void
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function TeamPage() {
   const { userId, isDemoMode } = useUser();
-  const [tab, setTab] = useState<"roster" | "leaderboard" | "feed">("roster");
+  const [tab, setTab] = useState<"roster" | "schedule" | "lineups" | "leaderboard" | "feed">("roster");
   const [team, setTeam] = useState<Team | null>(null);
   const [leaderboard, setLeaderboard] = useState<LbEntry[]>([]);
   const [loading, setLoading] = useState(!isDemoMode);
@@ -454,13 +456,13 @@ export default function TeamPage() {
         </div>
       </div>
 
-      {/* ── Tabs ─────────────────────────────────────────────────────────── */}
-      <div className="flex gap-1 bg-[#0D1528] border border-[#1E293B] rounded-xl p-1">
-        {(["roster", "leaderboard", "feed"] as const).map(t => (
+      {/* ── Tabs (scrollable on narrow screens) ─────────────────────────── */}
+      <div className="flex gap-1 bg-[#0D1528] border border-[#1E293B] rounded-xl p-1 overflow-x-auto no-scrollbar">
+        {(["roster", "schedule", "lineups", "leaderboard", "feed"] as const).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 text-xs font-semibold py-2 rounded-lg transition-colors cursor-pointer capitalize ${
+            className={`shrink-0 text-xs font-semibold py-2 px-3 rounded-lg transition-colors cursor-pointer capitalize ${
               tab === t ? "bg-[#1E293B] text-[#F1F5F9]" : "text-[#475569] hover:text-[#94A3B8]"
             }`}
           >
@@ -517,6 +519,34 @@ export default function TeamPage() {
             {copied ? "Invite link copied!" : "Copy invite link to add athletes"}
           </button>
         </div>
+      )}
+
+      {/* ── Schedule Tab (Phase 2.3) ─────────────────────────────────────── */}
+      {tab === "schedule" && (
+        <ScheduleTab
+          teamId={activeTeam.id}
+          userId={userId}
+          isCoach={isCoach}
+          isDemoMode={isDemoMode}
+          members={activeTeam.members.map(m => ({ user_id: m.user_id, paddle_side: m.paddle_side }))}
+        />
+      )}
+
+      {/* ── Lineups Tab (Phase 2.4) ───────────────────────────────────────── */}
+      {tab === "lineups" && (
+        <LineupsTab
+          teamId={activeTeam.id}
+          userId={userId}
+          isCoach={isCoach}
+          isDemoMode={isDemoMode}
+          members={activeTeam.members.map(m => ({
+            user_id: m.user_id,
+            full_name: m.full_name,
+            paddle_side: m.paddle_side,
+            weight_kg: m.weight_kg,
+            performance_role: m.performance_role,
+          }))}
+        />
       )}
 
       {/* ── Leaderboard Tab ──────────────────────────────────────────────── */}
