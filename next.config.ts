@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
   // Skip TypeScript type-checking during CI build (Render free tier memory).
   // Types are verified locally and in GitHub Actions.
   typescript: { ignoreBuildErrors: true },
+  // Empty turbopack config silences the "webpack config without turbopack" warning
+  // in Next.js 16 dev mode. Serwist still uses webpack for the production build
+  // (via `next build --webpack`), which is what Render runs.
+  turbopack: {},
 };
 
 export default withSerwist(nextConfig);
