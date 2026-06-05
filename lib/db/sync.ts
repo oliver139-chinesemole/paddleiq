@@ -6,6 +6,13 @@
  */
 import { getLocalDB, type SyncQueueItem } from "./schema";
 
+// Fields that exist only in the local Dexie row and must not reach Supabase
+const LOCAL_ONLY = new Set(["localId", "userId", "serverId", "synced"]);
+
+function toRemotePayload(payload: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(payload).filter(([k]) => !LOCAL_ONLY.has(k)));
+}
+
 let _syncing = false;
 
 export async function enqueue(
@@ -38,15 +45,16 @@ export async function flushQueue(): Promise<void> {
 
     for (const item of pending) {
       try {
+        const remote = toRemotePayload(item.payload);
         if (item.operation === "insert") {
-          const { error } = await supabase.from(item.table).insert(item.payload);
+          const { error } = await supabase.from(item.table).insert(remote);
           if (error) throw error;
         } else if (item.operation === "update") {
-          const { id, ...rest } = item.payload;
+          const { id, ...rest } = remote;
           const { error } = await supabase.from(item.table).update(rest).eq("id", id as string);
           if (error) throw error;
         } else if (item.operation === "delete") {
-          const { error } = await supabase.from(item.table).delete().eq("id", item.payload.id as string);
+          const { error } = await supabase.from(item.table).delete().eq("id", remote.id as string);
           if (error) throw error;
         }
 
@@ -78,7 +86,6 @@ async function markLocalSynced(table: SyncQueueItem["table"], localId: string): 
   } as const;
   const t = tableMap[table];
   if (!t || localId == null) return;
-  // localId was stored as string; convert back to number for Dexie pk
-  const numId = parseInt(localId.split("_").pop() ?? "", 10);
+  const numId = parseInt(localId, 10);
   if (!isNaN(numId)) await (t as ReturnType<typeof getLocalDB>["ergSessions"]).update(numId, { synced: 1 });
 }

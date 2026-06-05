@@ -6,16 +6,22 @@ import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+const IS_CONFIGURED =
+  typeof window !== "undefined" &&
+  !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
 const steps = [
   {
     id: "role",
     title: "What's your role?",
     subtitle: "We'll personalize your experience based on how you train.",
+    multi: false,
     options: [
-      { value: "paddler", label: "Paddler", desc: "I paddle with a team or solo" },
-      { value: "coach", label: "Coach", desc: "I coach a dragon boat team" },
-      { value: "captain", label: "Team Captain", desc: "I lead a team and paddle" },
-      { value: "beginner", label: "Beginner", desc: "I'm new to dragon boating" },
+      { value: "paddler",     label: "Paddler",           desc: "I paddle with a team or solo" },
+      { value: "coach",       label: "Coach",             desc: "I coach a dragon boat team" },
+      { value: "captain",     label: "Team Captain",      desc: "I lead a team and paddle" },
+      { value: "beginner",    label: "Beginner",          desc: "I'm new to dragon boating" },
       { value: "competitive", label: "Competitive Racer", desc: "I train seriously for races" },
     ],
   },
@@ -25,10 +31,10 @@ const steps = [
     subtitle: "Select all that apply to you.",
     multi: true,
     options: [
-      { value: "team_boat", label: "Dragon Boat", desc: "Team practices on the water" },
-      { value: "erg", label: "Paddle Erg", desc: "P-erg or paddle erg at home/gym" },
-      { value: "solo_water", label: "Solo Water", desc: "OC, kayak, canoe, or solo boat" },
-      { value: "dryland", label: "Dryland / Gym", desc: "Strength and conditioning" },
+      { value: "team_boat",   label: "Dragon Boat",   desc: "Team practices on the water" },
+      { value: "erg",         label: "Paddle Erg",    desc: "P-erg or paddle erg at home/gym" },
+      { value: "solo_water",  label: "Solo Water",    desc: "OC, kayak, canoe, or solo boat" },
+      { value: "dryland",     label: "Dryland / Gym", desc: "Strength and conditioning" },
     ],
   },
   {
@@ -37,12 +43,12 @@ const steps = [
     subtitle: "Pick your top priorities.",
     multi: true,
     options: [
-      { value: "endurance", label: "Build Endurance", desc: "Paddle longer and recover faster" },
-      { value: "technique", label: "Improve Technique", desc: "Better catch, rotation, timing" },
-      { value: "erg_score", label: "Better Erg Score", desc: "Improve 500m/1k/2k split times" },
-      { value: "race", label: "Race Readiness", desc: "Peak for an upcoming race" },
-      { value: "team", label: "Make the Team", desc: "Earn a seat at tryouts" },
-      { value: "fitness", label: "General Fitness", desc: "Use dragon boating to get fit" },
+      { value: "endurance",  label: "Build Endurance",   desc: "Paddle longer and recover faster" },
+      { value: "technique",  label: "Improve Technique", desc: "Better catch, rotation, timing" },
+      { value: "erg_score",  label: "Better Erg Score",  desc: "Improve 500m/1k/2k split times" },
+      { value: "race",       label: "Race Readiness",    desc: "Peak for an upcoming race" },
+      { value: "team",       label: "Make the Team",     desc: "Earn a seat at tryouts" },
+      { value: "fitness",    label: "General Fitness",   desc: "Use dragon boating to get fit" },
     ],
   },
   {
@@ -51,28 +57,28 @@ const steps = [
     subtitle: "We'll build your plans around these.",
     multi: true,
     options: [
-      { value: "200", label: "200m", desc: "Sprint race" },
-      { value: "250", label: "250m", desc: "Short sprint" },
-      { value: "500", label: "500m", desc: "Standard race distance" },
-      { value: "1000", label: "1km", desc: "Extended race" },
-      { value: "2000", label: "2km", desc: "Long distance" },
+      { value: "200",  label: "200m", desc: "Sprint race" },
+      { value: "250",  label: "250m", desc: "Short sprint" },
+      { value: "500",  label: "500m", desc: "Standard race distance" },
+      { value: "1000", label: "1km",  desc: "Extended race" },
+      { value: "2000", label: "2km",  desc: "Long distance" },
     ],
   },
-];
+] as const;
+
+type StepId = typeof steps[number]["id"];
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
+  const [answers, setAnswers] = useState<Record<StepId, string | string[]>>({} as Record<StepId, string | string[]>);
+  const [saving, setSaving] = useState(false);
   const current = steps[step];
 
   function toggle(value: string) {
     if (current.multi) {
-      const arr = (answers[current.id] as string[]) || [];
-      setAnswers({
-        ...answers,
-        [current.id]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value],
-      });
+      const arr = (answers[current.id] as string[]) ?? [];
+      setAnswers({ ...answers, [current.id]: arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value] });
     } else {
       setAnswers({ ...answers, [current.id]: value });
     }
@@ -80,21 +86,44 @@ export default function OnboardingPage() {
 
   function isSelected(value: string) {
     const ans = answers[current.id];
-    if (Array.isArray(ans)) return ans.includes(value);
-    return ans === value;
+    return Array.isArray(ans) ? ans.includes(value) : ans === value;
   }
 
   function canAdvance() {
     const ans = answers[current.id];
     if (!ans) return false;
-    if (Array.isArray(ans)) return ans.length > 0;
-    return true;
+    return Array.isArray(ans) ? ans.length > 0 : true;
   }
 
-  function next() {
+  async function next() {
     if (step < steps.length - 1) {
       setStep(step + 1);
-    } else {
+      return;
+    }
+
+    // Last step — save profile then redirect
+    setSaving(true);
+    try {
+      if (IS_CONFIGURED) {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from("profiles").upsert({
+            id: user.id,
+            email: user.email ?? "",
+            role: answers.role as string ?? "paddler",
+            training_env: (answers.env as string[]) ?? [],
+            goals: (answers.goals as string[]) ?? [],
+            preferred_distances: ((answers.distance as string[]) ?? []).map(Number),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Profile save failed:", err);
+    } finally {
+      setSaving(false);
       router.push("/dashboard");
     }
   }
@@ -105,17 +134,11 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-[#0A0F1E] flex flex-col">
       {/* Progress bar */}
       <div className="h-1 bg-[#1E293B]">
-        <div
-          className="h-full bg-[#0EA5E9] transition-all duration-500"
-          style={{ width: `${progress}%` }}
-        />
+        <div className="h-full bg-[#0EA5E9] transition-all duration-500" style={{ width: `${progress}%` }} />
       </div>
 
       <div className="flex-1 flex flex-col justify-center px-6 py-12 max-w-lg mx-auto w-full">
-        {/* Step indicator */}
-        <p className="text-xs text-[#475569] font-medium mb-6">
-          Step {step + 1} of {steps.length}
-        </p>
+        <p className="text-xs text-[#475569] font-medium mb-6">Step {step + 1} of {steps.length}</p>
 
         <h2 className="text-2xl font-black text-[#F1F5F9] mb-2">{current.title}</h2>
         <p className="text-[#64748B] text-sm mb-8">{current.subtitle}</p>
@@ -158,12 +181,14 @@ export default function OnboardingPage() {
             >
               ← Back
             </button>
-          ) : (
-            <div />
-          )}
-          <Button onClick={next} disabled={!canAdvance()}>
-            {step === steps.length - 1 ? "Go to Dashboard" : "Continue"}
-            <ArrowRight size={16} />
+          ) : <div />}
+          <Button onClick={next} disabled={!canAdvance() || saving}>
+            {saving
+              ? <><span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Saving…</>
+              : step === steps.length - 1
+                ? <>Go to Dashboard <ArrowRight size={16} /></>
+                : <>Continue <ArrowRight size={16} /></>
+            }
           </Button>
         </div>
       </div>
