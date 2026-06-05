@@ -70,6 +70,7 @@ export interface TeamSession {
   paddle_side: PaddleSide;
   role_in_boat: "paddler" | "drummer" | "steersperson" | "caller";
   stroke_rate?: number;
+  rpe?: number;
   notes?: string;
   coach_feedback?: string;
   created_at: string;

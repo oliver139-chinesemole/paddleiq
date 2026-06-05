@@ -113,7 +113,7 @@ export default function AICoachPage() {
         })),
         teamSessions: team.map((s) => ({
           date: s.date,
-          rpe: s.rpe,
+          rpe: s.rpe ?? 0,
           duration_min: s.duration_min,
         })),
         prs,

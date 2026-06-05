@@ -292,6 +292,7 @@ export function checkPRProximity(
     if (fraction <= THRESHOLDS.prProximityFraction || gap <= 0) {
       results.push({
         kind: "pr-proximity",
+        severity: gap <= 0 ? "ok" : "warn",
         category: pr.category,
         distanceM: pr.distance_m,
         prTimeSec: pr.time_sec,
@@ -327,6 +328,7 @@ export function computePRTrend(
 
   return {
     kind: "pr-trend",
+    severity: improvement > 0 ? "ok" : "warn",
     category: "erg",
     distanceM,
     improvementSec: Math.round(improvement * 10) / 10,

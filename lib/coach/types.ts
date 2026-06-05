@@ -50,6 +50,7 @@ export interface BoatErgGapResult {
 
 export interface PRProximityResult {
   kind: "pr-proximity";
+  severity: Severity;
   category: "erg" | "water";
   distanceM: number;
   prTimeSec: number;
@@ -60,6 +61,7 @@ export interface PRProximityResult {
 
 export interface PRTrendResult {
   kind: "pr-trend";
+  severity: Severity;
   category: "erg" | "water";
   distanceM: number;
   improvementSec: number;       // positive = improving

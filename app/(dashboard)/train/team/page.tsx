@@ -32,6 +32,7 @@ export default function TeamSessionPage() {
       const { saveTeamSession } = await import("@/lib/db/sessions");
       await saveTeamSession({
         userId,
+        user_id: userId,
         team_id: "",
         date: form.date,
         duration_min: parseInt(form.durationMin) || 0,

@@ -57,6 +57,7 @@ export default function DrylandPage() {
       const { saveDrylandSession } = await import("@/lib/db/sessions");
       await saveDrylandSession({
         userId,
+        user_id: userId,
         date: form.date,
         duration_min: parseInt(form.durationMin) || 0,
         exercises: exercises.map((ex) => ({

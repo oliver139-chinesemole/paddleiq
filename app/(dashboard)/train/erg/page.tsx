@@ -55,6 +55,7 @@ export default function ErgSessionPage() {
       const { saveErgSession } = await import("@/lib/db/sessions");
       await saveErgSession({
         userId,
+        user_id: userId,
         date: form.date,
         distance_m: parseInt(form.distanceM) || 0,
         duration_sec: durationSec,

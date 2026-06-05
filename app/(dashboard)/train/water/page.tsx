@@ -51,6 +51,7 @@ export default function WaterSessionPage() {
       const { saveWaterSession } = await import("@/lib/db/sessions");
       await saveWaterSession({
         userId,
+        user_id: userId,
         date: form.date,
         distance_m: distM,
         duration_sec: durationSec,
