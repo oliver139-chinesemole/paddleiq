@@ -153,11 +153,15 @@ test.describe("technique library", () => {
     await expect(page.locator("h1").first()).toHaveText(/torso rotation/i);
   });
 
-  test("a lesson shows the animated stroke with its own caption", async ({ page }) => {
-    await page.goto("/technique?lesson=t2", { waitUntil: "networkidle" });
-    await expect(page.locator("canvas").first()).toBeVisible();
-    await expect(page.getByText(/power comes from the trunk/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: /show this lesson/i })).toBeVisible();
+  test("a lesson points you at filming your own stroke", async ({ page }) => {
+    // The synthetic stick-figure animation was removed: it could show the
+    // order of the four phases but not blade angle, depth or what a clean
+    // catch looks like — which is what these lessons are about. Comparing
+    // your own clip against the cues teaches what a diagram can't.
+    await page.goto("/technique?lesson=t1", { waitUntil: "networkidle" });
+    await expect(page.getByText(/see it on your own stroke/i)).toBeVisible();
+    await expect(page.locator('a[href="/technique/video"]')).toBeVisible();
+    await expect(page.locator('a[href="/technique/form-check"]')).toBeVisible();
   });
 
   test("form check and team sync are reachable from the library", async ({ page }) => {

@@ -7,7 +7,6 @@ import { BookOpen, ChevronRight, Star, Check, Video, ScanLine, Users } from "luc
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { techniqueLessons } from "@/lib/data/seed";
-import { StrokeAnimation } from "@/components/technique/StrokeAnimation";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = ["All", "Stroke Mechanics", "Power & Mechanics", "Team Synchronization", "Race Strategy", "Erg Training", "Technique & Position"];
@@ -93,15 +92,31 @@ function TechniqueLibrary() {
           </ul>
         </div>
 
-        {/* Animated demonstration of the phase this lesson is about */}
-        <StrokeAnimation lessonId={lesson.id} />
-
-        <Link href="/technique/video">
-          <div className="flex items-center gap-3 rounded-xl border border-[#0EA5E9]/20 bg-[#0EA5E9]/10 p-3 hover:bg-[#0EA5E9]/15 transition-colors cursor-pointer">
-            <Video size={18} className="text-[#0EA5E9]" />
-            <span className="text-sm font-semibold text-[#0EA5E9]">Open Video Review →</span>
+        {/* Seeing your own stroke against these cues teaches more than a
+            diagram of an idealised one. */}
+        <div className="rounded-2xl border border-[#0EA5E9]/20 bg-[#0EA5E9]/5 p-5 flex flex-col gap-3">
+          <div>
+            <h2 className="text-sm font-bold text-[#F1F5F9]">See it on your own stroke</h2>
+            <p className="text-xs text-[#8A98AC] mt-1 leading-relaxed">
+              Film yourself side-on, then play it back in slow motion against the cues above.
+              Comparing your own catch to the description beats watching anyone else&apos;s.
+            </p>
           </div>
-        </Link>
+          <div className="flex flex-col gap-2">
+            <Link href="/technique/video">
+              <div className="flex items-center gap-3 rounded-xl border border-[#0EA5E9]/20 bg-[#0EA5E9]/10 p-3 hover:bg-[#0EA5E9]/15 transition-colors cursor-pointer">
+                <Video size={18} className="text-[#0EA5E9]" />
+                <span className="text-sm font-semibold text-[#0EA5E9]">Record and review a clip →</span>
+              </div>
+            </Link>
+            <Link href="/technique/form-check">
+              <div className="flex items-center gap-3 rounded-xl border border-[#0EA5E9]/20 bg-[#0EA5E9]/10 p-3 hover:bg-[#0EA5E9]/15 transition-colors cursor-pointer">
+                <ScanLine size={18} className="text-[#0EA5E9]" />
+                <span className="text-sm font-semibold text-[#0EA5E9]">Measure it with Form Check →</span>
+              </div>
+            </Link>
+          </div>
+        </div>
 
         <Button
           onClick={() => setWeeklyFocus(lesson.id)}
