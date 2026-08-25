@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { formatTime, formatPace, calcPacePer500m } from "@/lib/utils";
+import { formatTime, formatPace, calcPacePer500m, toLocalDateStr } from "@/lib/utils";
 
 const DISTANCES = [
   { value: "200", label: "200m" },
@@ -24,7 +24,7 @@ export default function WaterSessionPage() {
   const { userId } = useUser();
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
-    date: new Date().toISOString().split("T")[0],
+    date: toLocalDateStr(new Date()),
     distancePreset: "500",
     customDistance: "",
     minutes: "",

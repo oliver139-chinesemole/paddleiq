@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { VolumeChart } from "@/components/charts/volume-chart";
 import { ProgressChart } from "@/components/charts/progress-chart";
 import { mockStats, mockErgSessions, weeklyVolumeData, ergProgressData } from "@/lib/data/seed";
-import { formatTime, formatDistance, formatRelativeDate, formatPace } from "@/lib/utils";
+import { formatTime, formatDistance, formatRelativeDate, formatPace, toLocalDateStr } from "@/lib/utils";
 import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
 import type { DashboardStats } from "@/lib/types";
 import type { LocalErgSession } from "@/lib/db/schema";
@@ -61,7 +61,7 @@ export default function AnalyticsPage() {
   const ergCount = ergSessions.filter(s => {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 28);
-    return s.date >= cutoff.toISOString().split("T")[0];
+    return s.date >= toLocalDateStr(cutoff);
   }).length;
 
   return (

@@ -31,6 +31,7 @@ import {
   type FormCheckResult, type FormCheckSource,
 } from "@/lib/pose/history";
 import { getAllVideoClips, type VideoClip } from "@/lib/video/db";
+import { toLocalDateStr } from "@/lib/utils";
 
 // ─── constants ───────────────────────────────────────────────────────────────
 
@@ -119,7 +120,7 @@ export default function FormCheckPage() {
 
       await saveFormCheck({
         createdAt,
-        date: new Date(createdAt).toISOString().split("T")[0],
+        date: toLocalDateStr(new Date(createdAt)),
         source,
         side,
         metrics: result.metrics,

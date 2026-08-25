@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Trophy, Loader2 } from "lucide-react";
-import { formatTime, formatDistance } from "@/lib/utils";
+import { formatTime, formatDistance, toLocalDateStr } from "@/lib/utils";
 
 type Category = "erg500" | "erg2k" | "weekly_dist" | "attendance" | "most_improved";
 type Period  = "all" | "30d" | "7d";
@@ -104,8 +104,8 @@ export default function LeaderboardTab({
       const { createClient } = await import("@/lib/supabase/client");
       const sb = createClient();
 
-      const cutoff = period === "7d"  ? new Date(Date.now() - 7  * 86400000).toISOString().split("T")[0]
-                   : period === "30d" ? new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0]
+      const cutoff = period === "7d"  ? toLocalDateStr(new Date(Date.now() - 7  * 86400000))
+                   : period === "30d" ? toLocalDateStr(new Date(Date.now() - 30 * 86400000))
                    : "2000-01-01";
 
       if (cat === "erg500" || cat === "erg2k") {

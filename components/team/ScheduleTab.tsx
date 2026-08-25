@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { EventType, RsvpStatus } from "@/lib/types";
+import { toLocalDateStr } from "@/lib/utils";
 
 // ── Demo data ─────────────────────────────────────────────────────────────────
 const TODAY = "2026-06-05";
@@ -259,7 +260,7 @@ export default function ScheduleTab({
         .from("team_events")
         .select("id, title, event_date, event_time, location, event_type, description")
         .eq("team_id", teamId)
-        .gte("event_date", new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0])
+        .gte("event_date", toLocalDateStr(new Date(Date.now() - 30 * 86400000)))
         .order("event_date", { ascending: true });
       setEvents((evtsData ?? []) as TeamEvent[]);
 

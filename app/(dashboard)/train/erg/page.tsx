@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { formatTime, formatPace } from "@/lib/utils";
+import { formatTime, formatPace, toLocalDateStr } from "@/lib/utils";
 
 type WorkoutType = "steady" | "intervals" | "test" | "pyramid";
 
@@ -29,7 +29,7 @@ export default function ErgSessionPage() {
   const { acquire: wakeLockAcquire, release: wakeLockRelease } = useWakeLock();
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
-    date: new Date().toISOString().split("T")[0],
+    date: toLocalDateStr(new Date()),
     workoutType: "steady" as WorkoutType,
     distanceM: "",
     minutes: "",

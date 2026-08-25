@@ -7,6 +7,7 @@ import { useUser } from "@/hooks/useUser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toLocalDateStr } from "@/lib/utils";
 
 const PADDLE_EXERCISES = [
   "Pull-ups", "Lat Pulldown", "Bent-over Rows", "Single-arm Rows",
@@ -33,7 +34,7 @@ export default function DrylandPage() {
     { name: "Pull-ups", sets: "3", reps: "10", weight: "", rpe: "7" },
   ]);
   const [form, setForm] = useState({
-    date: new Date().toISOString().split("T")[0],
+    date: toLocalDateStr(new Date()),
     durationMin: "",
     rpe: "7",
     notes: "",
