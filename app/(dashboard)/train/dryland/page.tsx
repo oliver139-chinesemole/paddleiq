@@ -6,6 +6,7 @@ import { CheckCircle, Activity, Plus, X } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EffortPicker } from "@/components/ui/effort-picker";
 import { Textarea } from "@/components/ui/textarea";
 import { toLocalDateStr } from "@/lib/utils";
 import { validateDrylandForm, isValid, type FieldErrors } from "@/lib/validation/session";
@@ -211,19 +212,12 @@ export default function DrylandPage() {
       {/* Overall RPE */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
         <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Overall Session RPE</h2>
-        <div className="flex gap-1.5 flex-wrap">
-          {[1,2,3,4,5,6,7,8,9,10].map((n) => (
-            <button
-              key={n}
-              onClick={() => setForm({ ...form, rpe: String(n) })}
-              className={`w-9 h-9 rounded-xl text-sm font-bold transition-colors cursor-pointer ${
-                form.rpe === String(n) ? "bg-[#10B981] text-white" : "bg-[#1E293B] text-[#8A98AC] hover:bg-[#334155]"
-              }`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
+        <EffortPicker
+            label="Effort"
+            value={form.rpe}
+            onChange={(v) => updateField("rpe", v)}
+            error={errors.rpe}
+          />
       </div>
 
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">

@@ -6,6 +6,7 @@ import { useUser } from "@/hooks/useUser";
 import { CheckCircle, Droplets, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EffortPicker } from "@/components/ui/effort-picker";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTime, formatPace, calcPacePer500m, toLocalDateStr } from "@/lib/utils";
@@ -227,21 +228,12 @@ export default function WaterSessionPage() {
       {/* RPE */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
         <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Effort Level (RPE)</h2>
-        <div className="flex gap-1.5 flex-wrap">
-          {[1,2,3,4,5,6,7,8,9,10].map((n) => (
-            <button
-              key={n}
-              onClick={() => setForm({ ...form, rpe: String(n) })}
-              className={`w-9 h-9 rounded-xl text-sm font-bold transition-colors cursor-pointer ${
-                form.rpe === String(n)
-                  ? "bg-[#06B6D4] text-white"
-                  : "bg-[#1E293B] text-[#8A98AC] hover:bg-[#334155]"
-              }`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
+        <EffortPicker
+            label="Effort"
+            value={form.rpe}
+            onChange={(v) => updateField("rpe", v)}
+            error={errors.rpe}
+          />
       </div>
 
       {/* GPS / Location placeholder */}

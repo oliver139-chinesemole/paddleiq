@@ -7,6 +7,7 @@ import { useUser } from "@/hooks/useUser";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { EffortPicker } from "@/components/ui/effort-picker";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTime, formatPace, toLocalDateStr } from "@/lib/utils";
@@ -243,22 +244,12 @@ export default function ErgSessionPage() {
             onChange={(e) => updateField("heartRate", e.target.value)}
           />
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-[#94A3B8]">RPE (1–10)</label>
-            <div className="flex gap-1 flex-wrap mt-1">
-              {[1,2,3,4,5,6,7,8,9,10].map((n) => (
-                <button
-                  key={n}
-                  onClick={() => setForm({ ...form, rpe: String(n) })}
-                  className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                    form.rpe === String(n)
-                      ? "bg-[#0EA5E9] text-white"
-                      : "bg-[#1E293B] text-[#8A98AC] hover:bg-[#334155]"
-                  }`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
+            <EffortPicker
+            label="Effort"
+            value={form.rpe}
+            onChange={(v) => updateField("rpe", v)}
+            error={errors.rpe}
+          />
           </div>
         </div>
       </div>
