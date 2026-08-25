@@ -9,47 +9,10 @@ import type { DashboardStats } from "@/lib/types";
 // evening onward anywhere west of Greenwich — for a paddler in California that
 // is every session logged after 4pm.
 
-/** Local calendar date as "YYYY-MM-DD". */
-export function toLocalDateStr(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+import { toLocalDateStr, daysBefore, computeStreak } from "@/lib/utils";
 
-/** A new Date `days` before `from`, leaving the original untouched. */
-function daysBefore(from: Date, days: number): Date {
-  const d = new Date(from);
-  d.setDate(d.getDate() - days);
-  return d;
-}
-
-/**
- * Consecutive days of training, counting back from today.
- *
- * A streak stays alive until a full day is missed, so it anchors on today or
- * yesterday. Anchoring on today alone — as this used to — reported a streak of
- * zero every morning until the athlete trained again, which is both wrong and
- * the most discouraging possible moment to show it.
- */
-export function computeStreak(sessionDates: Set<string>, now = new Date()): number {
-  const today = toLocalDateStr(now);
-  const yesterday = toLocalDateStr(daysBefore(now, 1));
-
-  let cursor: Date;
-  if (sessionDates.has(today)) cursor = new Date(now);
-  else if (sessionDates.has(yesterday)) cursor = daysBefore(now, 1);
-  else return 0;
-
-  let streak = 0;
-  // Bounded so a corrupt date set can't spin forever.
-  for (let guard = 0; guard < 3650; guard++) {
-    if (!sessionDates.has(toLocalDateStr(cursor))) break;
-    streak++;
-    cursor = daysBefore(cursor, 1);
-  }
-  return streak;
-}
+// Re-exported so callers of the stats module don't need to know these moved.
+export { toLocalDateStr, computeStreak };
 
 export function computeDashboardStats(
   erg: LocalErgSession[],

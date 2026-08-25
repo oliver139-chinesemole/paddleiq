@@ -10,7 +10,8 @@ import {
   type TeamSessionInput, type PRInput,
 } from "./rules";
 import { buildWeeklySummary, insightTitle, insightBody } from "./templates";
-import type { CoachOutput, CoachInsight } from "./types";
+import { computeStreak, toLocalDateStr, daysBefore } from "@/lib/utils";
+import type { CoachInsight } from "./types";
 
 export interface EngineInput {
   ergSessions: ErgSessionInput[];
@@ -55,7 +56,9 @@ export function runCoachEngine(input: EngineInput): RenderedCoachOutput {
   const streak = checkHighRPEStreak(allSessions);
   const gaps = checkModalityGaps(drylandSessions, waterSessions, now);
   const boatErgGap = checkBoatErgGap(ergSessions, waterSessions);
-  const prProximity = checkPRProximity(ergSessions, waterSessions, prs);
+  // `now` matters here too — without it this rule reads the real clock and
+  // ignores the caller's date, which is exactly what made it untestable.
+  const prProximity = checkPRProximity(ergSessions, waterSessions, prs, now);
   const ergTrend = computePRTrend(ergSessions, 2000) ?? computePRTrend(ergSessions, 500);
 
   // ── Categorise by severity ────────────────────────────────────────────────
@@ -86,23 +89,14 @@ export function runCoachEngine(input: EngineInput): RenderedCoachOutput {
   }
 
   // ── Weekly summary ────────────────────────────────────────────────────────
-  const weekCutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const sessionsThisWeek = allSessions.filter((s) => new Date(s.date) >= weekCutoff).length;
+  const weekCutoff = toLocalDateStr(daysBefore(now, 6));
+  const sessionsThisWeek = allSessions.filter((s) => s.date >= weekCutoff).length;
   const prNearCount = prProximity.length;
-  const streakDays = (() => {
-    const sorted = [...allSessions]
-      .map((s) => s.date)
-      .sort()
-      .reverse();
-    let days = 0;
-    let prev = now.toISOString().split("T")[0];
-    for (const d of sorted) {
-      const diff = (new Date(prev).getTime() - new Date(d).getTime()) / (1000 * 60 * 60 * 24);
-      if (diff <= 1) { days++; prev = d; }
-      else break;
-    }
-    return days;
-  })();
+
+  // Shared with the dashboard so the two can't report different streaks. The
+  // local version walked the session list, so a double training day counted
+  // twice, and it read "today" in UTC.
+  const streakDays = computeStreak(new Set(allSessions.map((s) => s.date)), now);
 
   const summaryText = buildWeeklySummary(
     ergTrend ? { improvementSec: ergTrend.improvementSec, sessions: ergTrend.sessions, distance: ergTrend.distanceM } : null,

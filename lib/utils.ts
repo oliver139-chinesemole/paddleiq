@@ -65,6 +65,51 @@ export function calendarDaysBetween(from: Date, to: Date): number {
   return Math.round(ms / (1000 * 60 * 60 * 24));
 }
 
+/** Local calendar date as "YYYY-MM-DD", matching how sessions are stored. */
+export function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** A new Date `days` before `from`, leaving the original untouched. */
+export function daysBefore(from: Date, days: number): Date {
+  const d = new Date(from);
+  d.setDate(d.getDate() - days);
+  return d;
+}
+
+/**
+ * Consecutive days of training, counting back from today.
+ *
+ * A streak survives until a full day is missed, so it anchors on today or
+ * yesterday rather than today alone. Takes a Set of date strings, which also
+ * means two sessions on the same day count once — walking a session list
+ * instead lets every double day add a phantom streak day.
+ *
+ * Lives here rather than beside either caller so the dashboard and the coach
+ * engine can't drift apart on what a streak means. They previously disagreed.
+ */
+export function computeStreak(sessionDates: Set<string>, now = new Date()): number {
+  const today = toLocalDateStr(now);
+  const yesterday = toLocalDateStr(daysBefore(now, 1));
+
+  let cursor: Date;
+  if (sessionDates.has(today)) cursor = new Date(now);
+  else if (sessionDates.has(yesterday)) cursor = daysBefore(now, 1);
+  else return 0;
+
+  let streak = 0;
+  // Bounded so a corrupt date set can't spin forever.
+  for (let guard = 0; guard < 3650; guard++) {
+    if (!sessionDates.has(toLocalDateStr(cursor))) break;
+    streak++;
+    cursor = daysBefore(cursor, 1);
+  }
+  return streak;
+}
+
 export function formatDate(date: string | Date): string {
   return parseLocalDate(date).toLocaleDateString("en-US", {
     month: "short",
