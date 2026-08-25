@@ -9,11 +9,13 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/hooks/useUser";
 import { toLocalDateStr } from "@/lib/utils";
+import { validateTeamForm, isValid, type FieldErrors } from "@/lib/validation/session";
 
 export default function TeamSessionPage() {
   const router = useRouter();
   const { userId } = useUser();
   const [saved, setSaved] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState({
     date: toLocalDateStr(new Date()),
     durationMin: "",
@@ -27,7 +29,18 @@ export default function TeamSessionPage() {
     notes: "",
   });
 
+  function updateField(key: keyof typeof form, value: string) {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((prev: FieldErrors) => (prev[key] ? { ...prev, [key]: "" } : prev));
+  }
+
   async function handleSave() {
+    // Previously unguarded: an empty form saved a zeroed session and navigated
+    // away as though it had worked.
+    const found = validateTeamForm({ date: form.date, durationMin: form.durationMin, distanceM: form.distanceM, strokeRate: form.strokeRate, rpe: form.rpe });
+    setErrors(found);
+    if (!isValid(found)) return;
+
     setSaved(true);
     try {
       const { saveTeamSession } = await import("@/lib/db/sessions");
@@ -80,8 +93,9 @@ export default function TeamSessionPage() {
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
         <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-4">Practice Details</h2>
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-          <Input label="Duration (min)" type="number" placeholder="90" value={form.durationMin} onChange={(e) => setForm({ ...form, durationMin: e.target.value })} />
+          <Input label="Date" type="date"
+            error={errors.date} value={form.date} onChange={(e) => updateField("date", e.target.value)} />
+          <Input label="Duration (min)" type="number" placeholder="90" value={form.durationMin} onChange={(e) => updateField("durationMin", e.target.value)} error={errors.durationMin} />
           <Select
             label="Practice Type"
             options={[
@@ -93,9 +107,9 @@ export default function TeamSessionPage() {
               { value: "mixed", label: "Mixed" },
             ]}
             value={form.practiceType}
-            onChange={(e) => setForm({ ...form, practiceType: e.target.value })}
+            onChange={(e) => updateField("practiceType", e.target.value)}
           />
-          <Input label="Distance (m, optional)" type="number" placeholder="8000" value={form.distanceM} onChange={(e) => setForm({ ...form, distanceM: e.target.value })} />
+          <Input label="Distance (m, optional)" type="number" placeholder="8000" value={form.distanceM} onChange={(e) => updateField("distanceM", e.target.value)} />
         </div>
       </div>
 
@@ -109,9 +123,9 @@ export default function TeamSessionPage() {
               { value: "right", label: "Right Side" },
             ]}
             value={form.paddleSide}
-            onChange={(e) => setForm({ ...form, paddleSide: e.target.value })}
+            onChange={(e) => updateField("paddleSide", e.target.value)}
           />
-          <Input label="Seat # (optional)" type="number" placeholder="3" value={form.seatNumber} onChange={(e) => setForm({ ...form, seatNumber: e.target.value })} />
+          <Input label="Seat # (optional)" type="number" placeholder="3" value={form.seatNumber} onChange={(e) => updateField("seatNumber", e.target.value)} />
           <Select
             label="Role in Boat"
             options={[
@@ -121,9 +135,9 @@ export default function TeamSessionPage() {
               { value: "caller", label: "Stroke Caller" },
             ]}
             value={form.roleInBoat}
-            onChange={(e) => setForm({ ...form, roleInBoat: e.target.value })}
+            onChange={(e) => updateField("roleInBoat", e.target.value)}
           />
-          <Input label="Stroke Rate (spm)" type="number" placeholder="72" value={form.strokeRate} onChange={(e) => setForm({ ...form, strokeRate: e.target.value })} />
+          <Input label="Stroke Rate (spm)" type="number" placeholder="72" value={form.strokeRate} onChange={(e) => updateField("strokeRate", e.target.value)} />
         </div>
       </div>
 
@@ -149,7 +163,7 @@ export default function TeamSessionPage() {
           label="Session Notes"
           placeholder="Timing was off in race pieces but improved by end of practice. Coach focused on catch timing and rotation. Team was 85% synchronized by the last piece."
           value={form.notes}
-          onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          onChange={(e) => updateField("notes", e.target.value)}
         />
       </div>
 

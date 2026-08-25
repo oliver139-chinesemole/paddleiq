@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTime, formatPace, toLocalDateStr } from "@/lib/utils";
+import { validateErgForm, isValid, type FieldErrors } from "@/lib/validation/session";
 
 type WorkoutType = "steady" | "intervals" | "test" | "pyramid";
 
@@ -27,6 +28,7 @@ export default function ErgSessionPage() {
   const { userId } = useUser();
   const { acquire: wakeLockAcquire, release: wakeLockRelease } = useWakeLock();
   const [saved, setSaved] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState({
     date: toLocalDateStr(new Date()),
     workoutType: "steady" as WorkoutType,
@@ -55,7 +57,20 @@ export default function ErgSessionPage() {
   const distM = parseInt(form.distanceM || "0");
   const splitSec = distM > 0 && durationSec > 0 ? (durationSec / distM) * 500 : 0;
 
+  function updateField(key: keyof typeof form, value: string) {
+    setForm((f) => ({ ...f, [key]: value }));
+    // Clear this field's error the moment it's touched, rather than leaving a
+    // stale complaint under a field the athlete has just fixed.
+    setErrors((prev: FieldErrors) => (prev[key] ? { ...prev, [key]: "" } : prev));
+  }
+
   async function handleSave() {
+    // Previously unguarded: an empty form saved a 0m/0s session and navigated
+    // to the dashboard as though it had worked.
+    const found = validateErgForm(form);
+    setErrors(found);
+    if (!isValid(found)) return;
+
     setSaved(true);
     wakeLockRelease();
     try {
@@ -139,7 +154,7 @@ export default function ErgSessionPage() {
               label="Interval Template"
               options={INTERVALS.map((i) => ({ value: i.label, label: i.label }))}
               value={form.intervalTemplate}
-              onChange={(e) => setForm({ ...form, intervalTemplate: e.target.value })}
+              onChange={(e) => updateField("intervalTemplate", e.target.value)}
             />
           </div>
         )}
@@ -153,14 +168,16 @@ export default function ErgSessionPage() {
             label="Distance (m)"
             type="number"
             placeholder="2000"
+            error={errors.distanceM}
             value={form.distanceM}
-            onChange={(e) => setForm({ ...form, distanceM: e.target.value })}
+            onChange={(e) => updateField("distanceM", e.target.value)}
           />
           <Input
             label="Date"
             type="date"
+            error={errors.date}
             value={form.date}
-            onChange={(e) => setForm({ ...form, date: e.target.value })}
+            onChange={(e) => updateField("date", e.target.value)}
           />
         </div>
 
@@ -170,14 +187,16 @@ export default function ErgSessionPage() {
             <Input
               type="number"
               placeholder="Minutes"
+            error={errors.minutes}
               value={form.minutes}
-              onChange={(e) => setForm({ ...form, minutes: e.target.value })}
+              onChange={(e) => updateField("minutes", e.target.value)}
             />
             <Input
               type="number"
               placeholder="Seconds"
+            error={errors.seconds}
               value={form.seconds}
-              onChange={(e) => setForm({ ...form, seconds: e.target.value })}
+              onChange={(e) => updateField("seconds", e.target.value)}
             />
           </div>
         </div>
@@ -203,22 +222,25 @@ export default function ErgSessionPage() {
             label="Stroke Rate (spm)"
             type="number"
             placeholder="72"
+            error={errors.strokeRate}
             value={form.strokeRate}
-            onChange={(e) => setForm({ ...form, strokeRate: e.target.value })}
+            onChange={(e) => updateField("strokeRate", e.target.value)}
           />
           <Input
             label="Watts (optional)"
             type="number"
             placeholder="210"
+            error={errors.watts}
             value={form.watts}
-            onChange={(e) => setForm({ ...form, watts: e.target.value })}
+            onChange={(e) => updateField("watts", e.target.value)}
           />
           <Input
             label="Heart Rate (bpm)"
             type="number"
             placeholder="165"
+            error={errors.heartRate}
             value={form.heartRate}
-            onChange={(e) => setForm({ ...form, heartRate: e.target.value })}
+            onChange={(e) => updateField("heartRate", e.target.value)}
           />
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-[#94A3B8]">RPE (1–10)</label>
@@ -253,7 +275,7 @@ export default function ErgSessionPage() {
               { value: "both", label: "Alternating" },
             ]}
             value={form.paddleSide}
-            onChange={(e) => setForm({ ...form, paddleSide: e.target.value })}
+            onChange={(e) => updateField("paddleSide", e.target.value)}
           />
           <Select
             label="Resistance"
@@ -262,7 +284,7 @@ export default function ErgSessionPage() {
               label: `Level ${i + 1}`,
             }))}
             value={form.resistance}
-            onChange={(e) => setForm({ ...form, resistance: e.target.value })}
+            onChange={(e) => updateField("resistance", e.target.value)}
           />
         </div>
       </div>
@@ -273,7 +295,7 @@ export default function ErgSessionPage() {
           label="Notes (technique, feel, focus)"
           placeholder="Catch felt clean today. Exit timing improved. Faded slightly in last 500m of the 2k..."
           value={form.notes}
-          onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          onChange={(e) => updateField("notes", e.target.value)}
           className="min-h-[80px]"
         />
       </div>

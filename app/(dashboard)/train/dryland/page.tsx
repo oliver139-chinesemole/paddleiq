@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toLocalDateStr } from "@/lib/utils";
+import { validateDrylandForm, isValid, type FieldErrors } from "@/lib/validation/session";
 
 const PADDLE_EXERCISES = [
   "Pull-ups", "Lat Pulldown", "Bent-over Rows", "Single-arm Rows",
@@ -30,6 +31,7 @@ export default function DrylandPage() {
   const router = useRouter();
   const { userId } = useUser();
   const [saved, setSaved] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [exercises, setExercises] = useState<Exercise[]>([
     { name: "Pull-ups", sets: "3", reps: "10", weight: "", rpe: "7" },
   ]);
@@ -52,7 +54,18 @@ export default function DrylandPage() {
     setExercises(exercises.map((ex, idx) => idx === i ? { ...ex, [field]: value } : ex));
   }
 
+  function updateField(key: keyof typeof form, value: string) {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((prev: FieldErrors) => (prev[key] ? { ...prev, [key]: "" } : prev));
+  }
+
   async function handleSave() {
+    // Previously unguarded: an empty form saved a zeroed session and navigated
+    // away as though it had worked.
+    const found = validateDrylandForm({ date: form.date, durationMin: form.durationMin, rpe: form.rpe, exercises });
+    setErrors(found);
+    if (!isValid(found)) return;
+
     setSaved(true);
     try {
       const { saveDrylandSession } = await import("@/lib/db/sessions");
@@ -104,14 +117,18 @@ export default function DrylandPage() {
 
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
         <div className="grid grid-cols-2 gap-3">
-          <Input label="Date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-          <Input label="Duration (min)" type="number" placeholder="45" value={form.durationMin} onChange={(e) => setForm({ ...form, durationMin: e.target.value })} />
+          <Input label="Date" type="date"
+            error={errors.date} value={form.date} onChange={(e) => updateField("date", e.target.value)} />
+          <Input label="Duration (min)" type="number" placeholder="45" value={form.durationMin} onChange={(e) => updateField("durationMin", e.target.value)} error={errors.durationMin} />
         </div>
       </div>
 
       {/* Exercises */}
       <div className="flex flex-col gap-3">
         <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider">Exercises</h2>
+        {errors.exercises && (
+          <p className="text-xs text-[#EF4444]">{errors.exercises}</p>
+        )}
         {exercises.map((ex, i) => (
           <div key={i} className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4">
             <div className="flex items-center justify-between mb-3">
@@ -214,7 +231,7 @@ export default function DrylandPage() {
           label="Notes"
           placeholder="Focused on lat activation and pull pattern. Pull-ups felt strong — 3 more than last week."
           value={form.notes}
-          onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          onChange={(e) => updateField("notes", e.target.value)}
         />
       </div>
 

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTime, formatPace, calcPacePer500m, toLocalDateStr } from "@/lib/utils";
+import { validateWaterForm, isValid, type FieldErrors } from "@/lib/validation/session";
 
 const DISTANCES = [
   { value: "200", label: "200m" },
@@ -23,6 +24,7 @@ export default function WaterSessionPage() {
   const router = useRouter();
   const { userId } = useUser();
   const [saved, setSaved] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState({
     date: toLocalDateStr(new Date()),
     distancePreset: "500",
@@ -45,7 +47,18 @@ export default function WaterSessionPage() {
   const durationSec = parseInt(form.minutes || "0") * 60 + parseInt(form.seconds || "0");
   const split = calcPacePer500m(distM, durationSec);
 
+  function updateField(key: keyof typeof form, value: string) {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((prev: FieldErrors) => (prev[key] ? { ...prev, [key]: "" } : prev));
+  }
+
   async function handleSave() {
+    // Previously unguarded: an empty form saved a zeroed session and navigated
+    // away as though it had worked.
+    const found = validateWaterForm({ date: form.date, distanceM: String(distM || ""), minutes: form.minutes, seconds: form.seconds, strokeRate: form.strokeRate, heartRate: form.heartRate, rpe: form.rpe });
+    setErrors(found);
+    if (!isValid(found)) return;
+
     setSaved(true);
     try {
       const { saveWaterSession } = await import("@/lib/db/sessions");
@@ -127,7 +140,7 @@ export default function WaterSessionPage() {
               type="number"
               placeholder="750"
               value={form.customDistance}
-              onChange={(e) => setForm({ ...form, customDistance: e.target.value })}
+              onChange={(e) => updateField("customDistance", e.target.value)}
             />
           </div>
         )}
@@ -137,13 +150,16 @@ export default function WaterSessionPage() {
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
         <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-4">Time Result</h2>
         <div className="grid grid-cols-2 gap-2 mb-3">
-          <Input label="Date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+          <Input label="Date" type="date"
+            error={errors.date} value={form.date} onChange={(e) => updateField("date", e.target.value)} />
           <div />
         </div>
         <label className="text-sm font-medium text-[#94A3B8]">Finish Time</label>
         <div className="grid grid-cols-2 gap-2 mt-1.5">
-          <Input type="number" placeholder="Minutes" value={form.minutes} onChange={(e) => setForm({ ...form, minutes: e.target.value })} />
-          <Input type="number" placeholder="Seconds" value={form.seconds} onChange={(e) => setForm({ ...form, seconds: e.target.value })} />
+          <Input type="number" placeholder="Minutes"
+            error={errors.minutes} value={form.minutes} onChange={(e) => updateField("minutes", e.target.value)} />
+          <Input type="number" placeholder="Seconds"
+            error={errors.seconds} value={form.seconds} onChange={(e) => updateField("seconds", e.target.value)} />
         </div>
 
         {split > 0 && (
@@ -177,7 +193,7 @@ export default function WaterSessionPage() {
               { value: "other", label: "Other" },
             ]}
             value={form.boatType}
-            onChange={(e) => setForm({ ...form, boatType: e.target.value })}
+            onChange={(e) => updateField("boatType", e.target.value)}
           />
           <Select
             label="Water Condition"
@@ -189,21 +205,21 @@ export default function WaterSessionPage() {
               { value: "current", label: "Current" },
             ]}
             value={form.waterCondition}
-            onChange={(e) => setForm({ ...form, waterCondition: e.target.value })}
+            onChange={(e) => updateField("waterCondition", e.target.value)}
           />
           <Input
             label="Stroke Rate (spm)"
             type="number"
             placeholder="78"
             value={form.strokeRate}
-            onChange={(e) => setForm({ ...form, strokeRate: e.target.value })}
+            onChange={(e) => updateField("strokeRate", e.target.value)}
           />
           <Input
             label="Wind Speed (km/h)"
             type="number"
             placeholder="10"
             value={form.windSpeed}
-            onChange={(e) => setForm({ ...form, windSpeed: e.target.value })}
+            onChange={(e) => updateField("windSpeed", e.target.value)}
           />
         </div>
       </div>
@@ -243,7 +259,7 @@ export default function WaterSessionPage() {
           label="Notes (start, conditions, technique, fatigue)"
           placeholder="Caught a headwind on the return leg. Catch felt solid. Start was explosive — best in months."
           value={form.notes}
-          onChange={(e) => setForm({ ...form, notes: e.target.value })}
+          onChange={(e) => updateField("notes", e.target.value)}
         />
       </div>
 

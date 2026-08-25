@@ -98,6 +98,27 @@ test.describe("logging a session", () => {
     await page.goto("/train/erg", { waitUntil: "networkidle" });
     await expect(page.getByRole("button", { name: /save erg session/i })).toBeVisible();
   });
+
+  // Regression: submitting an empty form saved a session of 0m in 0s and
+  // navigated to the dashboard as though it had worked. Those rows fed weekly
+  // totals, the streak, ACWR and PR detection.
+  const EMPTY_SUBMITS: Array<[string, RegExp, RegExp]> = [
+    ["/train/erg", /save erg session/i, /how far did you go/i],
+    ["/train/water", /^save/i, /how long did it take/i],
+    ["/train/team", /^save/i, /how long was practice/i],
+    ["/train/dryland", /^save/i, /how long was the session/i],
+  ];
+
+  for (const [route, button, message] of EMPTY_SUBMITS) {
+    test(`${route} refuses an empty submit`, async ({ page }) => {
+      await page.goto(route, { waitUntil: "networkidle" });
+      await page.locator("button").filter({ hasText: button }).last().click();
+
+      // Must stay put and say why, rather than silently storing zeroes.
+      await expect(page.getByText(message)).toBeVisible();
+      expect(new URL(page.url()).pathname).toBe(route);
+    });
+  }
 });
 
 test.describe("notifications", () => {
