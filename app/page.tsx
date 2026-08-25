@@ -67,7 +67,7 @@ export default function LandingPage() {
             { value: "200m–2k", label: "Race Distances" },
             { value: "4 Modes", label: "Erg / Water / Team / Dryland" },
             { value: "8 Plans", label: "Built-in Training Plans" },
-            { value: "15+ Tips", label: "Technique Library" },
+            { value: "8 Lessons", label: "Technique Library" },
           ].map((s) => (
             <div key={s.label}>
               <div className="text-2xl font-black text-[#0EA5E9]">{s.value}</div>

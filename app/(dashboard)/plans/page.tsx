@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { trainingPlans } from "@/lib/data/seed";
 import { cn } from "@/lib/utils";
-import { useActivePlan, writeActivePlan } from "@/lib/plans/active";
+import { useActivePlan, writeActivePlan, writePlanStart } from "@/lib/plans/active";
+import { phaseForWeek, isDeloadWeek, weekInPhase } from "@/lib/plans/generate";
+import { PLAN_SPECS } from "@/lib/plans/specs";
+import { toLocalDateStr } from "@/lib/utils";
 
 const difficultyColor = {
   beginner: "success" as const,
@@ -21,14 +24,20 @@ export default function PlansPage() {
   const activePlan = useActivePlan();
 
   function toggleActivePlan(planId: string) {
-    writeActivePlan(activePlan === planId ? null : planId);
+    const next = activePlan === planId ? null : planId;
+    writeActivePlan(next);
+    // The start date is what lets the dashboard work out which week you're in.
+    writePlanStart(next ? toLocalDateStr(new Date()) : null);
   }
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [viewWeek, setViewWeek] = useState(1);
 
   const plan = selectedPlan ? trainingPlans.find((p) => p.id === selectedPlan) : null;
 
   if (plan) {
-    const week1 = plan.weekly_schedule[0];
+    const week = plan.weekly_schedule.find((w) => w.week === viewWeek) ?? plan.weekly_schedule[0];
+    const planSpec = PLAN_SPECS.find((sp) => sp.id === plan.id)!;
+    const phase = phaseForWeek(planSpec, week?.week ?? 1);
     return (
       <div className="py-6 flex flex-col gap-5 animate-fade-in">
         <button onClick={() => setSelectedPlan(null)} className="text-sm text-[#0EA5E9] hover:underline text-left">
@@ -62,11 +71,40 @@ export default function PlansPage() {
           ))}
         </div>
 
-        {week1 && (
+        {week && (
           <div>
-            <h2 className="text-sm font-bold text-[#F1F5F9] mb-3">Week 1 Schedule</h2>
+            <div className="flex items-baseline justify-between mb-2">
+              <h2 className="text-sm font-bold text-[#F1F5F9]">
+                Week {week.week} of {plan.duration_weeks}
+              </h2>
+              {phase && (
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-[#0EA5E9]">
+                  {phase.name}{isDeloadWeek(weekInPhase(planSpec, week.week), phase) ? " · recovery week" : ""}
+                </span>
+              )}
+            </div>
+
+            {/* Every week is browsable — the schedule used to stop at week 1. */}
+            <div className="flex gap-1 overflow-x-auto no-scrollbar pb-2 mb-3">
+              {plan.weekly_schedule.map((w) => (
+                <button
+                  key={w.week}
+                  onClick={() => setViewWeek(w.week)}
+                  aria-label={`Week ${w.week}`}
+                  aria-pressed={w.week === week.week}
+                  className={cn(
+                    "shrink-0 w-9 h-9 rounded-lg text-xs font-bold transition-colors",
+                    w.week === week.week
+                      ? "bg-[#0EA5E9] text-[#0A0F1E]"
+                      : "bg-[#1E293B] text-[#94A3B8] hover:bg-[#334155]"
+                  )}
+                >
+                  {w.week}
+                </button>
+              ))}
+            </div>
             <div className="flex flex-col gap-2">
-              {week1.days.map((day) => {
+              {week.days.map((day) => {
                 const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
                 const typeColor = {
                   erg: "#0EA5E9", water: "#06B6D4", team: "#F97316",
@@ -85,19 +123,13 @@ export default function PlansPage() {
                     <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: typeColor[day.type as keyof typeof typeColor] || "#7C8AA0" }} />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-[#F1F5F9]">{day.name}</div>
-                      <div className="text-xs text-[#8A98AC] truncate">{day.description.slice(0, 60)}…</div>
+                      <div className="text-xs text-[#8A98AC]">{day.description}</div>
                     </div>
                     <div className="text-xs text-[#7C8AA0] shrink-0">{day.duration_min > 0 ? `${day.duration_min}m` : "Rest"}</div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        )}
-
-        {plan.weekly_schedule.length === 0 && (
-          <div className="rounded-xl border border-dashed border-[#334155] p-6 text-center">
-            <div className="text-sm text-[#8A98AC]">Full week-by-week schedule coming soon for this plan.</div>
           </div>
         )}
 

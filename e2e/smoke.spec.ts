@@ -194,6 +194,35 @@ test.describe("accessibility", () => {
   }
 });
 
+test.describe("training plans", () => {
+  // Regression: plans advertised 4–12 weeks and shipped with at most one week
+  // of content. Three of the five had none, and the page said "full
+  // week-by-week schedule coming soon" without rendering the week it had.
+  test("every plan has its full schedule browsable", async ({ page }) => {
+    await page.goto("/plans", { waitUntil: "networkidle" });
+    await page.locator("button").filter({ hasText: /Erg Improvement/ }).first().click();
+
+    // Advertised as ten weeks, so ten weeks must be reachable.
+    await expect(page.getByRole("button", { name: /^Week \d+$/ })).toHaveCount(10);
+    await expect(page.getByText(/coming soon/i)).toHaveCount(0);
+
+    // A late week must hold real sessions, not an empty shell.
+    await page.getByRole("button", { name: "Week 9" }).click();
+    await expect(page.getByText(/Week 9 of 10/)).toBeVisible();
+  });
+
+  test("starting a plan puts today's session on the dashboard", async ({ page }) => {
+    await page.goto("/plans", { waitUntil: "networkidle" });
+    await page.locator("button").filter({ hasText: /Dragon Boat Foundation/ }).first().click();
+    await page.locator("button").filter({ hasText: /Start This Plan/i }).first().click();
+
+    await page.goto("/dashboard", { waitUntil: "networkidle" });
+    // Names the plan and the week, rather than the hardcoded prescription the
+    // card used to show every athlete.
+    await expect(page.getByText(/dragon boat foundation · week 1/i)).toBeVisible();
+  });
+});
+
 test.describe("GPS tracking", () => {
   // The landing page advertised "GPS-based time trials" while the water form
   // was manual entry only, and the page carried a "coming in next update"

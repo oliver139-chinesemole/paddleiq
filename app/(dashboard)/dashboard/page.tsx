@@ -10,7 +10,9 @@ import { Card, CardHeader, CardTitle, CardValue, CardContent } from "@/component
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { mockStats, mockErgSessions, mockPRs, weeklyVolumeData, trainingPlans } from "@/lib/data/seed";
-import { useActivePlan, dashboardPrompt } from "@/lib/plans/active";
+import {
+  useActivePlan, useActivePlanStart, dashboardPrompt, currentPlanWeek, trainingDayOfWeek,
+} from "@/lib/plans/active";
 import { formatTime, formatDistance, formatRelativeDate } from "@/lib/utils";
 import { VolumeChart } from "@/components/charts/volume-chart";
 import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
@@ -70,8 +72,17 @@ export default function DashboardPage() {
   const activePlanId = useActivePlan();
 
   const prompt = dashboardPrompt(stats.total_sessions, activePlanId);
-  const activePlanName = activePlanId
-    ? trainingPlans.find((p) => p.id === activePlanId)?.name ?? null
+  const activePlan = activePlanId ? trainingPlans.find((p) => p.id === activePlanId) ?? null : null;
+  const activePlanName = activePlan?.name ?? null;
+
+  // Which session the plan actually calls for today, rather than a generic
+  // nudge. The card used to hardcode "4 x 500m Erg Intervals" for everyone.
+  const planStart = useActivePlanStart();
+  const planWeekNo = activePlan ? currentPlanWeek(planStart, activePlan.duration_weeks) : 1;
+  const todaysWorkout = activePlan
+    ? activePlan.weekly_schedule
+        .find((w) => w.week === planWeekNo)
+        ?.days.find((d) => d.day === trainingDayOfWeek()) ?? null
     : null;
 
   useEffect(() => {
@@ -139,19 +150,22 @@ export default function DashboardPage() {
           <div>
             <p className="text-[#BAE6FD] text-xs font-semibold uppercase tracking-wider">
               {prompt.kind === "first-session" ? "Get started"
-                : prompt.kind === "active-plan" ? "Your plan"
-                : "No plan running"}
+                : prompt.kind === "active-plan"
+                  ? `${activePlanName} · week ${planWeekNo}`
+                  : "No plan running"}
             </p>
             <h2 className="text-white font-black text-lg mt-1">
               {prompt.kind === "first-session" ? "Log your first session"
-                : prompt.kind === "active-plan" ? (activePlanName ?? "Training plan")
+                : prompt.kind === "active-plan" ? (todaysWorkout?.name ?? activePlanName ?? "Training plan")
                 : "Pick a training plan"}
             </h2>
             <p className="text-[#BAE6FD] text-xs mt-1">
               {prompt.kind === "first-session"
                 ? "Anything counts — an erg piece, a paddle, or a gym session."
                 : prompt.kind === "active-plan"
-                  ? "Keep logging and your coach insights sharpen as the weeks build."
+                  ? todaysWorkout
+                    ? `${todaysWorkout.description}${todaysWorkout.duration_min > 0 ? ` · ${todaysWorkout.duration_min} min` : ""}`
+                    : "Keep logging and your coach insights sharpen as the weeks build."
                   : "Eight built-in plans, from first-timer to race prep."}
             </p>
           </div>

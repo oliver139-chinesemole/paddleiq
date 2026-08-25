@@ -1,3 +1,5 @@
+import { buildPlan } from "@/lib/plans/generate";
+import { PLAN_SPECS } from "@/lib/plans/specs";
 import type { ErgSession, WaterSession, PersonalRecord, TrainingPlan, TechniqueLesson, DashboardStats } from "@/lib/types";
 
 export const mockStats: DashboardStats = {
@@ -74,79 +76,10 @@ export const mockPRs: PersonalRecord[] = [
   { id: "pr5", user_id: "demo", category: "water", distance_m: 1000, time_sec: 310, date: "2026-04-20", previous_time_sec: 318, improvement_sec: 8 },
 ];
 
-export const trainingPlans: TrainingPlan[] = [
-  {
-    id: "plan-beginner",
-    name: "Dragon Boat Foundation",
-    description: "8-week plan for new paddlers. Builds endurance, introduces stroke mechanics, and prepares you for your first team practice.",
-    duration_weeks: 8,
-    difficulty: "beginner",
-    focus: ["technique", "endurance", "erg base"],
-    weekly_schedule: [
-      {
-        week: 1,
-        days: [
-          { day: 1, type: "erg", name: "Easy Erg Introduction", description: "30 min easy erg — focus on catch timing and body rotation. Keep stroke rate 60–65.", duration_min: 30, intensity: "easy", target_stroke_rate: 62 },
-          { day: 2, type: "rest", name: "Rest Day", description: "Light stretching and mobility.", duration_min: 20, intensity: "easy" },
-          { day: 3, type: "dryland", name: "Paddle Strength Intro", description: "3x10 pull-ups, 3x12 rows, 3x20 Russian twists, 2x30s plank.", duration_min: 40, intensity: "moderate" },
-          { day: 4, type: "erg", name: "Technique Focus", description: "20 min easy with 6x30s technique bursts at higher catch quality.", duration_min: 35, intensity: "easy", target_stroke_rate: 65 },
-          { day: 5, type: "rest", name: "Rest Day", description: "Recovery.", duration_min: 0, intensity: "easy" },
-          { day: 6, type: "erg", name: "Longer Steady", description: "40 min steady state. Maintain 65–68 spm. RPE 5–6.", duration_min: 40, intensity: "moderate", target_stroke_rate: 66 },
-          { day: 7, type: "rest", name: "Full Rest", description: "Complete rest or gentle walk.", duration_min: 0, intensity: "easy" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "plan-500m",
-    name: "500m Race Prep",
-    description: "6-week plan to peak for a 500m dragon boat race. Combines erg testing, interval work, race simulations, and taper.",
-    duration_weeks: 6,
-    difficulty: "intermediate",
-    focus: ["500m speed", "race starts", "lactate threshold", "taper"],
-    weekly_schedule: [
-      {
-        week: 1,
-        days: [
-          { day: 1, type: "erg", name: "500m Baseline Test", description: "Warm up 10 min easy. Then 500m all-out — note split, stroke rate, and watts.", duration_min: 30, intensity: "max", target_stroke_rate: 85, target_distance_m: 500 },
-          { day: 2, type: "dryland", name: "Strength + Core", description: "4x8 lat pulldown, 3x10 deadlift, 4x15 Russian twists, 3x1 min plank.", duration_min: 50, intensity: "hard" },
-          { day: 3, type: "erg", name: "4x500m Intervals", description: "4x500m at 95% effort. 5 min rest between. Track split progression.", duration_min: 50, intensity: "hard", target_stroke_rate: 82, target_distance_m: 500 },
-          { day: 4, type: "rest", name: "Active Recovery", description: "20 min easy mobility and stretching.", duration_min: 20, intensity: "easy" },
-          { day: 5, type: "erg", name: "Race Start Practice", description: "10x30s max power starts. 2 min rest. Focus on explosive first 10 strokes.", duration_min: 35, intensity: "max", target_stroke_rate: 90 },
-          { day: 6, type: "water", name: "Solo Water Paddle", description: "45 min open water in OC or kayak. Relax technique, enjoy the session.", duration_min: 45, intensity: "easy" },
-          { day: 7, type: "rest", name: "Rest Day", description: "Rest.", duration_min: 0, intensity: "easy" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "plan-erg",
-    name: "Erg Improvement",
-    description: "10-week plan focused on improving your erg scores across all distances: 500m, 1k, 2k.",
-    duration_weeks: 10,
-    difficulty: "intermediate",
-    focus: ["erg performance", "split improvement", "endurance base"],
-    weekly_schedule: [],
-  },
-  {
-    id: "plan-tryout",
-    name: "Tryout Prep",
-    description: "4-week intensive plan to prepare you for dragon boat team tryouts. Covers erg testing, team paddle technique, and physical conditioning.",
-    duration_weeks: 4,
-    difficulty: "intermediate",
-    focus: ["tryout readiness", "team technique", "erg test", "impression"],
-    weekly_schedule: [],
-  },
-  {
-    id: "plan-offseason",
-    name: "Off-Season Strength",
-    description: "12-week off-season strength and conditioning plan to build the power base for the next race season.",
-    duration_weeks: 12,
-    difficulty: "intermediate",
-    focus: ["strength", "power", "base endurance"],
-    weekly_schedule: [],
-  },
-];
+// Generated from the phase specs in lib/plans/specs.ts rather than written out
+// session by session. The plans previously advertised 4-12 weeks and shipped
+// with at most one week of content.
+export const trainingPlans: TrainingPlan[] = PLAN_SPECS.map(buildPlan);
 
 export const techniqueLessons: TechniqueLesson[] = [
   {

@@ -51,10 +51,59 @@ export function useActivePlan(): string | null {
   return useSyncExternalStore(subscribe, readActivePlan, () => null);
 }
 
+/** The date the active plan was started, read the same way. */
+export function useActivePlanStart(): string | null {
+  return useSyncExternalStore(subscribe, readPlanStart, () => null);
+}
+
 export type DashboardPrompt =
   | { kind: "first-session" }
   | { kind: "active-plan"; planId: string }
   | { kind: "pick-plan" };
+
+// ─── position within a plan ──────────────────────────────────────────────────
+
+const STARTED_KEY = "paddleiq:activePlanStartedAt";
+
+export function readPlanStart(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(STARTED_KEY);
+}
+
+export function writePlanStart(date: string | null): void {
+  if (typeof window === "undefined") return;
+  if (date) window.localStorage.setItem(STARTED_KEY, date);
+  else window.localStorage.removeItem(STARTED_KEY);
+  listeners.forEach((fn) => fn());
+}
+
+/**
+ * Which week of the plan the athlete is in, 1-based and clamped to the plan's
+ * length so a plan run past its end keeps showing the final week rather than
+ * disappearing.
+ */
+export function currentPlanWeek(
+  startedOn: string | null,
+  totalWeeks: number,
+  now = new Date(),
+): number {
+  if (!startedOn || totalWeeks < 1) return 1;
+  const start = new Date(`${startedOn}T00:00:00`);
+  if (Number.isNaN(start.getTime())) return 1;
+  const days = Math.floor((now.getTime() - start.getTime()) / 86_400_000);
+  if (days < 0) return 1;
+  return Math.min(totalWeeks, Math.floor(days / 7) + 1);
+}
+
+/**
+ * Day index within the training week, 1-based, Monday first.
+ *
+ * The plans are written Monday to Sunday, and getDay() puts Sunday at 0.
+ */
+export function trainingDayOfWeek(now = new Date()): number {
+  const js = now.getDay();
+  return js === 0 ? 7 : js;
+}
 
 /**
  * What the dashboard's headline card should offer.
