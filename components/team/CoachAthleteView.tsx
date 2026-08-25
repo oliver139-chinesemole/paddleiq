@@ -76,23 +76,23 @@ export default function CoachAthleteView({
         type PRRow = { category: string; distance_m: number; time_sec: number };
         const { runCoachEngine } = await import("@/lib/coach/engine");
         const result = runCoachEngine({
-          ergSessions: (ergRes.data ?? [] as ErgRow[]).map((s: ErgRow) => ({
+          ergSessions: ((ergRes.data ?? []) as ErgRow[]).map((s: ErgRow) => ({
             date: s.date, rpe: s.rpe ?? 7, duration_sec: s.duration_sec,
             distance_m: s.distance_m, split_sec: s.split_sec ?? 0,
           })),
-          waterSessions: (waterRes.data ?? [] as WaterRow[]).map((s: WaterRow) => ({
+          waterSessions: ((waterRes.data ?? []) as WaterRow[]).map((s: WaterRow) => ({
             date: s.date, rpe: s.rpe ?? 6, duration_sec: s.duration_sec,
             distance_m: s.distance_m, avg_pace_sec: s.avg_pace_sec ?? 0,
           })),
-          drylandSessions: (drylandRes.data ?? [] as MinRow[]).map((s: MinRow) => ({
+          drylandSessions: ((drylandRes.data ?? []) as MinRow[]).map((s: MinRow) => ({
             date: s.date, rpe: s.rpe ?? 6, duration_min: s.duration_min ?? 0,
           })),
-          teamSessions: (teamRes.data ?? [] as MinRow[]).map((s: MinRow) => ({
+          teamSessions: ((teamRes.data ?? []) as MinRow[]).map((s: MinRow) => ({
             date: s.date, rpe: s.rpe ?? 6, duration_min: s.duration_min ?? 0,
           })),
           // category comes back from Supabase as a plain string; drop anything
           // outside the union rather than asserting it away.
-          prs: (prRes.data ?? [] as PRRow[])
+          prs: ((prRes.data ?? []) as PRRow[])
             .map((p: PRRow) => ({
               category: p.category, distance_m: p.distance_m, time_sec: p.time_sec,
             }))

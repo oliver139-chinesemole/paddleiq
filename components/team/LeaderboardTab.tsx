@@ -118,7 +118,7 @@ export default function LeaderboardTab({
           .eq("distance_m", distM)
           .order("time_sec", { ascending: true });
         type PRRow = { user_id: string; time_sec: number };
-        setRows((data ?? [] as PRRow[]).map((r: PRRow) => ({ user_id: r.user_id, name: memberNames[r.user_id] ?? "Athlete", value: r.time_sec })));
+        setRows(((data ?? []) as PRRow[]).map((r: PRRow) => ({ user_id: r.user_id, name: memberNames[r.user_id] ?? "Athlete", value: r.time_sec })));
         return;
       }
 
@@ -130,7 +130,7 @@ export default function LeaderboardTab({
           .gte("date", cutoff);
         type DistRow = { user_id: string; distance_m: number };
         const totals: Record<string, number> = {};
-        (data ?? [] as DistRow[]).forEach((r: DistRow) => { totals[r.user_id] = (totals[r.user_id] ?? 0) + r.distance_m; });
+        ((data ?? []) as DistRow[]).forEach((r: DistRow) => { totals[r.user_id] = (totals[r.user_id] ?? 0) + r.distance_m; });
         const result = Object.entries(totals)
           .map(([uid, dist]) => ({ user_id: uid, name: memberNames[uid] ?? "Athlete", value: dist, subLabel: `${(dist / 1000).toFixed(1)} km` }))
           .sort((a, b) => b.value - a.value);
@@ -143,12 +143,12 @@ export default function LeaderboardTab({
         const { data: events } = await sb.from("team_events").select("id").eq("team_id", teamId).gte("event_date", cutoff);
         type EventRow = { id: string };
         type RsvpRow = { user_id: string; status: string };
-        const eventIds = (events ?? [] as EventRow[]).map((e: EventRow) => e.id);
+        const eventIds = ((events ?? []) as EventRow[]).map((e: EventRow) => e.id);
         if (eventIds.length === 0) { setRows([]); return; }
         const { data: rsvps } = await sb.from("event_rsvp").select("user_id, status").in("event_id", eventIds).in("user_id", memberIds);
         const yes: Record<string, number> = {};
         const total = eventIds.length;
-        (rsvps ?? [] as RsvpRow[]).forEach((r: RsvpRow) => { if (r.status === "yes") yes[r.user_id] = (yes[r.user_id] ?? 0) + 1; });
+        ((rsvps ?? []) as RsvpRow[]).forEach((r: RsvpRow) => { if (r.status === "yes") yes[r.user_id] = (yes[r.user_id] ?? 0) + 1; });
         const result = memberIds
           .map(uid => ({ user_id: uid, name: memberNames[uid] ?? "Athlete", value: Math.round(((yes[uid] ?? 0) / total) * 100), subLabel: `${yes[uid] ?? 0}/${total} events` }))
           .sort((a, b) => b.value - a.value);
@@ -168,7 +168,7 @@ export default function LeaderboardTab({
         // Best improvement per user
         const best: Record<string, { improvement_sec: number; distance_m: number }> = {};
         type ImprovRow = { user_id: string; improvement_sec: number; distance_m: number };
-        (data ?? [] as ImprovRow[]).forEach((r: ImprovRow) => {
+        ((data ?? []) as ImprovRow[]).forEach((r: ImprovRow) => {
           if (!best[r.user_id] || r.improvement_sec > best[r.user_id].improvement_sec) {
             best[r.user_id] = { improvement_sec: r.improvement_sec, distance_m: r.distance_m };
           }

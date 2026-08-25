@@ -266,13 +266,13 @@ export default function ScheduleTab({
       type EvtRow = { id: string };
       type RsvpMineRow = { event_id: string; status: string };
       type RsvpAllRow = { event_id: string; user_id: string; status: string };
-      const eventIds = (evtsData ?? [] as EvtRow[]).map((e: EvtRow) => e.id);
+      const eventIds = ((evtsData ?? []) as EvtRow[]).map((e: EvtRow) => e.id);
       if (eventIds.length === 0) return;
 
       // Load own RSVPs
       const { data: mine } = await sb.from("event_rsvp").select("event_id, status").eq("user_id", userId).in("event_id", eventIds);
       const myMap: Record<string, RsvpStatus> = {};
-      (mine ?? [] as RsvpMineRow[]).forEach((r: RsvpMineRow) => { myMap[r.event_id] = r.status as RsvpStatus; });
+      ((mine ?? []) as RsvpMineRow[]).forEach((r: RsvpMineRow) => { myMap[r.event_id] = r.status as RsvpStatus; });
       setMyRsvps(myMap);
 
       // Coach: load all RSVPs and compute side balance
@@ -280,7 +280,7 @@ export default function ScheduleTab({
         const { data: all } = await sb.from("event_rsvp").select("event_id, user_id, status").in("event_id", eventIds);
         const smap: Record<string, RsvpSummary> = {};
         eventIds.forEach((id: string) => { smap[id] = { yes: 0, no: 0, maybe: 0, leftYes: 0, rightYes: 0 }; });
-        (all ?? [] as RsvpAllRow[]).forEach((r: RsvpAllRow) => {
+        ((all ?? []) as RsvpAllRow[]).forEach((r: RsvpAllRow) => {
           const s = smap[r.event_id];
           if (!s) return;
           s[r.status as RsvpStatus]++;
