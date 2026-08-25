@@ -7,7 +7,7 @@ export default function NotFound() {
       <span className="text-6xl">🐉</span>
       <div>
         <h1 className="text-3xl font-black text-[#F1F5F9]">404</h1>
-        <p className="text-sm text-[#64748B] mt-2">This page doesn&apos;t exist or has been moved.</p>
+        <p className="text-sm text-[#8A98AC] mt-2">This page doesn&apos;t exist or has been moved.</p>
       </div>
       <Link
         href="/dashboard"

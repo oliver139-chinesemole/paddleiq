@@ -125,13 +125,13 @@ function AthleteModal({
             </div>
             <div>
               <div className="font-black text-[#F1F5F9]">{member.full_name}</div>
-              <div className="text-xs text-[#64748B] capitalize">
+              <div className="text-xs text-[#8A98AC] capitalize">
                 {member.role_in_team} · {member.paddle_side} side
                 {member.seat_number ? ` · Seat ${member.seat_number}` : ""}
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#475569] hover:text-[#94A3B8]">
+          <button onClick={onClose} className="text-[#7C8AA0] hover:text-[#94A3B8]">
             <X size={20} />
           </button>
         </div>
@@ -143,12 +143,12 @@ function AthleteModal({
             <span className="text-sm font-semibold" style={{ color: info.color }}>{info.label}</span>
           </div>
         ) : (
-          <div className="mb-4 p-3 rounded-xl bg-[#1E293B] text-xs text-[#475569]">No performance role assigned</div>
+          <div className="mb-4 p-3 rounded-xl bg-[#1E293B] text-xs text-[#7C8AA0]">No performance role assigned</div>
         )}
 
         {/* Weight */}
         {member.weight_kg && (
-          <div className="flex items-center gap-2 mb-4 text-sm text-[#64748B]">
+          <div className="flex items-center gap-2 mb-4 text-sm text-[#8A98AC]">
             <Shield size={14} />
             <span>{member.weight_kg} kg</span>
           </div>
@@ -168,7 +168,7 @@ function AthleteModal({
         {/* Role assignment (coach only) */}
         {isCoach && (
           <div className="mt-4 pt-4 border-t border-[#1E293B]">
-            <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">Performance Role</p>
+            <p className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Performance Role</p>
             <div className="grid grid-cols-2 gap-2">
               {PERF_ROLES.map(r => (
                 <button
@@ -178,7 +178,7 @@ function AthleteModal({
                   className={`flex items-center gap-2 rounded-xl border p-3 text-left text-sm font-semibold transition-colors ${
                     member.performance_role === r.value
                       ? "border-opacity-60 text-white"
-                      : "border-[#1E293B] text-[#64748B] hover:border-[#334155]"
+                      : "border-[#1E293B] text-[#8A98AC] hover:border-[#334155]"
                   }`}
                   style={member.performance_role === r.value
                     ? { borderColor: r.color, backgroundColor: `${r.color}20`, color: r.color }
@@ -207,8 +207,8 @@ function SideBalance({ members }: { members: Member[] }) {
   return (
     <div className="rounded-xl bg-[#111827] border border-[#1E293B] p-4">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">Side Balance</span>
-        {both > 0 && <span className="text-[10px] text-[#475569]">{both} switch-hitter{both > 1 ? "s" : ""}</span>}
+        <span className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider">Side Balance</span>
+        {both > 0 && <span className="text-[10px] text-[#7C8AA0]">{both} switch-hitter{both > 1 ? "s" : ""}</span>}
       </div>
       <div className="flex items-center gap-3">
         <div className="text-sm font-bold text-[#0EA5E9]">{left}L</div>
@@ -221,7 +221,7 @@ function SideBalance({ members }: { members: Member[] }) {
         <div className="text-sm font-bold text-[#06B6D4]">{right}R</div>
       </div>
       {total > 0 && (
-        <div className="text-[10px] text-[#475569] mt-1.5 text-center">
+        <div className="text-[10px] text-[#7C8AA0] mt-1.5 text-center">
           {left === right ? "✓ Perfectly balanced" :
            left > right ? `${left - right} more left-side paddlers` :
            `${right - left} more right-side paddlers`}
@@ -317,10 +317,10 @@ function NoTeamView({ userId, onJoined }: { userId: string; onJoined: () => void
   return (
     <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4 text-center">
       <div className="w-16 h-16 rounded-2xl bg-[#1E293B] flex items-center justify-center">
-        <Users size={28} className="text-[#475569]" />
+        <Users size={28} className="text-[#7C8AA0]" />
       </div>
       <h2 className="text-lg font-bold text-[#F1F5F9]">No team yet</h2>
-      <p className="text-sm text-[#64748B] max-w-xs">Create a team to manage your squad and track progress together.</p>
+      <p className="text-sm text-[#8A98AC] max-w-xs">Create a team to manage your squad and track progress together.</p>
       <Button className="w-full max-w-xs" onClick={() => setMode("create")}><Plus size={16} /> Create a Team</Button>
       <Button variant="outline" className="w-full max-w-xs" onClick={() => setMode("join")}><UserPlus size={16} /> Join with Team Code</Button>
     </div>
@@ -463,7 +463,7 @@ export default function TeamPage() {
             <h1 className="text-lg font-black text-[#F1F5F9] truncate">{activeTeam.name}</h1>
             <div className="flex items-center gap-2 mt-0.5">
               {isCoach && <Badge variant="warning" className="text-[10px]">Coach</Badge>}
-              <span className="text-xs text-[#475569]">Code:</span>
+              <span className="text-xs text-[#7C8AA0]">Code:</span>
               <span className="text-xs font-mono font-bold text-[#F59E0B]">{activeTeam.invite_code}</span>
             </div>
           </div>
@@ -481,20 +481,20 @@ export default function TeamPage() {
         <div className="grid grid-cols-3 gap-3 text-center">
           <div>
             <div className="text-lg font-bold text-[#F1F5F9]">{activeTeam.members.length}</div>
-            <div className="text-[10px] text-[#64748B]">Athletes</div>
+            <div className="text-[10px] text-[#8A98AC]">Athletes</div>
           </div>
           <div>
             <div className="text-lg font-bold text-[#0EA5E9]">
               {activeTeam.members.filter(m => m.paddle_side === "left").length}L /&nbsp;
               {activeTeam.members.filter(m => m.paddle_side === "right").length}R
             </div>
-            <div className="text-[10px] text-[#64748B]">Side Balance</div>
+            <div className="text-[10px] text-[#8A98AC]">Side Balance</div>
           </div>
           <div>
             <div className="text-lg font-bold text-[#10B981]">
               {headerTop500 ? formatTime(headerTop500) : "—"}
             </div>
-            <div className="text-[10px] text-[#64748B]">Top 500m</div>
+            <div className="text-[10px] text-[#8A98AC]">Top 500m</div>
           </div>
         </div>
       </div>
@@ -506,7 +506,7 @@ export default function TeamPage() {
             key={t}
             onClick={() => setTab(t)}
             className={`shrink-0 text-xs font-semibold py-2 px-3 rounded-lg transition-colors cursor-pointer capitalize ${
-              tab === t ? "bg-[#1E293B] text-[#F1F5F9]" : "text-[#475569] hover:text-[#94A3B8]"
+              tab === t ? "bg-[#1E293B] text-[#F1F5F9]" : "text-[#7C8AA0] hover:text-[#94A3B8]"
             }`}
           >
             {t}
@@ -520,7 +520,7 @@ export default function TeamPage() {
           <SideBalance members={activeTeam.members} />
 
           {activeTeam.members.length === 0 ? (
-            <p className="text-sm text-[#475569] text-center py-6">No members yet. Share your invite link!</p>
+            <p className="text-sm text-[#7C8AA0] text-center py-6">No members yet. Share your invite link!</p>
           ) : (
             activeTeam.members.map(m => {
               const perf = perfRoleInfo(m.performance_role);
@@ -547,7 +547,7 @@ export default function TeamPage() {
                       </div>
                     )}
                   </div>
-                  <ChevronRight size={14} className="text-[#475569] shrink-0" />
+                  <ChevronRight size={14} className="text-[#7C8AA0] shrink-0" />
                 </button>
               );
             })
@@ -556,7 +556,7 @@ export default function TeamPage() {
           {/* Invite row */}
           <button
             onClick={() => copyInviteLink(activeTeam.invite_code)}
-            className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#334155] p-4 text-sm text-[#64748B] hover:border-[#475569] transition-colors w-full"
+            className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-[#334155] p-4 text-sm text-[#8A98AC] hover:border-[#7C8AA0] transition-colors w-full"
           >
             {copied ? <Check size={14} className="text-[#10B981]" /> : <UserPlus size={14} />}
             {copied ? "Invite link copied!" : "Copy invite link to add athletes"}

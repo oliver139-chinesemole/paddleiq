@@ -19,8 +19,8 @@ export function VolumeChart({ data }: VolumeChartProps) {
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-        <XAxis dataKey="week" tick={{ fill: "#64748B", fontSize: 11 }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fill: "#64748B", fontSize: 11 }} axisLine={false} tickLine={false}
+        <XAxis dataKey="week" tick={{ fill: "#8A98AC", fontSize: 11 }} axisLine={false} tickLine={false} />
+        <YAxis tick={{ fill: "#8A98AC", fontSize: 11 }} axisLine={false} tickLine={false}
           tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
         <Tooltip
           contentStyle={{ background: "#0D1528", border: "1px solid #1E293B", borderRadius: 8 }}

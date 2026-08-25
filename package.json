@@ -55,6 +55,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.62.1",
     "@resvg/resvg-js": "^2.6.2",
     "@tailwindcss/postcss": "^4",

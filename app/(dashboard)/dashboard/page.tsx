@@ -114,13 +114,13 @@ export default function DashboardPage() {
       {/* Greeting */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[#64748B] text-sm">Good morning 👋</p>
+          <p className="text-[#8A98AC] text-sm">Good morning 👋</p>
           <h1 className="text-2xl font-black text-[#F1F5F9]">Dashboard</h1>
         </div>
         <div className="flex items-center gap-2 bg-[#0D1528] border border-[#1E293B] rounded-xl px-3 py-2">
           <Flame size={16} className="text-[#F97316]" />
           <span className="text-sm font-bold text-[#F1F5F9]">{stats.current_streak}</span>
-          <span className="text-xs text-[#64748B]">day streak</span>
+          <span className="text-xs text-[#8A98AC]">day streak</span>
         </div>
       </div>
 
@@ -152,7 +152,7 @@ export default function DashboardPage() {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider mb-3">Log a Workout</h2>
+        <h2 className="text-sm font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Log a Workout</h2>
         <div className="grid grid-cols-2 gap-3">
           {[
             { href: "/train/erg",     Icon: Dumbbell, label: "Erg Session",   color: "#0EA5E9" },
@@ -179,17 +179,17 @@ export default function DashboardPage() {
         <Card className="col-span-1">
           <CardTitle>Distance</CardTitle>
           <CardValue className="text-2xl mt-2">{weeklyDistanceKm.toFixed(1)}</CardValue>
-          <p className="text-xs text-[#64748B] mt-1">km this week</p>
+          <p className="text-xs text-[#8A98AC] mt-1">km this week</p>
         </Card>
         <Card className="col-span-1">
           <CardTitle>Sessions</CardTitle>
           <CardValue className="text-2xl mt-2">{stats.weekly_sessions}</CardValue>
-          <p className="text-xs text-[#64748B] mt-1">this week</p>
+          <p className="text-xs text-[#8A98AC] mt-1">this week</p>
         </Card>
         <Card className="col-span-1">
           <CardTitle>Avg SPM</CardTitle>
           <CardValue className="text-2xl mt-2">{stats.avg_stroke_rate || "—"}</CardValue>
-          <p className="text-xs text-[#64748B] mt-1">strokes/min</p>
+          <p className="text-xs text-[#8A98AC] mt-1">strokes/min</p>
         </Card>
       </div>
 
@@ -197,7 +197,7 @@ export default function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Weekly Distance Goal</CardTitle>
-          <span className="text-xs text-[#64748B]">
+          <span className="text-xs text-[#8A98AC]">
             {weeklyDistanceKm.toFixed(1)} / {WEEKLY_GOAL_KM} km
           </span>
         </CardHeader>
@@ -210,14 +210,14 @@ export default function DashboardPage() {
       {/* Recent Sessions */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider">Recent Sessions</h2>
+          <h2 className="text-sm font-semibold text-[#8A98AC] uppercase tracking-wider">Recent Sessions</h2>
           <Link href="/analytics" className="text-xs text-[#0EA5E9] flex items-center gap-1">
             View all <ChevronRight size={12} />
           </Link>
         </div>
         <div className="flex flex-col gap-3">
           {recent.length === 0 ? (
-            <p className="text-sm text-[#475569] text-center py-6">No sessions logged yet. Start training!</p>
+            <p className="text-sm text-[#7C8AA0] text-center py-6">No sessions logged yet. Start training!</p>
           ) : (
             recent.map((s) => {
               const cfg = SESSION_CONFIG[s.type];
@@ -236,14 +236,14 @@ export default function DashboardPage() {
                         </Badge>
                       )}
                     </div>
-                    <div className="text-xs text-[#64748B] mt-0.5">{formatRelativeDate(s.date)}</div>
+                    <div className="text-xs text-[#8A98AC] mt-0.5">{formatRelativeDate(s.date)}</div>
                   </div>
                   <div className="text-right shrink-0">
                     {s.distance_m > 0 && (
                       <div className="text-sm font-bold text-[#F1F5F9]">{formatDistance(s.distance_m)}</div>
                     )}
                     {durationSec > 0 && (
-                      <div className="text-xs text-[#64748B]">{formatTime(durationSec)}</div>
+                      <div className="text-xs text-[#8A98AC]">{formatTime(durationSec)}</div>
                     )}
                   </div>
                 </div>
@@ -256,20 +256,20 @@ export default function DashboardPage() {
       {/* PRs Snapshot */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-[#64748B] uppercase tracking-wider">Personal Records</h2>
+          <h2 className="text-sm font-semibold text-[#8A98AC] uppercase tracking-wider">Personal Records</h2>
           <Link href="/records" className="text-xs text-[#0EA5E9] flex items-center gap-1">
             All PRs <ChevronRight size={12} />
           </Link>
         </div>
         {prs.length === 0 ? (
-          <p className="text-sm text-[#475569] text-center py-4">No PRs yet — log a session to set one!</p>
+          <p className="text-sm text-[#7C8AA0] text-center py-4">No PRs yet — log a session to set one!</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {prs.slice(0, 4).map((pr) => (
               <div key={String(pr.id)} className="rounded-xl border border-[#1E293B] bg-[#0D1528] p-4">
                 <div className="flex items-center gap-1.5 mb-2">
                   <Target size={12} className="text-[#F59E0B]" />
-                  <span className="text-[10px] font-semibold text-[#64748B] uppercase">
+                  <span className="text-[10px] font-semibold text-[#8A98AC] uppercase">
                     {pr.category} {pr.distance_m >= 1000 ? `${pr.distance_m / 1000}k` : `${pr.distance_m}m`}
                   </span>
                 </div>
@@ -288,18 +288,18 @@ export default function DashboardPage() {
 
       {/* AI Coach Teaser */}
       <Link href="/ai-coach">
-        <div className="rounded-2xl border border-[#334155] bg-gradient-to-r from-[#0D1528] to-[#111827] p-5 hover:border-[#475569] transition-colors">
+        <div className="rounded-2xl border border-[#334155] bg-gradient-to-r from-[#0D1528] to-[#111827] p-5 hover:border-[#7C8AA0] transition-colors">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-xl bg-[#A855F7]/20 flex items-center justify-center">
               <Zap size={18} className="text-[#A855F7]" />
             </div>
             <div>
               <div className="text-sm font-bold text-[#F1F5F9]">AI Coach</div>
-              <div className="text-xs text-[#64748B]">Personalized training insights</div>
+              <div className="text-xs text-[#8A98AC]">Personalized training insights</div>
             </div>
-            <ChevronRight size={16} className="text-[#475569] ml-auto" />
+            <ChevronRight size={16} className="text-[#7C8AA0] ml-auto" />
           </div>
-          <p className="text-xs text-[#64748B] leading-relaxed">
+          <p className="text-xs text-[#8A98AC] leading-relaxed">
             See your weekly summary, training load, PR proximity, and more — all computed from your own data.
           </p>
           <div className="mt-2">
@@ -312,11 +312,11 @@ export default function DashboardPage() {
       <Link href="/technique">
         <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5 hover:border-[#334155] transition-colors">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">This Week&apos;s Technique Focus</p>
-            <ChevronRight size={14} className="text-[#475569]" />
+            <p className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider">This Week&apos;s Technique Focus</p>
+            <ChevronRight size={14} className="text-[#7C8AA0]" />
           </div>
           <h3 className="text-base font-bold text-[#F1F5F9] mb-1">The Catch</h3>
-          <p className="text-xs text-[#64748B]">
+          <p className="text-xs text-[#8A98AC]">
             A clean, deep, early catch is the single most important part of an efficient dragon boat stroke.
           </p>
         </div>

@@ -65,8 +65,8 @@ function IOSFallbackView({ onDone }: { onDone: (b: Blob, m: string, d: number) =
       </div>
       <div>
         <h2 className="text-lg font-bold text-white mb-1">Record with your camera</h2>
-        <p className="text-[#64748B] text-sm">Tap below to open the native camera, record your clip, then return to review it.</p>
-        <p className="text-[#475569] text-xs mt-1">(Native capture — most reliable on iPhone)</p>
+        <p className="text-[#8A98AC] text-sm">Tap below to open the native camera, record your clip, then return to review it.</p>
+        <p className="text-[#7C8AA0] text-xs mt-1">(Native capture — most reliable on iPhone)</p>
       </div>
       <input ref={inputRef} type="file" accept="video/*" capture="environment" className="hidden" onChange={handleFile} />
       <button
@@ -239,11 +239,11 @@ function PlaybackView({
       <div className="bg-[#0D1528] px-5 pt-4 pb-8 space-y-4">
         {/* Scrubber */}
         <div className="flex items-center gap-3">
-          <span className="text-xs text-[#64748B] font-mono w-10 text-right">{fmtTime(current)}</span>
+          <span className="text-xs text-[#8A98AC] font-mono w-10 text-right">{fmtTime(current)}</span>
           <input type="range" min={0} max={dur || 1} step={0.033} value={current}
             onChange={(e) => { if (videoRef.current) videoRef.current.currentTime = +e.target.value; }}
             className="flex-1 accent-[#0EA5E9]" />
-          <span className="text-xs text-[#64748B] font-mono w-10">{fmtTime(dur)}</span>
+          <span className="text-xs text-[#8A98AC] font-mono w-10">{fmtTime(dur)}</span>
         </div>
         {/* Controls */}
         <div className="flex items-center justify-between">
@@ -259,7 +259,7 @@ function PlaybackView({
         </div>
         {/* Actions */}
         <div className="flex items-center justify-between pt-1">
-          <button onClick={onDiscard} className="flex items-center gap-1.5 text-sm text-[#64748B] hover:text-red-400 transition-colors">
+          <button onClick={onDiscard} className="flex items-center gap-1.5 text-sm text-[#8A98AC] hover:text-red-400 transition-colors">
             <X size={16} /> Discard
           </button>
           <button onClick={cycleSpeed} className="px-4 py-1.5 rounded-full bg-[#1E293B] text-sm font-bold text-white">
@@ -292,30 +292,30 @@ function SaveView({
   return (
     <div className="flex flex-col flex-1 overflow-y-auto bg-[#0A0F1E]">
       <div className="flex items-center gap-3 px-5 pt-5 pb-4 border-b border-[#1E293B]">
-        <button onClick={onBack} className="text-[#64748B] hover:text-white"><ChevronLeft size={22} /></button>
+        <button onClick={onBack} className="text-[#8A98AC] hover:text-white"><ChevronLeft size={22} /></button>
         <div>
           <h2 className="text-base font-bold text-white">Save Clip</h2>
-          <p className="text-xs text-[#64748B]">{fmtTime(durationSec)} · {new Date().toLocaleDateString()}</p>
+          <p className="text-xs text-[#8A98AC]">{fmtTime(durationSec)} · {new Date().toLocaleDateString()}</p>
         </div>
       </div>
 
       <div className="flex-1 px-5 py-5 space-y-5">
         {/* Label */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Label</label>
+          <label className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wide">Label</label>
           <input type="text" value={label} onChange={(e) => setLabel(e.target.value)}
             placeholder="e.g. Catch drill — Tuesday session"
-            className="w-full bg-[#111827] border border-[#1E293B] rounded-xl px-4 py-3 text-white text-sm placeholder:text-[#475569] outline-none focus:border-[#0EA5E9] transition-colors" />
+            className="w-full bg-[#111827] border border-[#1E293B] rounded-xl px-4 py-3 text-white text-sm placeholder:text-[#7C8AA0] outline-none focus:border-[#0EA5E9] transition-colors" />
         </div>
 
         {/* Category */}
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Technique Focus</label>
+          <label className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wide">Technique Focus</label>
           <div className="flex flex-wrap gap-2">
             {VIDEO_CATEGORIES.map((cat) => (
               <button key={cat} onClick={() => setCategory(cat)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                  category === cat ? "bg-[#0EA5E9] text-white" : "bg-[#1E293B] text-[#64748B] hover:bg-[#334155]"
+                  category === cat ? "bg-[#0EA5E9] text-white" : "bg-[#1E293B] text-[#8A98AC] hover:bg-[#334155]"
                 }`}>
                 {cat}
               </button>
@@ -325,11 +325,11 @@ function SaveView({
 
         {/* Notes */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-[#64748B] uppercase tracking-wide">Notes</label>
+          <label className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wide">Notes</label>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
             placeholder="What were you working on? What did you notice?"
             rows={3}
-            className="w-full bg-[#111827] border border-[#1E293B] rounded-xl px-4 py-3 text-white text-sm placeholder:text-[#475569] outline-none focus:border-[#0EA5E9] transition-colors resize-none" />
+            className="w-full bg-[#111827] border border-[#1E293B] rounded-xl px-4 py-3 text-white text-sm placeholder:text-[#7C8AA0] outline-none focus:border-[#0EA5E9] transition-colors resize-none" />
         </div>
       </div>
 
@@ -385,9 +385,9 @@ function LibraryView({ onRecord, onDetail }: { onRecord: () => void; onDetail: (
       <div className="px-4 py-3 space-y-3 border-b border-[#1E293B]">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#475569]" />
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7C8AA0]" />
             <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search clips…"
-              className="w-full bg-[#111827] border border-[#1E293B] rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder:text-[#475569] outline-none focus:border-[#0EA5E9]" />
+              className="w-full bg-[#111827] border border-[#1E293B] rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder:text-[#7C8AA0] outline-none focus:border-[#0EA5E9]" />
           </div>
           <button onClick={onRecord}
             className="flex items-center gap-1.5 bg-[#0EA5E9] hover:bg-[#0284C7] text-white text-sm font-semibold px-4 py-2 rounded-xl shrink-0 transition-colors">
@@ -406,11 +406,11 @@ function LibraryView({ onRecord, onDetail }: { onRecord: () => void; onDetail: (
         {!loading && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center h-60 gap-4 text-center px-8">
             <div className="w-14 h-14 rounded-2xl bg-[#1E293B] flex items-center justify-center">
-              <Video size={24} className="text-[#475569]" />
+              <Video size={24} className="text-[#7C8AA0]" />
             </div>
             <div>
               <p className="text-white font-semibold">{query ? "No clips match" : "No clips yet"}</p>
-              <p className="text-[#64748B] text-sm mt-1">
+              <p className="text-[#8A98AC] text-sm mt-1">
                 {query ? "Try a different search." : "Record your first technique clip to get started."}
               </p>
             </div>
@@ -437,12 +437,12 @@ function LibraryView({ onRecord, onDetail }: { onRecord: () => void; onDetail: (
                     {clip.category}
                   </span>
                 </div>
-                <p className="text-xs text-[#475569] mt-0.5">{clip.date} · {fmtTime(clip.durationSec)}</p>
-                {clip.notes && <p className="text-xs text-[#64748B] mt-1 line-clamp-1">{clip.notes}</p>}
+                <p className="text-xs text-[#7C8AA0] mt-0.5">{clip.date} · {fmtTime(clip.durationSec)}</p>
+                {clip.notes && <p className="text-xs text-[#8A98AC] mt-1 line-clamp-1">{clip.notes}</p>}
               </div>
               <div className="flex gap-2 shrink-0">
-                <button onClick={() => download(clip)} className="text-[#475569] hover:text-[#0EA5E9] transition-colors"><Download size={17} /></button>
-                <button onClick={() => setConfirmId(clip.id ?? null)} className="text-[#475569] hover:text-red-400 transition-colors"><Trash2 size={17} /></button>
+                <button onClick={() => download(clip)} className="text-[#7C8AA0] hover:text-[#0EA5E9] transition-colors"><Download size={17} /></button>
+                <button onClick={() => setConfirmId(clip.id ?? null)} className="text-[#7C8AA0] hover:text-red-400 transition-colors"><Trash2 size={17} /></button>
               </div>
             </div>
           </div>
@@ -538,15 +538,15 @@ function DetailView({ clipId, onBack }: { clipId: number; onBack: () => void }) 
       <div className="bg-[#0D1528] px-5 pt-4 pb-8 space-y-3">
         <div>
           <p className="text-white font-bold text-sm">{clip.label}</p>
-          <p className="text-[#64748B] text-xs">{clip.category} · {clip.date} · {fmtTime(clip.durationSec)}</p>
+          <p className="text-[#8A98AC] text-xs">{clip.category} · {clip.date} · {fmtTime(clip.durationSec)}</p>
           {clip.notes && <p className="text-[#94A3B8] text-xs mt-1 leading-relaxed">{clip.notes}</p>}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-[#64748B] font-mono w-10 text-right">{fmtTime(current)}</span>
+          <span className="text-xs text-[#8A98AC] font-mono w-10 text-right">{fmtTime(current)}</span>
           <input type="range" min={0} max={dur || 1} step={0.033} value={current}
             onChange={(e) => { if (videoRef.current) videoRef.current.currentTime = +e.target.value; }}
             className="flex-1 accent-[#0EA5E9]" />
-          <span className="text-xs text-[#64748B] font-mono w-10">{fmtTime(dur)}</span>
+          <span className="text-xs text-[#8A98AC] font-mono w-10">{fmtTime(dur)}</span>
         </div>
         <div className="flex items-center justify-between">
           <button onClick={() => step(-1)} className="w-11 h-11 rounded-full bg-[#1E293B] flex items-center justify-center"><SkipBack size={18} className="text-[#94A3B8]" /></button>
@@ -589,7 +589,7 @@ function ErrorView({ reason, onRetry }: { reason: string; onRetry: () => void })
       </div>
       <div>
         <h2 className="text-lg font-bold text-white mb-1">{title}</h2>
-        <p className="text-[#64748B] text-sm leading-relaxed">{body}</p>
+        <p className="text-[#8A98AC] text-sm leading-relaxed">{body}</p>
       </div>
       <button onClick={onRetry} className="bg-[#0EA5E9] text-white font-bold px-8 py-3 rounded-2xl">Retry</button>
     </div>
@@ -631,7 +631,7 @@ export default function VideoReviewPage() {
     if (useIOS) return (
       <div className="fixed inset-0 bg-[#0A0F1E] flex flex-col z-50">
         <div className="flex items-center gap-3 px-5 pt-6 pb-3 border-b border-[#1E293B]">
-          <button onClick={() => setScreen({ id: "library" })} className="text-[#64748B]"><ChevronLeft size={22} /></button>
+          <button onClick={() => setScreen({ id: "library" })} className="text-[#8A98AC]"><ChevronLeft size={22} /></button>
           <h2 className="text-base font-bold text-white">Record</h2>
         </div>
         <IOSFallbackView onDone={onRecordingDone} />
@@ -656,7 +656,7 @@ export default function VideoReviewPage() {
   if (screen.id === "playback") return (
     <div className="fixed inset-0 bg-black flex flex-col z-50">
       <div className="flex items-center gap-3 px-5 pt-6 pb-3 bg-[#0D1528] border-b border-[#1E293B]">
-        <button onClick={() => setScreen({ id: "camera" })} className="text-[#64748B]"><ChevronLeft size={22} /></button>
+        <button onClick={() => setScreen({ id: "camera" })} className="text-[#8A98AC]"><ChevronLeft size={22} /></button>
         <h2 className="text-base font-bold text-white">Review Clip</h2>
       </div>
       <PlaybackView
@@ -686,7 +686,7 @@ export default function VideoReviewPage() {
   if (screen.id === "error") return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-5 pt-5 pb-3 border-b border-[#1E293B]">
-        <Link href="/technique" className="text-[#64748B]"><ChevronLeft size={22} /></Link>
+        <Link href="/technique" className="text-[#8A98AC]"><ChevronLeft size={22} /></Link>
         <h1 className="text-base font-bold text-white">Video Review</h1>
       </div>
       <ErrorView reason={screen.reason} onRetry={() => setScreen({ id: "camera" })} />
@@ -697,12 +697,12 @@ export default function VideoReviewPage() {
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-5 pt-5 pb-3 border-b border-[#1E293B]">
-        <Link href="/technique" className="text-[#64748B] hover:text-white transition-colors">
+        <Link href="/technique" aria-label="Back to technique library" className="text-[#8A98AC] hover:text-white transition-colors">
           <ChevronLeft size={22} />
         </Link>
         <div>
           <h1 className="text-base font-bold text-white">Video Review</h1>
-          <p className="text-xs text-[#64748B]">Record and analyze your technique</p>
+          <p className="text-xs text-[#8A98AC]">Record and analyze your technique</p>
         </div>
       </div>
       <LibraryView

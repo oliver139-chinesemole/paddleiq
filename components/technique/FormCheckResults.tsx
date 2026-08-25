@@ -23,7 +23,7 @@ function Delta({ now, before, lowerIsBetter = false }: { now: number; before?: n
   const diff = now - before;
   if (Math.abs(diff) < 0.005) {
     return (
-      <span className="flex items-center gap-0.5 text-[#64748B] text-xs">
+      <span className="flex items-center gap-0.5 text-[#8A98AC] text-xs">
         <Minus size={12} /> same
       </span>
     );
@@ -42,9 +42,9 @@ function Delta({ now, before, lowerIsBetter = false }: { now: number; before?: n
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="bg-[#111C2E] border border-[#1E293B] rounded-2xl p-4">
-      <div className="text-[#64748B] text-[11px] font-semibold tracking-wide uppercase">{label}</div>
+      <div className="text-[#8A98AC] text-[11px] font-semibold tracking-wide uppercase">{label}</div>
       <div className="text-white text-2xl font-bold mt-1">{value}</div>
-      {sub && <div className="text-[#475569] text-xs mt-0.5">{sub}</div>}
+      {sub && <div className="text-[#7C8AA0] text-xs mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -70,11 +70,11 @@ export function FormCheckResults({
       <div className="bg-gradient-to-br from-[#0EA5E9]/20 to-[#0F172A] border border-[#1E293B] rounded-3xl p-6 text-center">
         <div className="text-[#94A3B8] text-xs font-semibold tracking-wide uppercase">Technique score</div>
         <div className={`text-6xl font-bold mt-2 ${scoreColor(score)}`}>{score}</div>
-        <div className="text-[#64748B] text-sm mt-2">
+        <div className="text-[#8A98AC] text-sm mt-2">
           from {metrics.strokeCount} strokes at {Math.round(metrics.strokeRateSpm)} spm
         </div>
         {previous && (
-          <div className="text-[#475569] text-xs mt-1">
+          <div className="text-[#7C8AA0] text-xs mt-1">
             Last check: {previous.score} on {previous.date}
           </div>
         )}
@@ -150,7 +150,7 @@ export function FormCheckResults({
                 <p className="text-[#94A3B8] text-sm mt-2 leading-relaxed">{f.message}</p>
 
                 <div className="mt-3 bg-[#0B1220] border border-[#1E293B] rounded-xl p-3">
-                  <div className="text-[#64748B] text-[10px] font-bold tracking-wide uppercase mb-1">
+                  <div className="text-[#8A98AC] text-[10px] font-bold tracking-wide uppercase mb-1">
                     Try this
                   </div>
                   <p className="text-[#CBD5E1] text-sm">{f.drill}</p>
@@ -171,8 +171,8 @@ export function FormCheckResults({
 
       {/* Honesty about what this can and can't see */}
       <div className="flex gap-3 bg-[#0B1220] border border-[#1E293B] rounded-2xl p-4">
-        <Info size={16} className="text-[#64748B] shrink-0 mt-0.5" />
-        <p className="text-[#64748B] text-xs leading-relaxed">
+        <Info size={16} className="text-[#8A98AC] shrink-0 mt-0.5" />
+        <p className="text-[#8A98AC] text-xs leading-relaxed">
           These numbers come from tracking your body in a single 2D video, so they describe your
           strokes <span className="text-[#94A3B8]">relative to each other</span> — they are not
           absolute biomechanical measurements. The paddle itself isn&apos;t tracked, so blade angle

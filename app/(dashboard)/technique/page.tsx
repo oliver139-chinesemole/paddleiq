@@ -49,7 +49,7 @@ function TechniqueLibrary() {
             </span>
           </div>
           <h1 className="text-2xl font-black text-[#F1F5F9]">{lesson.title}</h1>
-          <p className="text-sm text-[#64748B] mt-2 leading-relaxed">{lesson.summary}</p>
+          <p className="text-sm text-[#8A98AC] mt-2 leading-relaxed">{lesson.summary}</p>
         </div>
 
         <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
@@ -130,7 +130,7 @@ function TechniqueLibrary() {
         </div>
         <div>
           <h1 className="text-xl font-black text-[#F1F5F9]">Technique Library</h1>
-          <p className="text-xs text-[#64748B]">Dragon boat stroke education</p>
+          <p className="text-xs text-[#8A98AC]">Dragon boat stroke education</p>
         </div>
       </div>
 
@@ -161,9 +161,9 @@ function TechniqueLibrary() {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-bold text-[#F1F5F9]">Form Check</h3>
-            <p className="text-xs text-[#64748B] mt-0.5">Point your camera at yourself — or read a saved clip — and get your stroke measured</p>
+            <p className="text-xs text-[#8A98AC] mt-0.5">Point your camera at yourself — or read a saved clip — and get your stroke measured</p>
           </div>
-          <ChevronRight size={16} className="text-[#475569] shrink-0" />
+          <ChevronRight size={16} className="text-[#7C8AA0] shrink-0" />
         </div>
       </Link>
 
@@ -175,9 +175,9 @@ function TechniqueLibrary() {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-bold text-[#F1F5F9]">Team Sync</h3>
-            <p className="text-xs text-[#64748B] mt-0.5">Film the boat side-on and see who&apos;s catching early or late, in milliseconds</p>
+            <p className="text-xs text-[#8A98AC] mt-0.5">Film the boat side-on and see who&apos;s catching early or late, in milliseconds</p>
           </div>
-          <ChevronRight size={16} className="text-[#475569] shrink-0" />
+          <ChevronRight size={16} className="text-[#7C8AA0] shrink-0" />
         </div>
       </Link>
 
@@ -189,9 +189,9 @@ function TechniqueLibrary() {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-bold text-[#F1F5F9]">Video Review</h3>
-            <p className="text-xs text-[#64748B] mt-0.5">Record clips, review in slow motion, annotate your technique</p>
+            <p className="text-xs text-[#8A98AC] mt-0.5">Record clips, review in slow motion, annotate your technique</p>
           </div>
-          <ChevronRight size={16} className="text-[#475569] shrink-0" />
+          <ChevronRight size={16} className="text-[#7C8AA0] shrink-0" />
         </div>
       </Link>
 
@@ -205,7 +205,7 @@ function TechniqueLibrary() {
               "rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer shrink-0",
               category === cat
                 ? "bg-[#0EA5E9] text-white"
-                : "bg-[#1E293B] text-[#64748B] hover:bg-[#334155]"
+                : "bg-[#1E293B] text-[#8A98AC] hover:bg-[#334155]"
             )}
           >
             {cat}
@@ -235,16 +235,16 @@ function TechniqueLibrary() {
                   {lesson.difficulty}
                 </span>
               </div>
-              <p className="text-xs text-[#64748B] line-clamp-2 leading-relaxed">{lesson.summary}</p>
+              <p className="text-xs text-[#8A98AC] line-clamp-2 leading-relaxed">{lesson.summary}</p>
             </div>
-            <ChevronRight size={16} className="text-[#475569] mt-1 shrink-0" />
+            <ChevronRight size={16} className="text-[#7C8AA0] mt-1 shrink-0" />
           </button>
         ))}
       </div>
 
       <div className="rounded-xl border border-dashed border-[#334155] p-4 text-center">
-        <div className="text-sm text-[#64748B]">More technique lessons coming soon.</div>
-        <div className="text-xs text-[#475569] mt-1">Drill libraries and coach review in development.</div>
+        <div className="text-sm text-[#8A98AC]">More technique lessons coming soon.</div>
+        <div className="text-xs text-[#7C8AA0] mt-1">Drill libraries and coach review in development.</div>
       </div>
     </div>
   );
@@ -254,7 +254,7 @@ function TechniqueLibrary() {
 // this statically-rendered route.
 export default function TechniquePage() {
   return (
-    <Suspense fallback={<div className="p-4 text-sm text-[#64748B]">Loading…</div>}>
+    <Suspense fallback={<div className="p-4 text-sm text-[#8A98AC]">Loading…</div>}>
       <TechniqueLibrary />
     </Suspense>
   );

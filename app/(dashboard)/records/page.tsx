@@ -27,7 +27,7 @@ function PRCard({ category, distance, prs }: { category: "erg" | "water"; distan
     <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4">
       <div className="flex items-center gap-1.5 mb-2">
         <Target size={12} style={{ color: accent }} />
-        <span className="text-[10px] font-semibold text-[#64748B] uppercase">
+        <span className="text-[10px] font-semibold text-[#8A98AC] uppercase">
           {category.toUpperCase()} · {distance >= 1000 ? `${distance / 1000}km` : `${distance}m`}
         </span>
       </div>
@@ -43,20 +43,20 @@ function PRCard({ category, distance, prs }: { category: "erg" | "water"; distan
               </div>
             )}
           </div>
-          <div className="flex items-center gap-1 mt-1.5 text-[#475569]">
+          <div className="flex items-center gap-1 mt-1.5 text-[#7C8AA0]">
             <Calendar size={10} />
             <span className="text-[10px]">{formatDate(pr.date)}</span>
           </div>
           {pr.previous_time_sec && pr.previous_time_sec > 0 && (
-            <div className="text-[10px] text-[#475569] mt-1">
+            <div className="text-[10px] text-[#7C8AA0] mt-1">
               Previous: {formatTime(pr.previous_time_sec)}
             </div>
           )}
         </>
       ) : (
         <div className="py-2">
-          <div className="text-lg font-bold text-[#475569]">—</div>
-          <div className="text-[10px] text-[#475569] mt-1">No PR yet</div>
+          <div className="text-lg font-bold text-[#7C8AA0]">—</div>
+          <div className="text-[10px] text-[#7C8AA0] mt-1">No PR yet</div>
         </div>
       )}
     </div>
@@ -136,7 +136,7 @@ export default function RecordsPage() {
         </div>
         <div>
           <h1 className="text-xl font-black text-[#F1F5F9]">Personal Records</h1>
-          <p className="text-xs text-[#64748B]">Your all-time bests</p>
+          <p className="text-xs text-[#8A98AC]">Your all-time bests</p>
         </div>
       </div>
 
@@ -144,15 +144,15 @@ export default function RecordsPage() {
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-[#1E293B] bg-[#0D1528] p-3 text-center">
           <div className="text-xl font-black text-[#F59E0B]">{totalPRs}</div>
-          <div className="text-[10px] text-[#64748B] mt-0.5">Total PRs</div>
+          <div className="text-[10px] text-[#8A98AC] mt-0.5">Total PRs</div>
         </div>
         <div className="rounded-xl border border-[#1E293B] bg-[#0D1528] p-3 text-center">
           <div className="text-xl font-black text-[#10B981]">{bestImprovement > 0 ? `−${bestImprovement}s` : "—"}</div>
-          <div className="text-[10px] text-[#64748B] mt-0.5">Best Improve</div>
+          <div className="text-[10px] text-[#8A98AC] mt-0.5">Best Improve</div>
         </div>
         <div className="rounded-xl border border-[#1E293B] bg-[#0D1528] p-3 text-center">
           <div className="text-xl font-black text-[#0EA5E9]">2k</div>
-          <div className="text-[10px] text-[#64748B] mt-0.5">Top Distance</div>
+          <div className="text-[10px] text-[#8A98AC] mt-0.5">Top Distance</div>
         </div>
       </div>
 
@@ -190,9 +190,9 @@ export default function RecordsPage() {
         <div className="grid grid-cols-2 gap-3">
           {otherRecords.map(({ label, value, sub }) => (
             <div key={label} className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4">
-              <div className="text-[10px] text-[#64748B] uppercase font-semibold mb-1">{label}</div>
+              <div className="text-[10px] text-[#8A98AC] uppercase font-semibold mb-1">{label}</div>
               <div className="text-xl font-black text-[#F1F5F9]">{value}</div>
-              <div className="text-[10px] text-[#475569] mt-1">{sub}</div>
+              <div className="text-[10px] text-[#7C8AA0] mt-1">{sub}</div>
             </div>
           ))}
         </div>
@@ -205,7 +205,7 @@ export default function RecordsPage() {
             <Target size={16} className="text-[#0EA5E9]" />
             <h3 className="text-sm font-bold text-[#0EA5E9]">Train to Beat Your 2k PR</h3>
           </div>
-          <p className="text-xs text-[#64748B] leading-relaxed mb-3">
+          <p className="text-xs text-[#8A98AC] leading-relaxed mb-3">
             Your current 2k erg PR is {formatTime(best2k.time_sec)} ({formatTime(Math.round(best2k.time_sec / 4))}/500m split).
             To beat it, focus on sustaining split consistency across all four 500m segments.
           </p>

@@ -60,10 +60,10 @@ function SignupForm() {
           <CheckCircle size={32} className="text-[#10B981]" />
         </div>
         <h2 className="text-xl font-black text-white">Account created!</h2>
-        <p className="text-[#64748B] text-sm text-center">
+        <p className="text-[#8A98AC] text-sm text-center">
           Check your email for a confirmation link, then come back to finish setup.
         </p>
-        <p className="text-[#475569] text-xs">
+        <p className="text-[#7C8AA0] text-xs">
           {inviteCode ? "Redirecting to team invite…" : "Redirecting to onboarding…"}
         </p>
       </div>
@@ -75,7 +75,7 @@ function SignupForm() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/"><span className="text-3xl font-black gradient-text">PaddleIQ</span></Link>
-          <p className="text-[#64748B] text-sm mt-2">
+          <p className="text-[#8A98AC] text-sm mt-2">
             {inviteCode ? "Create an account to join your team" : "Create your athlete profile"}
           </p>
         </div>
@@ -99,7 +99,7 @@ function SignupForm() {
                 : <>Create Account <ArrowRight size={16} /></>}
             </Button>
 
-            <p className="text-center text-xs text-[#475569]">
+            <p className="text-center text-xs text-[#7C8AA0]">
               By signing up you agree to our{" "}
               <Link href="/legal/terms" className="text-[#0EA5E9] hover:underline">Terms of Service</Link>
               {" "}and{" "}
@@ -108,7 +108,7 @@ function SignupForm() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-[#475569] mt-6">
+        <p className="text-center text-sm text-[#7C8AA0] mt-6">
           Already have an account?{" "}
           <Link href="/login" className="text-[#0EA5E9] font-medium hover:underline">Log in</Link>
         </p>

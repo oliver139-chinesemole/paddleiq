@@ -74,7 +74,7 @@ function medal(i: number) {
   return i === 0 ? "bg-[#F59E0B] text-[#0A0F1E]"
        : i === 1 ? "bg-[#94A3B8] text-[#0A0F1E]"
        : i === 2 ? "bg-[#CD7C2B] text-[#0A0F1E]"
-       : "bg-[#1E293B] text-[#64748B]";
+       : "bg-[#1E293B] text-[#8A98AC]";
 }
 
 // ── LeaderboardTab ────────────────────────────────────────────────────────────
@@ -200,7 +200,7 @@ export default function LeaderboardTab({
             key={c}
             onClick={() => setCat(c)}
             className={`shrink-0 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${
-              cat === c ? "border-[#0EA5E9]/50 bg-[#0EA5E9]/15 text-[#0EA5E9]" : "border-[#1E293B] text-[#475569] hover:border-[#334155]"
+              cat === c ? "border-[#0EA5E9]/50 bg-[#0EA5E9]/15 text-[#0EA5E9]" : "border-[#1E293B] text-[#7C8AA0] hover:border-[#334155]"
             }`}
           >
             {CATEGORY_LABEL[c]}
@@ -215,7 +215,7 @@ export default function LeaderboardTab({
             key={p}
             onClick={() => setPeriod(p)}
             className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-              period === p ? "border-[#334155] bg-[#1E293B] text-[#F1F5F9]" : "border-[#1E293B] text-[#475569]"
+              period === p ? "border-[#334155] bg-[#1E293B] text-[#F1F5F9]" : "border-[#1E293B] text-[#7C8AA0]"
             }`}
           >
             {PERIOD_LABEL[p]}
@@ -236,7 +236,7 @@ export default function LeaderboardTab({
           <Loader2 size={20} className="text-[#0EA5E9] animate-spin" />
         </div>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-[#475569] text-center py-6">No data yet for this category.</p>
+        <p className="text-sm text-[#7C8AA0] text-center py-6">No data yet for this category.</p>
       ) : (
         rows.map((row, i) => (
           <div
@@ -250,7 +250,7 @@ export default function LeaderboardTab({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold text-[#F1F5F9] truncate">{row.name}</div>
-              {row.subLabel && <div className="text-[10px] text-[#64748B] mt-0.5">{row.subLabel}</div>}
+              {row.subLabel && <div className="text-[10px] text-[#8A98AC] mt-0.5">{row.subLabel}</div>}
             </div>
             <div className="text-right shrink-0">
               <div className={`text-base font-black ${i === 0 ? "text-[#F59E0B]" : "text-[#F1F5F9]"}`}>

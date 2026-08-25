@@ -94,7 +94,7 @@ export default function InvitePage() {
         {state.id === "loading" && (
           <>
             <Loader2 size={40} className="text-[#0EA5E9] animate-spin" />
-            <p className="text-sm text-[#64748B]">Looking up your invite…</p>
+            <p className="text-sm text-[#8A98AC]">Looking up your invite…</p>
           </>
         )}
 
@@ -105,12 +105,12 @@ export default function InvitePage() {
             </div>
             <div>
               <h1 className="text-xl font-black text-[#F1F5F9]">You&apos;ve been invited!</h1>
-              <p className="text-[#64748B] text-sm mt-1">Join <span className="text-[#F1F5F9] font-semibold">{state.teamName}</span> on PaddleIQ</p>
+              <p className="text-[#8A98AC] text-sm mt-1">Join <span className="text-[#F1F5F9] font-semibold">{state.teamName}</span> on PaddleIQ</p>
             </div>
             <Button onClick={join} className="w-full">
               <Users size={16} /> Accept Invite
             </Button>
-            <p className="text-xs text-[#475569]">
+            <p className="text-xs text-[#7C8AA0]">
               Don&apos;t have an account?{" "}
               <button onClick={() => router.push(`/signup?invite=${code}`)} className="text-[#0EA5E9] hover:underline">
                 Sign up first
@@ -122,7 +122,7 @@ export default function InvitePage() {
         {state.id === "joining" && (
           <>
             <Loader2 size={40} className="text-[#0EA5E9] animate-spin" />
-            <p className="text-sm text-[#64748B]">Joining the team…</p>
+            <p className="text-sm text-[#8A98AC]">Joining the team…</p>
           </>
         )}
 
@@ -132,8 +132,8 @@ export default function InvitePage() {
               <CheckCircle size={32} className="text-[#10B981]" />
             </div>
             <h1 className="text-xl font-black text-[#F1F5F9]">You&apos;re in!</h1>
-            <p className="text-[#64748B] text-sm">Welcome to <span className="text-[#F1F5F9] font-semibold">{state.teamName}</span>.</p>
-            <p className="text-xs text-[#475569]">Redirecting to team…</p>
+            <p className="text-[#8A98AC] text-sm">Welcome to <span className="text-[#F1F5F9] font-semibold">{state.teamName}</span>.</p>
+            <p className="text-xs text-[#7C8AA0]">Redirecting to team…</p>
           </>
         )}
 
@@ -143,7 +143,7 @@ export default function InvitePage() {
               <CheckCircle size={32} className="text-[#0EA5E9]" />
             </div>
             <h1 className="text-xl font-black text-[#F1F5F9]">Already a member</h1>
-            <p className="text-[#64748B] text-sm">You&apos;re already on <span className="text-[#F1F5F9] font-semibold">{state.teamName}</span>.</p>
+            <p className="text-[#8A98AC] text-sm">You&apos;re already on <span className="text-[#F1F5F9] font-semibold">{state.teamName}</span>.</p>
             <Button onClick={() => router.push("/team")} className="w-full">Go to Team</Button>
           </>
         )}
@@ -154,7 +154,7 @@ export default function InvitePage() {
               <XCircle size={32} className="text-[#EF4444]" />
             </div>
             <h1 className="text-xl font-black text-[#F1F5F9]">Invalid invite</h1>
-            <p className="text-[#64748B] text-sm">This invite link has expired or doesn&apos;t exist.</p>
+            <p className="text-[#8A98AC] text-sm">This invite link has expired or doesn&apos;t exist.</p>
             <Button variant="outline" onClick={() => router.push("/")} className="w-full">Go Home</Button>
           </>
         )}

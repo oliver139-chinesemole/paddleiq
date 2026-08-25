@@ -32,7 +32,7 @@ export function TopNav({ title, subtitle }: TopNavProps) {
             {title ? (
               <>
                 <h1 className="text-base font-bold text-[#F1F5F9]">{title}</h1>
-                {subtitle && <p className="text-xs text-[#64748B]">{subtitle}</p>}
+                {subtitle && <p className="text-xs text-[#8A98AC]">{subtitle}</p>}
               </>
             ) : (
               <Link href="/dashboard" className="flex items-center gap-2">

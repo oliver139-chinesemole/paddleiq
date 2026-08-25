@@ -61,7 +61,7 @@ export default function AnalyticsPage() {
     <div className="py-6 flex flex-col gap-5 animate-fade-in">
       <div>
         <h1 className="text-2xl font-black text-[#F1F5F9]">Analytics</h1>
-        <p className="text-sm text-[#64748B] mt-1">Your training trends over time.</p>
+        <p className="text-sm text-[#8A98AC] mt-1">Your training trends over time.</p>
       </div>
 
       {/* Top Stats */}
@@ -69,7 +69,7 @@ export default function AnalyticsPage() {
         <Card>
           <CardTitle>Total Sessions</CardTitle>
           <CardValue className="mt-2">{stats.total_sessions || "—"}</CardValue>
-          <p className="text-xs text-[#64748B] mt-1">all time</p>
+          <p className="text-xs text-[#8A98AC] mt-1">all time</p>
         </Card>
         <Card>
           <CardTitle>Current Streak</CardTitle>
@@ -77,12 +77,12 @@ export default function AnalyticsPage() {
             <Flame size={20} className="text-[#F97316]" />
             <CardValue>{stats.current_streak}</CardValue>
           </div>
-          <p className="text-xs text-[#64748B] mt-1">days in a row</p>
+          <p className="text-xs text-[#8A98AC] mt-1">days in a row</p>
         </Card>
         <Card>
           <CardTitle>Avg Stroke Rate</CardTitle>
           <CardValue className="mt-2">{stats.avg_stroke_rate || "—"}</CardValue>
-          <p className="text-xs text-[#64748B] mt-1">spm this month</p>
+          <p className="text-xs text-[#8A98AC] mt-1">spm this month</p>
         </Card>
         <Card>
           <CardTitle>Best 2k Split</CardTitle>
@@ -92,7 +92,7 @@ export default function AnalyticsPage() {
           ) : splitDelta < 0 ? (
             <p className="text-xs text-[#EF4444] mt-1">↑ {Math.abs(splitDelta)}s slower</p>
           ) : (
-            <p className="text-xs text-[#64748B] mt-1">No change yet</p>
+            <p className="text-xs text-[#8A98AC] mt-1">No change yet</p>
           )}
         </Card>
       </div>
@@ -113,7 +113,7 @@ export default function AnalyticsPage() {
             ].map((s) => (
               <div key={s.label} className="text-center">
                 <div className="text-base font-bold text-[#F1F5F9]">{s.value}</div>
-                <div className="text-[10px] text-[#64748B]">{s.label}</div>
+                <div className="text-[10px] text-[#8A98AC]">{s.label}</div>
               </div>
             ))}
           </div>
@@ -147,16 +147,16 @@ export default function AnalyticsPage() {
             </div>
           )}
           {progressData.length === 0 && (
-            <p className="text-xs text-[#475569] text-center py-4">Log erg sessions to see your split trend.</p>
+            <p className="text-xs text-[#7C8AA0] text-center py-4">Log erg sessions to see your split trend.</p>
           )}
         </CardContent>
       </Card>
 
       {/* Erg Session Log */}
       <div>
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">Erg Session Log</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Erg Session Log</h2>
         {ergSessions.length === 0 ? (
-          <p className="text-sm text-[#475569] text-center py-6">No erg sessions logged yet.</p>
+          <p className="text-sm text-[#7C8AA0] text-center py-6">No erg sessions logged yet.</p>
         ) : (
           <div className="flex flex-col gap-3">
             {ergSessions.slice(0, 10).map((session) => (
@@ -169,7 +169,7 @@ export default function AnalyticsPage() {
                       <Badge variant="secondary" className="text-[10px]">{session.workout_type}</Badge>
                     )}
                   </div>
-                  <span className="text-xs text-[#64748B]">{formatRelativeDate(session.date)}</span>
+                  <span className="text-xs text-[#8A98AC]">{formatRelativeDate(session.date)}</span>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {[
@@ -180,12 +180,12 @@ export default function AnalyticsPage() {
                   ].map((s) => (
                     <div key={s.label} className="bg-[#111827] rounded-xl p-2 text-center">
                       <div className="text-xs font-bold text-[#F1F5F9]">{s.value}</div>
-                      <div className="text-[9px] text-[#475569] mt-0.5">{s.label}</div>
+                      <div className="text-[9px] text-[#7C8AA0] mt-0.5">{s.label}</div>
                     </div>
                   ))}
                 </div>
                 {session.notes && (
-                  <p className="text-xs text-[#64748B] mt-2 leading-relaxed line-clamp-2">{session.notes}</p>
+                  <p className="text-xs text-[#8A98AC] mt-2 leading-relaxed line-clamp-2">{session.notes}</p>
                 )}
               </div>
             ))}
@@ -211,7 +211,7 @@ export default function AnalyticsPage() {
             ].map(({ label, value, color }) => (
               <div key={label}>
                 <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[#64748B]">{label}</span>
+                  <span className="text-[#8A98AC]">{label}</span>
                   <span className="font-semibold text-[#94A3B8]">{Math.round(value)}%</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-[#1E293B]">

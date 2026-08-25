@@ -30,7 +30,7 @@ export function BottomNav() {
                 "flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 transition-colors min-w-0",
                 isActive
                   ? "text-[#0EA5E9]"
-                  : "text-[#475569] hover:text-[#94A3B8]"
+                  : "text-[#7C8AA0] hover:text-[#94A3B8]"
               )}
             >
               <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />

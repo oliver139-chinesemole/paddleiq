@@ -13,7 +13,7 @@ import {
   type Highlight, type StrokePose, type Vec2,
 } from "@/lib/technique/stroke-model";
 
-const BONE = "#475569";
+const BONE = "#7C8AA0";
 const BONE_LIT = "#0EA5E9";
 const JOINT = "#94A3B8";
 const SHAFT = "#CBD5E1";
@@ -176,7 +176,7 @@ export function StrokeAnimation({ lessonId }: { lessonId: string }) {
     }
 
     // Phase label
-    ctx.fillStyle = "#64748B";
+    ctx.fillStyle = "#8A98AC";
     ctx.font = `600 ${Math.round(W * 0.038)}px ui-sans-serif, system-ui, sans-serif`;
     ctx.textAlign = "left";
     ctx.fillText(phaseAt(t).label.toUpperCase(), W * 0.035, H * 0.09);
@@ -242,7 +242,7 @@ export function StrokeAnimation({ lessonId }: { lessonId: string }) {
           aria-label="Scrub through the stroke"
           className="w-full accent-[#0EA5E9]"
         />
-        <div className="flex justify-between text-[9px] text-[#475569] -mt-1">
+        <div className="flex justify-between text-[9px] text-[#7C8AA0] -mt-1">
           {PHASES.map((p) => (
             <button
               key={p.phase}
@@ -293,7 +293,7 @@ export function StrokeAnimation({ lessonId }: { lessonId: string }) {
         <p className="px-4 pb-4 text-xs text-[#94A3B8] leading-relaxed">{focus.caption}</p>
       )}
 
-      <p className="px-4 pb-3 text-[10px] text-[#475569] leading-relaxed">
+      <p className="px-4 pb-3 text-[10px] text-[#7C8AA0] leading-relaxed">
         An illustration of the stroke, not footage of a specific paddler — use it for the shape and
         sequence, and your coach for the detail.
       </p>

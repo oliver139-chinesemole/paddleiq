@@ -21,7 +21,7 @@ export function InstallBanner() {
           <p className="text-sm font-bold text-[#F1F5F9]">Install PaddleIQ</p>
           {install.status === "android" && (
             <>
-              <p className="text-xs text-[#64748B] mt-0.5">Add to your home screen for the full app experience — offline included.</p>
+              <p className="text-xs text-[#8A98AC] mt-0.5">Add to your home screen for the full app experience — offline included.</p>
               <button
                 onClick={() => { install.prompt(); dismiss(); }}
                 className="mt-2.5 flex items-center gap-1.5 bg-[#0EA5E9] text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-[#0284C7] transition-colors"
@@ -33,7 +33,7 @@ export function InstallBanner() {
           )}
           {install.status === "ios" && (
             <>
-              <p className="text-xs text-[#64748B] mt-0.5 leading-relaxed">
+              <p className="text-xs text-[#8A98AC] mt-0.5 leading-relaxed">
                 Tap <Share size={11} className="inline mx-0.5 text-[#0EA5E9]" /> <strong className="text-[#94A3B8]">Share</strong> at the bottom of your browser, then <strong className="text-[#94A3B8]">Add to Home Screen</strong>.
               </p>
             </>
@@ -41,7 +41,7 @@ export function InstallBanner() {
         </div>
 
         {/* Dismiss */}
-        <button onClick={dismiss} className="text-[#475569] hover:text-[#94A3B8] shrink-0 mt-0.5">
+        <button onClick={dismiss} className="text-[#7C8AA0] hover:text-[#94A3B8] shrink-0 mt-0.5">
           <X size={16} />
         </button>
       </div>

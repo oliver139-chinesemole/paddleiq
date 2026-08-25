@@ -57,12 +57,12 @@ export default function TrainPage() {
     <div className="py-6 flex flex-col gap-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-black text-[#F1F5F9]">Train</h1>
-        <p className="text-sm text-[#64748B] mt-1">Choose your training mode to log a session.</p>
+        <p className="text-sm text-[#8A98AC] mt-1">Choose your training mode to log a session.</p>
       </div>
 
       {/* Quick Start */}
       <div>
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">Quick Start</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Quick Start</h2>
         <div className="grid grid-cols-2 gap-2">
           {quickWorkouts.map((w) => (
             <Link
@@ -72,7 +72,7 @@ export default function TrainPage() {
             >
               <div className="flex items-center gap-1.5">
                 <Timer size={12} className="text-[#0EA5E9]" />
-                <span className="text-[10px] text-[#64748B]">{w.time}</span>
+                <span className="text-[10px] text-[#8A98AC]">{w.time}</span>
               </div>
               <span className="text-sm font-semibold text-[#F1F5F9]">{w.label}</span>
             </Link>
@@ -82,7 +82,7 @@ export default function TrainPage() {
 
       {/* Training Modes */}
       <div>
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">All Modes</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">All Modes</h2>
         <div className="flex flex-col gap-4">
           {modes.map(({ href, icon: Icon, title, desc, color, badge, badgeVariant, features }) => (
             <Link
@@ -102,12 +102,12 @@ export default function TrainPage() {
                     </div>
                   </div>
                 </div>
-                <ChevronRight size={16} className="text-[#475569] mt-1 shrink-0" />
+                <ChevronRight size={16} className="text-[#7C8AA0] mt-1 shrink-0" />
               </div>
-              <p className="text-sm text-[#64748B] mb-3">{desc}</p>
+              <p className="text-sm text-[#8A98AC] mb-3">{desc}</p>
               <div className="flex flex-wrap gap-1.5">
                 {features.map((f) => (
-                  <span key={f} className="text-[10px] font-medium bg-[#1E293B] text-[#64748B] px-2 py-0.5 rounded-full">
+                  <span key={f} className="text-[10px] font-medium bg-[#1E293B] text-[#8A98AC] px-2 py-0.5 rounded-full">
                     {f}
                   </span>
                 ))}
@@ -120,16 +120,16 @@ export default function TrainPage() {
       {/* Workout Builder Teaser */}
       <Link
         href="/plans"
-        className="flex items-center gap-3 rounded-xl border border-dashed border-[#334155] p-4 hover:border-[#475569] transition-colors"
+        className="flex items-center gap-3 rounded-xl border border-dashed border-[#334155] p-4 hover:border-[#7C8AA0] transition-colors"
       >
         <div className="w-9 h-9 rounded-xl border border-dashed border-[#334155] flex items-center justify-center">
-          <Plus size={16} className="text-[#64748B]" />
+          <Plus size={16} className="text-[#8A98AC]" />
         </div>
         <div>
           <div className="text-sm font-semibold text-[#94A3B8]">View Training Plans</div>
-          <div className="text-xs text-[#475569]">8 built-in plans for all levels</div>
+          <div className="text-xs text-[#7C8AA0]">8 built-in plans for all levels</div>
         </div>
-        <ChevronRight size={14} className="text-[#475569] ml-auto" />
+        <ChevronRight size={14} className="text-[#7C8AA0] ml-auto" />
       </Link>
     </div>
   );

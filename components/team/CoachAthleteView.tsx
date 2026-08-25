@@ -31,7 +31,7 @@ const WORKOUT_ICONS: Record<WorkoutType, React.ElementType> = {
   erg: Dumbbell, water: Droplets, dryland: Activity, team: Users, rest: CheckCircle,
 };
 const WORKOUT_COLORS: Record<WorkoutType, string> = {
-  erg: "#0EA5E9", water: "#06B6D4", dryland: "#10B981", team: "#F97316", rest: "#64748B",
+  erg: "#0EA5E9", water: "#06B6D4", dryland: "#10B981", team: "#F97316", rest: "#8A98AC",
 };
 
 // ── CoachAthleteView ──────────────────────────────────────────────────────────
@@ -153,11 +153,11 @@ export default function CoachAthleteView({
     <div className="mt-5 space-y-4">
       {/* ── Training flags ──────────────────────────────────────────────── */}
       <div>
-        <p className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider mb-2">Training Flags</p>
+        <p className="text-[10px] font-semibold text-[#8A98AC] uppercase tracking-wider mb-2">Training Flags</p>
         {loading ? (
           <div className="flex items-center gap-2 py-3">
             <Loader2 size={14} className="text-[#0EA5E9] animate-spin" />
-            <span className="text-xs text-[#475569]">Analysing sessions…</span>
+            <span className="text-xs text-[#7C8AA0]">Analysing sessions…</span>
           </div>
         ) : flags && flags.length > 0 ? (
           <div className="space-y-2">
@@ -169,21 +169,21 @@ export default function CoachAthleteView({
                   <Icon size={14} style={{ color }} className="shrink-0 mt-0.5" />
                   <div>
                     <div className="text-xs font-bold" style={{ color }}>{f.title}</div>
-                    <div className="text-[11px] text-[#64748B] mt-0.5 leading-relaxed">{f.body}</div>
+                    <div className="text-[11px] text-[#8A98AC] mt-0.5 leading-relaxed">{f.body}</div>
                   </div>
                 </div>
               );
             })}
           </div>
         ) : (
-          <div className="text-xs text-[#475569] py-2">No sessions to analyse yet.</div>
+          <div className="text-xs text-[#7C8AA0] py-2">No sessions to analyse yet.</div>
         )}
       </div>
 
       {/* ── Assigned workouts ────────────────────────────────────────────── */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <p className="text-[10px] font-semibold text-[#64748B] uppercase tracking-wider">Assigned Workouts</p>
+          <p className="text-[10px] font-semibold text-[#8A98AC] uppercase tracking-wider">Assigned Workouts</p>
           <button
             onClick={() => setShowAssign(!showAssign)}
             className="flex items-center gap-1 text-[10px] text-[#0EA5E9] font-semibold"
@@ -208,7 +208,7 @@ export default function CoachAthleteView({
                     key={t}
                     onClick={() => setForm({ ...form, type: t })}
                     className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold border transition-colors capitalize ${
-                      form.type === t ? "border-opacity-50" : "border-[#1E293B] text-[#475569]"
+                      form.type === t ? "border-opacity-50" : "border-[#1E293B] text-[#7C8AA0]"
                     }`}
                     style={form.type === t ? { borderColor: color, backgroundColor: `${color}20`, color } : {}}
                   >
@@ -240,9 +240,9 @@ export default function CoachAthleteView({
                 <div key={a.id} className={`flex items-center gap-2.5 rounded-xl px-3 py-2 border ${a.completed ? "border-[#1E293B] opacity-50" : "border-[#1E293B]"}`}>
                   <Icon size={12} style={{ color }} className="shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className={`text-xs font-semibold ${a.completed ? "line-through text-[#475569]" : "text-[#F1F5F9]"}`}>{a.title}</div>
+                    <div className={`text-xs font-semibold ${a.completed ? "line-through text-[#7C8AA0]" : "text-[#F1F5F9]"}`}>{a.title}</div>
                     {a.target_date && (
-                      <div className="flex items-center gap-1 text-[9px] text-[#475569] mt-0.5">
+                      <div className="flex items-center gap-1 text-[9px] text-[#7C8AA0] mt-0.5">
                         <Calendar size={9} />
                         {new Date(a.target_date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </div>

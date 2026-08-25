@@ -82,10 +82,10 @@ export default function WaterSessionPage() {
         {split > 0 && (
           <div className="text-center">
             <div className="text-3xl font-black text-[#06B6D4]">{formatPace(split)}</div>
-            <div className="text-sm text-[#64748B] mt-1">Your pace</div>
+            <div className="text-sm text-[#8A98AC] mt-1">Your pace</div>
           </div>
         )}
-        <p className="text-[#64748B] text-sm">Redirecting to dashboard…</p>
+        <p className="text-[#8A98AC] text-sm">Redirecting to dashboard…</p>
       </div>
     );
   }
@@ -98,13 +98,13 @@ export default function WaterSessionPage() {
         </div>
         <div>
           <h1 className="text-xl font-black text-[#F1F5F9]">Solo Water Time Trial</h1>
-          <p className="text-xs text-[#64748B]">OC / kayak / canoe / solo paddle craft</p>
+          <p className="text-xs text-[#8A98AC]">OC / kayak / canoe / solo paddle craft</p>
         </div>
       </div>
 
       {/* Distance Selection */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">Race Distance</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Race Distance</h2>
         <div className="grid grid-cols-3 gap-2">
           {DISTANCES.map(({ value, label }) => (
             <button
@@ -113,7 +113,7 @@ export default function WaterSessionPage() {
               className={`rounded-xl border p-3 text-sm font-bold transition-colors cursor-pointer ${
                 form.distancePreset === value
                   ? "border-[#06B6D4] bg-[#06B6D4]/15 text-[#06B6D4]"
-                  : "border-[#1E293B] bg-[#111827] text-[#64748B] hover:border-[#334155]"
+                  : "border-[#1E293B] bg-[#111827] text-[#8A98AC] hover:border-[#334155]"
               }`}
             >
               {label}
@@ -135,7 +135,7 @@ export default function WaterSessionPage() {
 
       {/* Time & Split */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-4">Time Result</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-4">Time Result</h2>
         <div className="grid grid-cols-2 gap-2 mb-3">
           <Input label="Date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
           <div />
@@ -154,7 +154,7 @@ export default function WaterSessionPage() {
                 <div className="text-2xl font-black text-[#06B6D4]">{formatPace(split)}</div>
               </div>
               <div className="text-right">
-                <div className="text-xs text-[#64748B] mb-1">Total Time</div>
+                <div className="text-xs text-[#8A98AC] mb-1">Total Time</div>
                 <div className="text-xl font-bold text-[#F1F5F9]">{formatTime(durationSec)}</div>
               </div>
             </div>
@@ -164,7 +164,7 @@ export default function WaterSessionPage() {
 
       {/* Boat & Conditions */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-4">Boat & Conditions</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-4">Boat & Conditions</h2>
         <div className="grid grid-cols-2 gap-3">
           <Select
             label="Boat Type"
@@ -210,7 +210,7 @@ export default function WaterSessionPage() {
 
       {/* RPE */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">Effort Level (RPE)</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Effort Level (RPE)</h2>
         <div className="flex gap-1.5 flex-wrap">
           {[1,2,3,4,5,6,7,8,9,10].map((n) => (
             <button
@@ -219,7 +219,7 @@ export default function WaterSessionPage() {
               className={`w-9 h-9 rounded-xl text-sm font-bold transition-colors cursor-pointer ${
                 form.rpe === String(n)
                   ? "bg-[#06B6D4] text-white"
-                  : "bg-[#1E293B] text-[#64748B] hover:bg-[#334155]"
+                  : "bg-[#1E293B] text-[#8A98AC] hover:bg-[#334155]"
               }`}
             >
               {n}
@@ -230,10 +230,10 @@ export default function WaterSessionPage() {
 
       {/* GPS / Location placeholder */}
       <div className="rounded-2xl border border-dashed border-[#334155] p-5 flex items-center gap-3">
-        <MapPin size={20} className="text-[#64748B]" />
+        <MapPin size={20} className="text-[#8A98AC]" />
         <div>
-          <div className="text-sm font-semibold text-[#64748B]">GPS Route Tracking</div>
-          <div className="text-xs text-[#475569]">Live GPS recording — coming in next update</div>
+          <div className="text-sm font-semibold text-[#8A98AC]">GPS Route Tracking</div>
+          <div className="text-xs text-[#7C8AA0]">Live GPS recording — coming in next update</div>
         </div>
       </div>
 

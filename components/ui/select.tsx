@@ -8,11 +8,24 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, label, options, error, ...props }, ref) => (
+  ({ className, label, options, error, id, ...props }, ref) => {
+    // Same as Input: the visible label was never tied to the control.
+    const generatedId = React.useId();
+    const selectId = id ?? generatedId;
+    const errorId = `${selectId}-error`;
+
+    return (
     <div className="flex flex-col gap-1.5">
-      {label && <label className="text-sm font-medium text-[#94A3B8]">{label}</label>}
+      {label && (
+        <label htmlFor={selectId} className="text-sm font-medium text-[#94A3B8]">
+          {label}
+        </label>
+      )}
       <select
         ref={ref}
+        id={selectId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         className={cn(
           "h-11 w-full rounded-xl border border-[#1E293B] bg-[#111827] px-4 text-[#F1F5F9] text-sm outline-none transition-colors appearance-none cursor-pointer",
           "focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20",
@@ -28,8 +41,9 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           </option>
         ))}
       </select>
-      {error && <p className="text-xs text-[#EF4444]">{error}</p>}
+      {error && <p id={errorId} className="text-xs text-[#EF4444]">{error}</p>}
     </div>
-  )
+    );
+  }
 );
 Select.displayName = "Select";

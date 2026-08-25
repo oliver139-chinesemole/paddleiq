@@ -145,16 +145,16 @@ export default function AICoachPage() {
         </div>
         <div className="flex-1">
           <h1 className="text-xl font-black text-[#F1F5F9]">Coach</h1>
-          <p className="text-xs text-[#64748B]">Rules-based insights from your own data</p>
+          <p className="text-xs text-[#8A98AC]">Rules-based insights from your own data</p>
         </div>
-        <button onClick={() => { setLoading(true); void loadInsights(); }} disabled={loading} className="text-[#475569] hover:text-[#94A3B8] transition-colors">
+        <button onClick={() => { setLoading(true); void loadInsights(); }} disabled={loading} className="text-[#7C8AA0] hover:text-[#94A3B8] transition-colors">
           <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
         </button>
         <Badge variant="secondary" className="text-[10px]">No AI · No API</Badge>
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center h-40 gap-3 text-[#64748B]">
+        <div className="flex items-center justify-center h-40 gap-3 text-[#8A98AC]">
           <div className="w-6 h-6 rounded-full border-2 border-[#0EA5E9]/30 border-t-[#0EA5E9] animate-spin" />
           <span className="text-sm">Computing insights…</span>
         </div>
@@ -181,7 +181,7 @@ export default function AICoachPage() {
           {/* Warnings */}
           {data.warnings.length > 0 && (
             <div className="flex flex-col gap-3">
-              <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">Watch Out</h2>
+              <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider">Watch Out</h2>
               {data.warnings.map((w, i) => (
                 <InsightCard key={i} insight={w} expanded={expanded === `w${i}`} onToggle={() => setExpanded(expanded === `w${i}` ? null : `w${i}`)} />
               ))}
@@ -191,7 +191,7 @@ export default function AICoachPage() {
           {/* Suggestions */}
           {data.suggestions.length > 0 && (
             <div className="flex flex-col gap-3">
-              <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">Suggestions</h2>
+              <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider">Suggestions</h2>
               {data.suggestions.map((s, i) => (
                 <InsightCard key={i} insight={s} expanded={expanded === `s${i}`} onToggle={() => setExpanded(expanded === `s${i}` ? null : `s${i}`)} />
               ))}
@@ -201,7 +201,7 @@ export default function AICoachPage() {
           {/* Positives */}
           {data.positives.length > 0 && (
             <div className="flex flex-col gap-3">
-              <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">Going Well</h2>
+              <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider">Going Well</h2>
               {data.positives.map((p, i) => (
                 <InsightCard key={i} insight={p} expanded={expanded === `p${i}`} onToggle={() => setExpanded(expanded === `p${i}` ? null : `p${i}`)} />
               ))}
@@ -210,7 +210,7 @@ export default function AICoachPage() {
 
           {/* Questions Panel */}
           <div>
-            <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">Ask Your Data</h2>
+            <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Ask Your Data</h2>
             <div className="flex flex-col gap-2">
               {QUESTIONS.map((q) => (
                 <div key={q}>
@@ -236,7 +236,7 @@ export default function AICoachPage() {
 
           {/* Engine note */}
           <div className="rounded-xl border border-[#1E293B] p-4 text-center">
-            <p className="text-xs text-[#475569]">
+            <p className="text-xs text-[#7C8AA0]">
               All insights are computed by a <span className="text-[#94A3B8] font-semibold">deterministic rules engine</span> running entirely on your device from your logged sessions.
               No AI API, no external calls, zero recurring cost.
             </p>
@@ -274,7 +274,7 @@ function InsightCard({
             <p className="text-xs text-[#94A3B8] leading-relaxed mt-2">{insight.body}</p>
           )}
         </div>
-        <span className="text-[#475569] text-xs">{expanded ? "▲" : "▼"}</span>
+        <span className="text-[#7C8AA0] text-xs">{expanded ? "▲" : "▼"}</span>
       </div>
     </div>
   );

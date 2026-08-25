@@ -56,7 +56,7 @@ export function TeamSyncResults({
           {copy.label}
         </span>
         <p className="text-[#94A3B8] text-sm mt-3 leading-relaxed">{copy.body}</p>
-        <div className="text-[#475569] text-xs mt-3">
+        <div className="text-[#7C8AA0] text-xs mt-3">
           {result.seats.length} paddlers · {result.pairedStrokes} strokes ·{" "}
           {Math.round(result.strokeRateSpm)} spm
         </div>
@@ -67,7 +67,7 @@ export function TeamSyncResults({
         <h3 className="text-[#94A3B8] text-xs font-semibold tracking-wide uppercase mb-1">
           Who&apos;s early, who&apos;s late
         </h3>
-        <div className="flex items-center justify-between text-[10px] text-[#475569] mb-3">
+        <div className="flex items-center justify-between text-[10px] text-[#7C8AA0] mb-3">
           <span className="flex items-center gap-1"><ArrowLeft size={11} /> early</span>
           <span>on the crew</span>
           <span className="flex items-center gap-1">late <ArrowRight size={11} /></span>
@@ -99,7 +99,7 @@ export function TeamSyncResults({
                   />
                 </div>
 
-                <div className="text-[#475569] text-[11px] mt-1.5">
+                <div className="text-[#7C8AA0] text-[11px] mt-1.5">
                   {s.strokeCount} strokes · ±{Math.round(s.offsetSpreadMs)}ms variation
                 </div>
               </div>
@@ -111,7 +111,7 @@ export function TeamSyncResults({
       {/* What to do about it */}
       {offenders.length > 0 && (
         <div className="bg-[#111C2E] border border-[#1E293B] rounded-2xl p-4">
-          <div className="text-[#64748B] text-[10px] font-bold tracking-wide uppercase mb-2">
+          <div className="text-[#8A98AC] text-[10px] font-bold tracking-wide uppercase mb-2">
             Where to look first
           </div>
           <ul className="flex flex-col gap-2">
@@ -129,8 +129,8 @@ export function TeamSyncResults({
       )}
 
       <div className="flex gap-3 bg-[#0B1220] border border-[#1E293B] rounded-2xl p-4">
-        <Info size={16} className="text-[#64748B] shrink-0 mt-0.5" />
-        <p className="text-[#64748B] text-xs leading-relaxed">
+        <Info size={16} className="text-[#8A98AC] shrink-0 mt-0.5" />
+        <p className="text-[#8A98AC] text-xs leading-relaxed">
           Positions are numbered left to right <span className="text-[#94A3B8]">as the camera
           sees them</span>, not by seat number in the boat. Offsets are measured against the crew&apos;s
           own average catch, so this shows who is out of step with everyone else — it can&apos;t tell

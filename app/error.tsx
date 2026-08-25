@@ -22,7 +22,7 @@ export default function Error({
       </div>
       <div>
         <h1 className="text-xl font-black text-[#F1F5F9]">Something went wrong</h1>
-        <p className="text-sm text-[#64748B] mt-2 max-w-xs">
+        <p className="text-sm text-[#8A98AC] mt-2 max-w-xs">
           An unexpected error occurred. Your local data is safe.
         </p>
       </div>

@@ -33,17 +33,17 @@ export default function PlansPage() {
             {plan.difficulty}
           </Badge>
           <h1 className="text-2xl font-black text-[#F1F5F9]">{plan.name}</h1>
-          <p className="text-sm text-[#64748B] mt-2 leading-relaxed">{plan.description}</p>
+          <p className="text-sm text-[#8A98AC] mt-2 leading-relaxed">{plan.description}</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl border border-[#1E293B] bg-[#0D1528] p-3 text-center">
             <div className="text-xl font-black text-[#0EA5E9]">{plan.duration_weeks}</div>
-            <div className="text-[10px] text-[#64748B] mt-0.5">weeks</div>
+            <div className="text-[10px] text-[#8A98AC] mt-0.5">weeks</div>
           </div>
           <div className="rounded-xl border border-[#1E293B] bg-[#0D1528] p-3 text-center">
             <div className="text-xl font-black text-[#F1F5F9]">{plan.focus.length}</div>
-            <div className="text-[10px] text-[#64748B] mt-0.5">focus areas</div>
+            <div className="text-[10px] text-[#8A98AC] mt-0.5">focus areas</div>
           </div>
         </div>
 
@@ -63,7 +63,7 @@ export default function PlansPage() {
                 const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
                 const typeColor = {
                   erg: "#0EA5E9", water: "#06B6D4", team: "#F97316",
-                  dryland: "#10B981", rest: "#475569", recovery: "#64748B",
+                  dryland: "#10B981", rest: "#7C8AA0", recovery: "#8A98AC",
                 };
                 return (
                   <div key={day.day} className={cn(
@@ -73,14 +73,14 @@ export default function PlansPage() {
                       : "border-[#1E293B] bg-[#0D1528]"
                   )}>
                     <div className="w-10 text-center shrink-0">
-                      <div className="text-[10px] text-[#475569]">{dayNames[day.day - 1]}</div>
+                      <div className="text-[10px] text-[#7C8AA0]">{dayNames[day.day - 1]}</div>
                     </div>
-                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: typeColor[day.type as keyof typeof typeColor] || "#475569" }} />
+                    <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: typeColor[day.type as keyof typeof typeColor] || "#7C8AA0" }} />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold text-[#F1F5F9]">{day.name}</div>
-                      <div className="text-xs text-[#64748B] truncate">{day.description.slice(0, 60)}…</div>
+                      <div className="text-xs text-[#8A98AC] truncate">{day.description.slice(0, 60)}…</div>
                     </div>
-                    <div className="text-xs text-[#475569] shrink-0">{day.duration_min > 0 ? `${day.duration_min}m` : "Rest"}</div>
+                    <div className="text-xs text-[#7C8AA0] shrink-0">{day.duration_min > 0 ? `${day.duration_min}m` : "Rest"}</div>
                   </div>
                 );
               })}
@@ -90,7 +90,7 @@ export default function PlansPage() {
 
         {plan.weekly_schedule.length === 0 && (
           <div className="rounded-xl border border-dashed border-[#334155] p-6 text-center">
-            <div className="text-sm text-[#64748B]">Full week-by-week schedule coming soon for this plan.</div>
+            <div className="text-sm text-[#8A98AC]">Full week-by-week schedule coming soon for this plan.</div>
           </div>
         )}
 
@@ -112,7 +112,7 @@ export default function PlansPage() {
     <div className="py-6 flex flex-col gap-5 animate-fade-in">
       <div>
         <h1 className="text-2xl font-black text-[#F1F5F9]">Training Plans</h1>
-        <p className="text-sm text-[#64748B] mt-1">Structured plans for every goal.</p>
+        <p className="text-sm text-[#8A98AC] mt-1">Structured plans for every goal.</p>
       </div>
 
       {/* Active Plan Banner */}
@@ -150,11 +150,11 @@ export default function PlansPage() {
                   <Badge variant="default" className="text-[10px]">Active</Badge>
                 )}
               </div>
-              <ChevronRight size={16} className="text-[#475569] shrink-0" />
+              <ChevronRight size={16} className="text-[#7C8AA0] shrink-0" />
             </div>
             <h3 className="text-base font-bold text-[#F1F5F9] mb-1">{plan.name}</h3>
-            <p className="text-xs text-[#64748B] leading-relaxed mb-3 line-clamp-2">{plan.description}</p>
-            <div className="flex items-center gap-4 text-xs text-[#475569]">
+            <p className="text-xs text-[#8A98AC] leading-relaxed mb-3 line-clamp-2">{plan.description}</p>
+            <div className="flex items-center gap-4 text-xs text-[#7C8AA0]">
               <span className="flex items-center gap-1"><Calendar size={11} /> {plan.duration_weeks} weeks</span>
               <span className="flex items-center gap-1"><Target size={11} /> {plan.focus.slice(0, 2).join(", ")}</span>
             </div>
@@ -164,8 +164,8 @@ export default function PlansPage() {
 
       {/* Custom plan CTA */}
       <div className="rounded-xl border border-dashed border-[#334155] p-5 text-center">
-        <div className="text-sm font-semibold text-[#64748B] mb-1">Want a custom plan?</div>
-        <div className="text-xs text-[#475569]">The AI Coach can generate a personalized plan based on your goals and schedule.</div>
+        <div className="text-sm font-semibold text-[#8A98AC] mb-1">Want a custom plan?</div>
+        <div className="text-xs text-[#7C8AA0]">The AI Coach can generate a personalized plan based on your goals and schedule.</div>
         <button className="text-xs text-[#0EA5E9] mt-2 hover:underline font-semibold">Ask AI Coach →</button>
       </div>
     </div>

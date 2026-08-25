@@ -40,7 +40,7 @@ const TYPE_LABEL: Record<FeedPostType, string> = {
   announcement: "", pr: "🏆 PR", milestone: "🎯 Milestone", new_member: "👋 Welcome", pin: "📌 Pinned",
 };
 const TYPE_COLOR: Record<FeedPostType, string> = {
-  announcement: "#64748B", pr: "#F59E0B", milestone: "#A855F7", new_member: "#10B981", pin: "#0EA5E9",
+  announcement: "#8A98AC", pr: "#F59E0B", milestone: "#A855F7", new_member: "#10B981", pin: "#0EA5E9",
 };
 
 // ── Single post card ──────────────────────────────────────────────────────────
@@ -73,7 +73,7 @@ function PostCard({ post, userId, onKudos, onPin, isCoach }: {
             )}
             <span className="text-xs font-semibold text-[#94A3B8]">{post.author_name ?? "Team"}</span>
           </div>
-          <span className="text-[10px] text-[#475569] shrink-0">{timeAgo(post.created_at)}</span>
+          <span className="text-[10px] text-[#7C8AA0] shrink-0">{timeAgo(post.created_at)}</span>
         </div>
 
         <p className="text-sm text-[#F1F5F9] leading-relaxed">{post.content}</p>
@@ -83,7 +83,7 @@ function PostCard({ post, userId, onKudos, onPin, isCoach }: {
           <button
             onClick={toggleKudos}
             className={`flex items-center gap-1.5 text-xs font-semibold transition-colors ${
-              hasKudosed ? "text-[#EF4444]" : "text-[#475569] hover:text-[#EF4444]"
+              hasKudosed ? "text-[#EF4444]" : "text-[#7C8AA0] hover:text-[#EF4444]"
             }`}
           >
             <Heart size={13} fill={hasKudosed ? "currentColor" : "none"} />
@@ -241,7 +241,7 @@ export default function FeedTab({
           onKeyDown={e => { if (e.key === "Enter" && e.metaKey) post(); }}
           placeholder="Post an update, announcement, or shout-out…"
           rows={3}
-          className="w-full bg-transparent text-sm text-[#F1F5F9] placeholder-[#475569] resize-none outline-none"
+          className="w-full bg-transparent text-sm text-[#F1F5F9] placeholder-[#7C8AA0] resize-none outline-none"
         />
         <div className="flex items-center justify-between mt-2">
           <span className="text-[10px] text-[#334155]">⌘↵ to post</span>

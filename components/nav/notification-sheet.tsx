@@ -51,19 +51,19 @@ export function NotificationSheet({
             <button
               onClick={onClose}
               aria-label="Close notifications"
-              className="text-[#64748B] hover:text-white p-1"
+              className="text-[#8A98AC] hover:text-white p-1"
             >
               <X size={18} />
             </button>
           </div>
 
           {loading ? (
-            <div className="py-10 text-center text-sm text-[#64748B]">Loading…</div>
+            <div className="py-10 text-center text-sm text-[#8A98AC]">Loading…</div>
           ) : items.length === 0 ? (
             <div className="py-10 flex flex-col items-center gap-2 text-center">
               <BellOff size={24} className="text-[#334155]" />
-              <p className="text-sm text-[#64748B]">You&apos;re all caught up.</p>
-              <p className="text-xs text-[#475569] max-w-xs">
+              <p className="text-sm text-[#8A98AC]">You&apos;re all caught up.</p>
+              <p className="text-xs text-[#7C8AA0] max-w-xs">
                 New personal records, assigned workouts, team announcements and upcoming sessions
                 show up here.
               </p>
@@ -88,7 +88,7 @@ export function NotificationSheet({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline justify-between gap-2">
                           <span className="text-sm font-bold text-[#F1F5F9] truncate">{n.title}</span>
-                          <span className="text-[10px] text-[#475569] shrink-0">
+                          <span className="text-[10px] text-[#7C8AA0] shrink-0">
                             {formatRelativeDate(new Date(n.at))}
                           </span>
                         </div>

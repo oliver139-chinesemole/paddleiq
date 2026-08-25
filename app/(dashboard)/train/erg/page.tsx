@@ -93,10 +93,10 @@ export default function ErgSessionPage() {
         {splitSec > 0 && (
           <div className="text-center">
             <div className="text-3xl font-black gradient-text">{formatPace(splitSec)}</div>
-            <div className="text-sm text-[#64748B] mt-1">Your split</div>
+            <div className="text-sm text-[#8A98AC] mt-1">Your split</div>
           </div>
         )}
-        <p className="text-[#64748B] text-sm">Redirecting to dashboard…</p>
+        <p className="text-[#8A98AC] text-sm">Redirecting to dashboard…</p>
       </div>
     );
   }
@@ -110,13 +110,13 @@ export default function ErgSessionPage() {
         </div>
         <div>
           <h1 className="text-xl font-black text-[#F1F5F9]">Log Erg Session</h1>
-          <p className="text-xs text-[#64748B]">Paddle erg / P-Erg training</p>
+          <p className="text-xs text-[#8A98AC]">Paddle erg / P-Erg training</p>
         </div>
       </div>
 
       {/* Workout Type */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">Workout Type</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Workout Type</h2>
         <div className="grid grid-cols-2 gap-2">
           {(["steady", "intervals", "test", "pyramid"] as WorkoutType[]).map((type) => (
             <button
@@ -125,7 +125,7 @@ export default function ErgSessionPage() {
               className={`rounded-xl border p-3 text-sm font-semibold transition-colors cursor-pointer ${
                 form.workoutType === type
                   ? "border-[#0EA5E9] bg-[#0EA5E9]/15 text-[#0EA5E9]"
-                  : "border-[#1E293B] bg-[#111827] text-[#64748B] hover:border-[#334155]"
+                  : "border-[#1E293B] bg-[#111827] text-[#8A98AC] hover:border-[#334155]"
               }`}
             >
               {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -147,7 +147,7 @@ export default function ErgSessionPage() {
 
       {/* Core Stats */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-4">Session Stats</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-4">Session Stats</h2>
         <div className="grid grid-cols-2 gap-3">
           <Input
             label="Distance (m)"
@@ -190,14 +190,14 @@ export default function ErgSessionPage() {
               <span className="text-xs text-[#0EA5E9] font-semibold">Calculated Split</span>
             </div>
             <div className="text-2xl font-black gradient-text">{formatPace(splitSec)}</div>
-            <div className="text-xs text-[#64748B] mt-1">Total: {formatTime(durationSec)}</div>
+            <div className="text-xs text-[#8A98AC] mt-1">Total: {formatTime(durationSec)}</div>
           </div>
         )}
       </div>
 
       {/* Performance Details */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-4">Performance Details</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-4">Performance Details</h2>
         <div className="grid grid-cols-2 gap-3">
           <Input
             label="Stroke Rate (spm)"
@@ -230,7 +230,7 @@ export default function ErgSessionPage() {
                   className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                     form.rpe === String(n)
                       ? "bg-[#0EA5E9] text-white"
-                      : "bg-[#1E293B] text-[#64748B] hover:bg-[#334155]"
+                      : "bg-[#1E293B] text-[#8A98AC] hover:bg-[#334155]"
                   }`}
                 >
                   {n}
@@ -243,7 +243,7 @@ export default function ErgSessionPage() {
 
       {/* Settings */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-4">Session Settings</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-4">Session Settings</h2>
         <div className="grid grid-cols-2 gap-3">
           <Select
             label="Paddle Side"

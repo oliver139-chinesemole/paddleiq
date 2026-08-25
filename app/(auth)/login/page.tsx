@@ -64,7 +64,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/"><span className="text-3xl font-black gradient-text">PaddleIQ</span></Link>
-          <p className="text-[#64748B] text-sm mt-2">Welcome back, athlete</p>
+          <p className="text-[#8A98AC] text-sm mt-2">Welcome back, athlete</p>
         </div>
 
         <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-6">
@@ -79,11 +79,12 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  className="h-11 w-full rounded-xl border border-[#1E293B] bg-[#111827] px-4 pr-12 text-[#F1F5F9] text-sm placeholder:text-[#475569] outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-colors"
+                  className="h-11 w-full rounded-xl border border-[#1E293B] bg-[#111827] px-4 pr-12 text-[#F1F5F9] text-sm placeholder:text-[#7C8AA0] outline-none focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20 transition-colors"
                   required={supabaseConfigured}
                 />
                 <button type="button" onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#475569] hover:text-[#94A3B8]">
+                  aria-label={showPw ? "Hide password" : "Show password"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7C8AA0] hover:text-[#94A3B8]">
                   {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
@@ -118,14 +119,14 @@ export default function LoginPage() {
         </div>
 
         {!supabaseConfigured && (
-          <div className="mt-4 rounded-xl border border-[#1E293B] bg-[#111827] px-4 py-3 text-sm text-[#64748B]">
+          <div className="mt-4 rounded-xl border border-[#1E293B] bg-[#111827] px-4 py-3 text-sm text-[#8A98AC]">
             <span className="text-[#0EA5E9] font-semibold">Demo mode</span> — Supabase not connected yet.
             Click Log in to explore with seed data. Add{" "}
             <code className="text-[#94A3B8] text-xs">NEXT_PUBLIC_SUPABASE_URL</code> to enable real accounts.
           </div>
         )}
 
-        <p className="text-center text-sm text-[#475569] mt-6">
+        <p className="text-center text-sm text-[#7C8AA0] mt-6">
           New to PaddleIQ?{" "}
           <Link href="/signup" className="text-[#0EA5E9] font-medium hover:underline">Create an account</Link>
         </p>

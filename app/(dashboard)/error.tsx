@@ -22,7 +22,7 @@ export default function DashboardError({
       </div>
       <div>
         <h2 className="text-base font-bold text-[#F1F5F9]">Something went wrong</h2>
-        <p className="text-sm text-[#64748B] mt-1">Your data is safe. Try reloading this page.</p>
+        <p className="text-sm text-[#8A98AC] mt-1">Your data is safe. Try reloading this page.</p>
       </div>
       <Button onClick={reset} className="w-full max-w-xs">Reload</Button>
     </div>

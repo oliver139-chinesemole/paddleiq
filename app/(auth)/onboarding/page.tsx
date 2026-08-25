@@ -138,10 +138,10 @@ export default function OnboardingPage() {
       </div>
 
       <div className="flex-1 flex flex-col justify-center px-6 py-12 max-w-lg mx-auto w-full">
-        <p className="text-xs text-[#475569] font-medium mb-6">Step {step + 1} of {steps.length}</p>
+        <p className="text-xs text-[#7C8AA0] font-medium mb-6">Step {step + 1} of {steps.length}</p>
 
         <h2 className="text-2xl font-black text-[#F1F5F9] mb-2">{current.title}</h2>
-        <p className="text-[#64748B] text-sm mb-8">{current.subtitle}</p>
+        <p className="text-[#8A98AC] text-sm mb-8">{current.subtitle}</p>
 
         <div className="flex flex-col gap-3">
           {current.options.map((opt) => {
@@ -161,7 +161,7 @@ export default function OnboardingPage() {
                   <div className={cn("font-semibold text-sm", selected ? "text-[#0EA5E9]" : "text-[#F1F5F9]")}>
                     {opt.label}
                   </div>
-                  <div className="text-xs text-[#64748B] mt-0.5">{opt.desc}</div>
+                  <div className="text-xs text-[#8A98AC] mt-0.5">{opt.desc}</div>
                 </div>
                 {selected && (
                   <div className="h-6 w-6 rounded-full bg-[#0EA5E9] flex items-center justify-center shrink-0 ml-3">
@@ -177,7 +177,7 @@ export default function OnboardingPage() {
           {step > 0 ? (
             <button
               onClick={() => setStep(step - 1)}
-              className="text-sm text-[#64748B] hover:text-[#94A3B8] transition-colors"
+              className="text-sm text-[#8A98AC] hover:text-[#94A3B8] transition-colors"
             >
               ← Back
             </button>

@@ -73,7 +73,7 @@ function SideToggle({ side, onChange }: { side: PaddleSide; onChange: (s: Paddle
 function FramingTips() {
   return (
     <div className="bg-[#0B1220] border border-[#1E293B] rounded-2xl p-4">
-      <div className="text-[#64748B] text-[10px] font-bold tracking-wide uppercase mb-2">
+      <div className="text-[#8A98AC] text-[10px] font-bold tracking-wide uppercase mb-2">
         For a reading that means anything
       </div>
       <ul className="text-[#94A3B8] text-sm space-y-1.5 leading-relaxed">
@@ -236,17 +236,17 @@ export default function FormCheckPage() {
   const header = (title: string, sub?: string, back?: () => void) => (
     <div className="flex items-start gap-2 mb-5">
       {back ? (
-        <button onClick={back} className="text-[#64748B] hover:text-white mt-1" aria-label="Back">
+        <button onClick={back} className="text-[#8A98AC] hover:text-white mt-1" aria-label="Back">
           <ChevronLeft size={22} />
         </button>
       ) : (
-        <Link href="/technique" className="text-[#64748B] hover:text-white mt-1" aria-label="Back">
+        <Link href="/technique" className="text-[#8A98AC] hover:text-white mt-1" aria-label="Back">
           <ChevronLeft size={22} />
         </Link>
       )}
       <div>
         <h1 className="text-2xl font-black text-white">{title}</h1>
-        {sub && <p className="text-sm text-[#64748B] mt-0.5">{sub}</p>}
+        {sub && <p className="text-sm text-[#8A98AC] mt-0.5">{sub}</p>}
       </div>
     </div>
   );
@@ -349,7 +349,7 @@ export default function FormCheckPage() {
             <button
               onClick={endCapture}
               disabled={!longEnough}
-              className="flex items-center gap-2 bg-[#EF4444] disabled:bg-[#334155] disabled:text-[#64748B] text-white font-bold px-7 py-4 rounded-2xl transition-colors"
+              className="flex items-center gap-2 bg-[#EF4444] disabled:bg-[#334155] disabled:text-[#8A98AC] text-white font-bold px-7 py-4 rounded-2xl transition-colors"
             >
               <Square size={16} fill="currentColor" />
               {longEnough ? "Stop & analyze" : `${MIN_CAPTURE_SEC - elapsed}s more`}
@@ -382,11 +382,11 @@ export default function FormCheckPage() {
                 style={{ width: `${Math.round(progress * 100)}%` }}
               />
             </div>
-            <p className="text-[#64748B] text-xs text-center mt-2">
+            <p className="text-[#8A98AC] text-xs text-center mt-2">
               {progress > 0 ? `${Math.round(progress * 100)}%` : "Reading frames…"}
             </p>
           </div>
-          <p className="text-[#475569] text-xs text-center px-8">
+          <p className="text-[#7C8AA0] text-xs text-center px-8">
             Running on your device. The video never leaves your phone.
           </p>
           <button
@@ -440,7 +440,7 @@ export default function FormCheckPage() {
         {clips.length === 0 ? (
           <div className="text-center py-16">
             <VideoIcon size={28} className="text-[#334155] mx-auto mb-3" />
-            <p className="text-[#64748B] text-sm">No clips saved yet.</p>
+            <p className="text-[#8A98AC] text-sm">No clips saved yet.</p>
             <Link href="/technique/video" className="text-[#0EA5E9] text-sm font-semibold mt-2 inline-block">
               Record one first
             </Link>
@@ -455,11 +455,11 @@ export default function FormCheckPage() {
               >
                 <div className="min-w-0">
                   <div className="text-white font-semibold truncate">{c.label}</div>
-                  <div className="text-[#64748B] text-xs mt-0.5">
+                  <div className="text-[#8A98AC] text-xs mt-0.5">
                     {c.category} · {c.date} · {Math.round(c.durationSec)}s
                   </div>
                 </div>
-                <ChevronLeft size={16} className="text-[#475569] rotate-180 shrink-0" />
+                <ChevronLeft size={16} className="text-[#7C8AA0] rotate-180 shrink-0" />
               </button>
             ))}
           </div>
@@ -473,7 +473,7 @@ export default function FormCheckPage() {
       <div className="py-6 animate-fade-in">
         {header("Past checks", undefined, () => setScreen({ id: "home" }))}
         {history.length === 0 ? (
-          <p className="text-[#64748B] text-sm text-center py-16">No form checks yet.</p>
+          <p className="text-[#8A98AC] text-sm text-center py-16">No form checks yet.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {history.map((h) => (
@@ -483,9 +483,9 @@ export default function FormCheckPage() {
               >
                 <div>
                   <div className="text-white font-semibold">
-                    {h.score} <span className="text-[#64748B] text-sm font-normal">score</span>
+                    {h.score} <span className="text-[#8A98AC] text-sm font-normal">score</span>
                   </div>
-                  <div className="text-[#64748B] text-xs mt-0.5">
+                  <div className="text-[#8A98AC] text-xs mt-0.5">
                     {h.date} · {h.side} side · {Math.round(h.metrics.strokeRateSpm)} spm ·{" "}
                     {h.metrics.strokeCount} strokes
                   </div>
@@ -495,7 +495,7 @@ export default function FormCheckPage() {
                     if (h.id !== undefined) await deleteFormCheck(h.id);
                     setHistory(await getFormChecks());
                   }}
-                  className="text-[#475569] hover:text-[#F87171] p-2"
+                  className="text-[#7C8AA0] hover:text-[#F87171] p-2"
                   aria-label="Delete"
                 >
                   <Trash2 size={16} />
@@ -545,7 +545,7 @@ export default function FormCheckPage() {
             <Upload size={20} className="text-[#0EA5E9]" />
             <span className="flex-1 text-left">
               Analyze a video
-              <span className="block text-xs font-normal text-[#64748B]">
+              <span className="block text-xs font-normal text-[#8A98AC]">
                 Someone films you once, you read it later
               </span>
             </span>
@@ -558,7 +558,7 @@ export default function FormCheckPage() {
             <Library size={20} className="text-[#0EA5E9]" />
             <span className="flex-1 text-left">
               From your clip library
-              <span className="block text-xs font-normal text-[#64748B]">
+              <span className="block text-xs font-normal text-[#8A98AC]">
                 Re-read a clip you already recorded
               </span>
             </span>
@@ -583,7 +583,7 @@ export default function FormCheckPage() {
 
         <div className="flex gap-3 bg-[#0B1220] border border-[#1E293B] rounded-2xl p-4">
           <Check size={16} className="text-[#4ADE80] shrink-0 mt-0.5" />
-          <p className="text-[#64748B] text-xs leading-relaxed">
+          <p className="text-[#8A98AC] text-xs leading-relaxed">
             Everything runs in your browser. Your video is never uploaded, and only the measured
             numbers are saved on this device.
           </p>

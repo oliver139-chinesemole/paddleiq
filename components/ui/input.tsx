@@ -7,13 +7,28 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, ...props }, ref) => (
+  ({ className, label, error, id, ...props }, ref) => {
+    // The label was rendered but never associated with the control, so screen
+    // readers announced these inputs as unlabelled. Generated once per instance
+    // and overridable by a caller-supplied id.
+    const generatedId = React.useId();
+    const inputId = id ?? generatedId;
+    const errorId = `${inputId}-error`;
+
+    return (
     <div className="flex flex-col gap-1.5">
-      {label && <label className="text-sm font-medium text-[#94A3B8]">{label}</label>}
+      {label && (
+        <label htmlFor={inputId} className="text-sm font-medium text-[#94A3B8]">
+          {label}
+        </label>
+      )}
       <input
         ref={ref}
+        id={inputId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : undefined}
         className={cn(
-          "h-11 w-full rounded-xl border border-[#1E293B] bg-[#111827] px-4 text-[#F1F5F9] text-sm placeholder:text-[#475569] outline-none transition-colors",
+          "h-11 w-full rounded-xl border border-[#1E293B] bg-[#111827] px-4 text-[#F1F5F9] text-sm placeholder:text-[#7C8AA0] outline-none transition-colors",
           "focus:border-[#0EA5E9] focus:ring-2 focus:ring-[#0EA5E9]/20",
           "disabled:cursor-not-allowed disabled:opacity-50",
           error && "border-[#EF4444]",
@@ -21,8 +36,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
         {...props}
       />
-      {error && <p className="text-xs text-[#EF4444]">{error}</p>}
+      {error && <p id={errorId} className="text-xs text-[#EF4444]">{error}</p>}
     </div>
-  )
+    );
+  }
 );
 Input.displayName = "Input";

@@ -30,5 +30,5 @@ export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDi
 }
 
 export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mt-4 flex items-center gap-2 text-sm text-[#64748B]", className)} {...props} />;
+  return <div className={cn("mt-4 flex items-center gap-2 text-sm text-[#8A98AC]", className)} {...props} />;
 }

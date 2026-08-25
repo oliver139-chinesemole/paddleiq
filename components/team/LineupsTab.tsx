@@ -68,7 +68,7 @@ function AthleteChip({ member, selected, onClick }: {
     >
       <span className={`w-2 h-2 rounded-full shrink-0 ${member.paddle_side === "left" ? "bg-[#0EA5E9]" : member.paddle_side === "right" ? "bg-[#06B6D4]" : "bg-[#F59E0B]"}`} />
       {member.full_name.split(" ")[0]}
-      {member.weight_kg ? <span className="text-[9px] text-[#475569]">{member.weight_kg}kg</span> : null}
+      {member.weight_kg ? <span className="text-[9px] text-[#7C8AA0]">{member.weight_kg}kg</span> : null}
     </button>
   );
 }
@@ -147,7 +147,7 @@ function TrimRow({
   return (
     <div>
       <div className="flex items-center justify-between text-[10px] mb-1">
-        <span className="font-bold text-[#64748B] uppercase tracking-wide">{label}</span>
+        <span className="font-bold text-[#8A98AC] uppercase tracking-wide">{label}</span>
         <span className="font-bold tabular-nums" style={{ color: GRADE_COLOR[grade] }}>
           {Math.abs(diffKg) < 0.5 ? "even" : `${Math.abs(diffKg).toFixed(1)}kg`}
         </span>
@@ -163,9 +163,9 @@ function TrimRow({
           }}
         />
       </div>
-      <div className="flex items-center justify-between text-[10px] mt-1 text-[#475569]">
+      <div className="flex items-center justify-between text-[10px] mt-1 text-[#7C8AA0]">
         <span>{leftTag}</span>
-        <span className="text-[#64748B]">{detail}</span>
+        <span className="text-[#8A98AC]">{detail}</span>
         <span>{rightTag}</span>
       </div>
     </div>
@@ -187,7 +187,7 @@ function BalancePanel({
         <span className="font-bold text-[#0EA5E9]">
           {report.leftCount}L · {report.leftWeightKg.toFixed(0)}kg
         </span>
-        <span className="text-[#475569]">
+        <span className="text-[#7C8AA0]">
           {report.seatedCount} / {members.length} placed
         </span>
         <span className="font-bold text-[#06B6D4]">
@@ -221,7 +221,7 @@ function BalancePanel({
             </div>
           )}
           {report.missingWeight.length > 0 && (
-            <div className="text-[10px] text-[#64748B]">
+            <div className="text-[10px] text-[#8A98AC]">
               No weight recorded for {report.missingWeight.map(m => m.full_name).join(", ")} — balance
               figures exclude them.
             </div>
@@ -229,7 +229,7 @@ function BalancePanel({
         </div>
       )}
 
-      <div className="text-[10px] text-[#475569]">
+      <div className="text-[10px] text-[#7C8AA0]">
         {report.totalWeightKg.toFixed(0)} kg of paddlers aboard
       </div>
     </div>
@@ -443,7 +443,7 @@ export default function LineupsTab({
               <div key={l.id} className="flex items-center gap-3 px-4 py-3 border-b border-[#1E293B] last:border-0">
                 <button className="flex-1 text-left" onClick={() => loadLineup(l)}>
                   <div className="text-sm font-semibold text-[#F1F5F9]">{l.name}</div>
-                  <div className="text-[10px] text-[#475569]">{l.boat_size}-seat · {l.assignments.filter(a => a.user_id).length} assigned</div>
+                  <div className="text-[10px] text-[#7C8AA0]">{l.boat_size}-seat · {l.assignments.filter(a => a.user_id).length} assigned</div>
                 </button>
                 <button onClick={() => deleteLineup(l.id)} className="text-[#EF4444]/50 hover:text-[#EF4444]">
                   <Trash2 size={14} />
@@ -455,13 +455,13 @@ export default function LineupsTab({
 
         {/* Boat size selector */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-[#64748B] font-semibold shrink-0">Boat size:</span>
+          <span className="text-xs text-[#8A98AC] font-semibold shrink-0">Boat size:</span>
           {[10, 20].map(s => (
             <button
               key={s}
               onClick={() => { setBoatSize(s); setShowCustom(false); }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                !showCustom && boatSize === s ? "border-[#0EA5E9]/50 bg-[#0EA5E9]/20 text-[#0EA5E9]" : "border-[#1E293B] text-[#475569] hover:border-[#334155]"
+                !showCustom && boatSize === s ? "border-[#0EA5E9]/50 bg-[#0EA5E9]/20 text-[#0EA5E9]" : "border-[#1E293B] text-[#7C8AA0] hover:border-[#334155]"
               }`}
             >
               {s} seats
@@ -470,7 +470,7 @@ export default function LineupsTab({
           <button
             onClick={() => setShowCustom(!showCustom)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-              showCustom ? "border-[#0EA5E9]/50 bg-[#0EA5E9]/20 text-[#0EA5E9]" : "border-[#1E293B] text-[#475569] hover:border-[#334155]"
+              showCustom ? "border-[#0EA5E9]/50 bg-[#0EA5E9]/20 text-[#0EA5E9]" : "border-[#1E293B] text-[#7C8AA0] hover:border-[#334155]"
             }`}
           >
             Custom
@@ -505,7 +505,7 @@ export default function LineupsTab({
             <strong>{members.find(m => m.user_id === selected)?.full_name.split(" ")[0]}</strong> selected — tap a seat to place, or tap again to deselect
           </div>
         ) : (
-          <div className="text-xs text-[#475569] text-center">
+          <div className="text-xs text-[#7C8AA0] text-center">
             Tap an athlete to select, then tap a seat — or drag directly on desktop
           </div>
         )}
@@ -514,7 +514,7 @@ export default function LineupsTab({
         <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] overflow-hidden">
           {/* Bow / Drummer */}
           <div className="bg-[#F59E0B]/10 border-b border-[#1E293B] px-3 pt-3 pb-2">
-            <div className="text-[9px] text-center text-[#475569] uppercase tracking-widest mb-1.5">Bow — Front of Boat</div>
+            <div className="text-[9px] text-center text-[#7C8AA0] uppercase tracking-widest mb-1.5">Bow — Front of Boat</div>
             <SeatSlot
               seat="drummer" side={undefined}
               occupant={getOccupant("drummer")}
@@ -559,14 +559,14 @@ export default function LineupsTab({
               selected={selected === getOccupant("steerer")?.user_id}
               onTap={() => handleSlotTap("steerer")}
             />
-            <div className="text-[9px] text-center text-[#475569] uppercase tracking-widest mt-1.5">Stern — Back of Boat</div>
+            <div className="text-[9px] text-center text-[#7C8AA0] uppercase tracking-widest mt-1.5">Stern — Back of Boat</div>
           </div>
         </div>
 
         {/* ── Athlete pool ─────────────────────────────────────────────── */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-[#64748B] uppercase tracking-wider">Unassigned ({pool.length})</span>
+            <span className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider">Unassigned ({pool.length})</span>
             {assignments.length > 0 && (
               <button
                 onClick={() => { setAssignments([]); setSelected(null); }}

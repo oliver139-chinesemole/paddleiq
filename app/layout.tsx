@@ -8,7 +8,12 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // maximumScale: 1 was blocking pinch-zoom. It's a common PWA reflex — it
+  // stops iOS zooming when a small input is focused — but it also denies zoom
+  // to anyone who needs it. The inputs here are already 16px, which is what
+  // actually prevents that auto-zoom.
+  maximumScale: 5,
+  userScalable: true,
   themeColor: "#0A0F1E",
   viewportFit: "cover",
 };

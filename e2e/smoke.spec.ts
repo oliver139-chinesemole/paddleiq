@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { AxeBuilder } from "@axe-core/playwright";
 
 /**
  * Smoke tests over the running app.
@@ -145,6 +146,31 @@ test.describe("technique library", () => {
     await expect(page.locator('a[href="/technique/form-check"]')).toBeVisible();
     await expect(page.locator('a[href="/technique/team-sync"]')).toBeVisible();
   });
+});
+
+test.describe("accessibility", () => {
+  // Guards the rules that were actually broken and are now fixed. Kept to a
+  // named list rather than "no violations at all" so the suite stays honest:
+  // colour contrast on the primary button is a live, known failure and a
+  // pending design decision, not something to quietly allow through a filter.
+  const RULES = ["label", "select-name", "button-name", "link-name", "meta-viewport"];
+
+  const ROUTES = [
+    "/login", "/dashboard", "/train/erg", "/train/water", "/train/team",
+    "/train/dryland", "/technique", "/technique/video", "/profile", "/onboarding",
+  ];
+
+  for (const route of ROUTES) {
+    test(`${route} has labelled controls and allows zoom`, async ({ page }) => {
+      await page.goto(route, { waitUntil: "networkidle" });
+      const results = await new AxeBuilder({ page }).withRules(RULES).analyze();
+
+      const detail = results.violations.flatMap((v) =>
+        v.nodes.map((n) => `${v.id}: ${n.html.replace(/\s+/g, " ").slice(0, 80)}`)
+      );
+      expect(detail, `${route} accessibility violations`).toEqual([]);
+    });
+  }
 });
 
 test.describe("offline", () => {

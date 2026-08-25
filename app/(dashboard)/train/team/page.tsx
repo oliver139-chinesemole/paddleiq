@@ -60,7 +60,7 @@ export default function TeamSessionPage() {
           <CheckCircle size={32} className="text-[#F97316]" />
         </div>
         <h2 className="text-xl font-black text-[#F1F5F9]">Practice Logged!</h2>
-        <p className="text-[#64748B] text-sm">Great session with your team.</p>
+        <p className="text-[#8A98AC] text-sm">Great session with your team.</p>
       </div>
     );
   }
@@ -73,12 +73,12 @@ export default function TeamSessionPage() {
         </div>
         <div>
           <h1 className="text-xl font-black text-[#F1F5F9]">Dragon Boat Practice</h1>
-          <p className="text-xs text-[#64748B]">Team session on the water</p>
+          <p className="text-xs text-[#8A98AC]">Team session on the water</p>
         </div>
       </div>
 
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-4">Practice Details</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-4">Practice Details</h2>
         <div className="grid grid-cols-2 gap-3">
           <Input label="Date" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
           <Input label="Duration (min)" type="number" placeholder="90" value={form.durationMin} onChange={(e) => setForm({ ...form, durationMin: e.target.value })} />
@@ -100,7 +100,7 @@ export default function TeamSessionPage() {
       </div>
 
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-4">Your Position</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-4">Your Position</h2>
         <div className="grid grid-cols-2 gap-3">
           <Select
             label="Paddle Side"
@@ -128,14 +128,14 @@ export default function TeamSessionPage() {
       </div>
 
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">Effort Level (RPE)</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Effort Level (RPE)</h2>
         <div className="flex gap-1.5 flex-wrap">
           {[1,2,3,4,5,6,7,8,9,10].map((n) => (
             <button
               key={n}
               onClick={() => setForm({ ...form, rpe: String(n) })}
               className={`w-9 h-9 rounded-xl text-sm font-bold transition-colors cursor-pointer ${
-                form.rpe === String(n) ? "bg-[#F97316] text-white" : "bg-[#1E293B] text-[#64748B] hover:bg-[#334155]"
+                form.rpe === String(n) ? "bg-[#F97316] text-white" : "bg-[#1E293B] text-[#8A98AC] hover:bg-[#334155]"
               }`}
             >
               {n}

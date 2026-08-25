@@ -91,7 +91,7 @@ function EventCard({
               <span className="text-[10px] font-medium" style={{ color: accent }}>{daysUntil(event.event_date)}</span>
             </div>
             <div className="text-sm font-bold text-[#F1F5F9]">{event.title}</div>
-            <div className="flex items-center gap-3 mt-1 text-xs text-[#64748B]">
+            <div className="flex items-center gap-3 mt-1 text-xs text-[#8A98AC]">
               <span className="flex items-center gap-1"><Calendar size={11} />{fmtDate(event.event_date)}</span>
               {event.event_time && <span className="flex items-center gap-1"><Clock size={11} />{fmtTime(event.event_time)}</span>}
             </div>
@@ -106,7 +106,7 @@ function EventCard({
               {myRsvp === "yes" ? "✓ Going" : myRsvp === "no" ? "✗ Can&apos;t go" : "? Maybe"}
             </div>
           )}
-          {expanded ? <ChevronUp size={14} className="text-[#475569] shrink-0" /> : <ChevronDown size={14} className="text-[#475569] shrink-0" />}
+          {expanded ? <ChevronUp size={14} className="text-[#7C8AA0] shrink-0" /> : <ChevronDown size={14} className="text-[#7C8AA0] shrink-0" />}
         </div>
       </button>
 
@@ -118,13 +118,13 @@ function EventCard({
             </div>
           )}
           {event.description && (
-            <p className="text-xs text-[#64748B] mt-2 leading-relaxed">{event.description}</p>
+            <p className="text-xs text-[#8A98AC] mt-2 leading-relaxed">{event.description}</p>
           )}
 
           {/* RSVP buttons */}
           {!isPast && (
             <div className="mt-4">
-              <p className="text-[10px] font-semibold text-[#475569] uppercase tracking-wider mb-2">Your RSVP</p>
+              <p className="text-[10px] font-semibold text-[#7C8AA0] uppercase tracking-wider mb-2">Your RSVP</p>
               <div className="flex gap-2">
                 {(["yes", "no", "maybe"] as RsvpStatus[]).map(s => (
                   <button
@@ -135,7 +135,7 @@ function EventCard({
                         ? s === "yes" ? "bg-[#10B981]/20 border-[#10B981]/50 text-[#10B981]"
                         : s === "no"  ? "bg-[#EF4444]/20 border-[#EF4444]/50 text-[#EF4444]"
                         :               "bg-[#F59E0B]/20 border-[#F59E0B]/50 text-[#F59E0B]"
-                        : "bg-[#111827] border-[#1E293B] text-[#64748B] hover:border-[#334155]"
+                        : "bg-[#111827] border-[#1E293B] text-[#8A98AC] hover:border-[#334155]"
                     }`}
                   >
                     {s === "yes" ? <Check size={12} /> : s === "no" ? <X size={12} /> : <HelpCircle size={12} />}
@@ -149,23 +149,23 @@ function EventCard({
           {/* Coach: RSVP summary */}
           {isCoach && summary && (
             <div className="mt-4 p-3 rounded-xl bg-[#111827] border border-[#1E293B]">
-              <p className="text-[10px] font-semibold text-[#475569] uppercase tracking-wider mb-2">Attendance Summary</p>
+              <p className="text-[10px] font-semibold text-[#7C8AA0] uppercase tracking-wider mb-2">Attendance Summary</p>
               <div className="grid grid-cols-3 gap-2 text-center mb-3">
                 <div>
                   <div className="text-base font-black text-[#10B981]">{summary.yes}</div>
-                  <div className="text-[9px] text-[#64748B]">Going</div>
+                  <div className="text-[9px] text-[#8A98AC]">Going</div>
                 </div>
                 <div>
                   <div className="text-base font-black text-[#EF4444]">{summary.no}</div>
-                  <div className="text-[9px] text-[#64748B]">Can&apos;t go</div>
+                  <div className="text-[9px] text-[#8A98AC]">Can&apos;t go</div>
                 </div>
                 <div>
                   <div className="text-base font-black text-[#F59E0B]">{summary.maybe}</div>
-                  <div className="text-[9px] text-[#64748B]">Maybe</div>
+                  <div className="text-[9px] text-[#8A98AC]">Maybe</div>
                 </div>
               </div>
               {summary.yes > 0 && (
-                <div className="text-[11px] text-[#64748B]">
+                <div className="text-[11px] text-[#8A98AC]">
                   Confirmed side balance: <span className="text-[#0EA5E9] font-bold">{summary.leftYes}L</span> / <span className="text-[#06B6D4] font-bold">{summary.rightYes}R</span>
                   {summary.leftYes !== summary.rightYes && (
                     <span className="text-[#F59E0B]"> — {Math.abs(summary.leftYes - summary.rightYes)} imbalance</span>
@@ -213,11 +213,11 @@ function CreateEventForm({ onSave, onCancel }: { onSave: (f: Omit<TeamEvent, "id
       </div>
       <Input label="Location (optional)" placeholder="Boat Club / Gym" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
       <div>
-        <label className="block text-xs text-[#64748B] font-medium mb-1.5">Event Type</label>
+        <label className="block text-xs text-[#8A98AC] font-medium mb-1.5">Event Type</label>
         <div className="flex gap-2 flex-wrap">
           {(["practice","race","time_trial","tryout","social"] as EventType[]).map(t => (
             <button key={t} type="button" onClick={() => setForm({ ...form, type: t })}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${form.type === t ? "bg-[#0EA5E9]/20 border-[#0EA5E9]/50 text-[#0EA5E9]" : "border-[#1E293B] text-[#475569] hover:border-[#334155]"}`}>
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${form.type === t ? "bg-[#0EA5E9]/20 border-[#0EA5E9]/50 text-[#0EA5E9]" : "border-[#1E293B] text-[#7C8AA0] hover:border-[#334155]"}`}>
               {EVENT_TYPE_LABEL[t]}
             </button>
           ))}
@@ -360,7 +360,7 @@ export default function ScheduleTab({
       {events.length === 0 && !showCreate && (
         <div className="flex flex-col items-center gap-3 py-10 text-center">
           <Calendar size={32} className="text-[#334155]" />
-          <p className="text-sm text-[#475569]">
+          <p className="text-sm text-[#7C8AA0]">
             {isCoach ? "No events scheduled yet. Create one above." : "No upcoming events. Check back soon!"}
           </p>
         </div>

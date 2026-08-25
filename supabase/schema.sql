@@ -175,6 +175,10 @@ ALTER TABLE team_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dryland_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE personal_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_training_plans ENABLE ROW LEVEL SECURITY;
+-- technique_videos was the one table left without RLS. The anon key is public
+-- in a client-side app, so every row was readable and writable by anyone via
+-- the REST API — video URLs, notes and coach comments included.
+ALTER TABLE technique_videos ENABLE ROW LEVEL SECURITY;
 
 -- Profiles: users can read/update their own
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
@@ -198,6 +202,11 @@ CREATE POLICY "Users can manage own PRs" ON personal_records FOR ALL USING (auth
 
 -- Training plans: own data only
 CREATE POLICY "Users can manage own training plans" ON user_training_plans FOR ALL USING (auth.uid() = user_id);
+
+-- Technique videos: own data only, matching the session tables. A coach-read
+-- policy can be added alongside this when the feature is actually built; the
+-- table is currently unreferenced by the app.
+CREATE POLICY "Users can manage own technique videos" ON technique_videos FOR ALL USING (auth.uid() = user_id);
 
 -- ==================== AUTO PR DETECTION FUNCTION ====================
 CREATE OR REPLACE FUNCTION check_and_update_pr()

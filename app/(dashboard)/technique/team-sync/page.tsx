@@ -48,7 +48,7 @@ function SideToggle({ side, onChange }: { side: PaddleSide; onChange: (s: Paddle
 function FramingTips() {
   return (
     <div className="bg-[#0B1220] border border-[#1E293B] rounded-2xl p-4">
-      <div className="text-[#64748B] text-[10px] font-bold tracking-wide uppercase mb-2">
+      <div className="text-[#8A98AC] text-[10px] font-bold tracking-wide uppercase mb-2">
         Filming the crew
       </div>
       <ul className="text-[#94A3B8] text-sm space-y-1.5 leading-relaxed">
@@ -122,17 +122,17 @@ export default function TeamSyncPage() {
   const header = (title: string, sub?: string, back?: () => void) => (
     <div className="flex items-start gap-2 mb-5">
       {back ? (
-        <button onClick={back} className="text-[#64748B] hover:text-white mt-1" aria-label="Back">
+        <button onClick={back} className="text-[#8A98AC] hover:text-white mt-1" aria-label="Back">
           <ChevronLeft size={22} />
         </button>
       ) : (
-        <Link href="/technique" className="text-[#64748B] hover:text-white mt-1" aria-label="Back">
+        <Link href="/technique" className="text-[#8A98AC] hover:text-white mt-1" aria-label="Back">
           <ChevronLeft size={22} />
         </Link>
       )}
       <div>
         <h1 className="text-2xl font-black text-white">{title}</h1>
-        {sub && <p className="text-sm text-[#64748B] mt-0.5">{sub}</p>}
+        {sub && <p className="text-sm text-[#8A98AC] mt-0.5">{sub}</p>}
       </div>
     </div>
   );
@@ -150,11 +150,11 @@ export default function TeamSyncPage() {
                 style={{ width: `${Math.round(progress * 100)}%` }}
               />
             </div>
-            <p className="text-[#64748B] text-xs text-center mt-2">
+            <p className="text-[#8A98AC] text-xs text-center mt-2">
               {progress > 0 ? `${Math.round(progress * 100)}%` : "Reading frames…"}
             </p>
           </div>
-          <p className="text-[#475569] text-xs text-center px-8">
+          <p className="text-[#7C8AA0] text-xs text-center px-8">
             Tracking up to {MAX_TRACKED_PADDLERS} paddlers takes longer than a single one. Runs
             entirely on your device.
           </p>
@@ -210,7 +210,7 @@ export default function TeamSyncPage() {
         {clips.length === 0 ? (
           <div className="text-center py-16">
             <VideoIcon size={28} className="text-[#334155] mx-auto mb-3" />
-            <p className="text-[#64748B] text-sm">No clips saved yet.</p>
+            <p className="text-[#8A98AC] text-sm">No clips saved yet.</p>
             <Link href="/technique/video" className="text-[#0EA5E9] text-sm font-semibold mt-2 inline-block">
               Record one first
             </Link>
@@ -225,11 +225,11 @@ export default function TeamSyncPage() {
               >
                 <div className="min-w-0">
                   <div className="text-white font-semibold truncate">{c.label}</div>
-                  <div className="text-[#64748B] text-xs mt-0.5">
+                  <div className="text-[#8A98AC] text-xs mt-0.5">
                     {c.category} · {c.date} · {Math.round(c.durationSec)}s
                   </div>
                 </div>
-                <ChevronLeft size={16} className="text-[#475569] rotate-180 shrink-0" />
+                <ChevronLeft size={16} className="text-[#7C8AA0] rotate-180 shrink-0" />
               </button>
             ))}
           </div>
@@ -282,7 +282,7 @@ export default function TeamSyncPage() {
             <Library size={20} className="text-[#0EA5E9]" />
             <span className="flex-1 text-left">
               From your clip library
-              <span className="block text-xs font-normal text-[#64748B]">
+              <span className="block text-xs font-normal text-[#8A98AC]">
                 Re-read a clip you already recorded
               </span>
             </span>

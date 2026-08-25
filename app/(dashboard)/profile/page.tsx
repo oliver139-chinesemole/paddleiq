@@ -118,7 +118,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <h1 className="text-lg font-black text-[#F1F5F9]">{displayName}</h1>
-            <p className="text-sm text-[#64748B]">{displayEmail}</p>
+            <p className="text-sm text-[#8A98AC]">{displayEmail}</p>
             <div className="flex items-center gap-2 mt-1.5">
               {isDemoMode && <Badge variant="default" className="text-[10px]">Demo Mode</Badge>}
               {!isDemoMode && <Badge variant="cyan" className="text-[10px]">Real Athlete</Badge>}
@@ -129,15 +129,15 @@ export default function ProfilePage() {
         <div className="grid grid-cols-3 gap-3 mt-5 pt-4 border-t border-[#1E293B]">
           <div className="text-center">
             <div className="text-xl font-black text-[#F1F5F9]">{stats.total_sessions}</div>
-            <div className="text-[10px] text-[#64748B]">Sessions</div>
+            <div className="text-[10px] text-[#8A98AC]">Sessions</div>
           </div>
           <div className="text-center">
             <div className="text-xl font-black text-[#F97316]">{stats.current_streak}</div>
-            <div className="text-[10px] text-[#64748B]">Day Streak</div>
+            <div className="text-[10px] text-[#8A98AC]">Day Streak</div>
           </div>
           <div className="text-center">
             <div className="text-xl font-black text-[#F59E0B]">{prCount}</div>
-            <div className="text-[10px] text-[#64748B]">PRs Set</div>
+            <div className="text-[10px] text-[#8A98AC]">PRs Set</div>
           </div>
         </div>
       </div>
@@ -149,12 +149,12 @@ export default function ProfilePage() {
           <span className="text-sm font-bold text-[#F59E0B]">Best Performances</span>
         </div>
         {topPRs.length === 0 ? (
-          <p className="text-xs text-[#475569]">Log sessions to set your first PRs.</p>
+          <p className="text-xs text-[#7C8AA0]">Log sessions to set your first PRs.</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {topPRs.map((pr) => (
               <div key={pr.label} className="bg-[#0D1528] rounded-xl p-3 border border-[#1E293B]">
-                <div className="text-[10px] text-[#64748B] uppercase">{pr.label}</div>
+                <div className="text-[10px] text-[#8A98AC] uppercase">{pr.label}</div>
                 <div className="text-lg font-black text-[#F1F5F9]">{formatTime(pr.time_sec)}</div>
               </div>
             ))}
@@ -164,7 +164,7 @@ export default function ProfilePage() {
 
       {/* Badges */}
       <div>
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider mb-3">Badges</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">Badges</h2>
         <div className="grid grid-cols-4 gap-2">
           {STATIC_BADGES.map((badge) => {
             const earned = earnedBadges.has(badge.key);
@@ -176,7 +176,7 @@ export default function ProfilePage() {
                 }`}
               >
                 <div className="text-2xl mb-1">{badge.icon}</div>
-                <div className="text-[9px] text-[#64748B] leading-tight">{badge.name}</div>
+                <div className="text-[9px] text-[#8A98AC] leading-tight">{badge.name}</div>
               </div>
             );
           })}
@@ -185,7 +185,7 @@ export default function ProfilePage() {
 
       {/* Settings */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] overflow-hidden">
-        <h2 className="text-xs font-semibold text-[#64748B] uppercase tracking-wider p-4 pb-2">Settings</h2>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider p-4 pb-2">Settings</h2>
         {[
           { icon: User,     label: "Edit Profile",   href: "#" },
           { icon: Bell,     label: "Notifications",  href: "#" },
@@ -197,9 +197,9 @@ export default function ProfilePage() {
             href={href}
             className="flex items-center gap-3 px-4 py-3.5 border-t border-[#1E293B] hover:bg-[#1E293B] transition-colors"
           >
-            <Icon size={16} className="text-[#475569]" />
+            <Icon size={16} className="text-[#7C8AA0]" />
             <span className="text-sm text-[#F1F5F9] flex-1">{label}</span>
-            <ChevronRight size={14} className="text-[#475569]" />
+            <ChevronRight size={14} className="text-[#7C8AA0]" />
           </Link>
         ))}
       </div>
@@ -207,8 +207,8 @@ export default function ProfilePage() {
       {/* About */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4 text-center">
         <div className="text-lg font-black gradient-text mb-1">PaddleIQ</div>
-        <div className="text-xs text-[#475569]">Version 1.0.0 — Beta</div>
-        <div className="text-xs text-[#475569] mt-1">Built for dragon boat athletes worldwide.</div>
+        <div className="text-xs text-[#7C8AA0]">Version 1.0.0 — Beta</div>
+        <div className="text-xs text-[#7C8AA0] mt-1">Built for dragon boat athletes worldwide.</div>
       </div>
 
       <Button

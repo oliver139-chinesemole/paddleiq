@@ -16,9 +16,9 @@ export function ProgressChart({ data, color = "#0EA5E9", label = "Split", invert
     <ResponsiveContainer width="100%" height={140}>
       <LineChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
-        <XAxis dataKey="date" tick={{ fill: "#64748B", fontSize: 11 }} axisLine={false} tickLine={false} />
+        <XAxis dataKey="date" tick={{ fill: "#8A98AC", fontSize: 11 }} axisLine={false} tickLine={false} />
         <YAxis
-          tick={{ fill: "#64748B", fontSize: 11 }}
+          tick={{ fill: "#8A98AC", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           reversed={invertY}
