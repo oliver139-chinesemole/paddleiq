@@ -236,18 +236,63 @@ describe("checkBoatErgGap", () => {
 
 // ── Rule 8: PR proximity ─────────────────────────────────────────────────────
 describe("checkPRProximity", () => {
+  // Pinned so the fixtures don't age out of the 14-day window. Passing the
+  // clock in is why this is stable; reading Date.now() inside made the test
+  // pass in the week it was written and fail silently ever after.
+  const NOW = new Date(TODAY);
+
   it("returns empty when no recent sessions", () => {
     const prs = [{ category: "erg" as const, distance_m: 500, time_sec: 120 }];
-    expect(checkPRProximity([], [], prs)).toHaveLength(0);
+    expect(checkPRProximity([], [], prs, NOW)).toHaveLength(0);
   });
 
   it("flags proximity when recent session is close to PR", () => {
     const prs = [{ category: "erg" as const, distance_m: 500, time_sec: 130 }];
-    // Recent session: split 131 → duration = 131s for 500m
+    // Recent session: split 131 → duration = 131s for 500m, 1s short of the PR.
     const erg = [makeErg({ date: d(3), distance_m: 500, duration_sec: 131, split_sec: 131 })];
-    const result = checkPRProximity(erg, [], prs);
+    const result = checkPRProximity(erg, [], prs, NOW);
     expect(result.length).toBeGreaterThan(0);
-    expect(result[0].gapSec).toBeCloseTo(130 - 131, 0); // negative = slower than PR
+    // Positive = still short of the PR, which is what templates.ts renders as
+    // "within Xs of your PR". The old assertion had this inverted.
+    expect(result[0].gapSec).toBeCloseTo(1, 0);
+    expect(result[0].severity).toBe("warn");
+  });
+
+  it("ignores sessions older than the lookback window", () => {
+    const prs = [{ category: "erg" as const, distance_m: 500, time_sec: 130 }];
+    const erg = [makeErg({ date: d(30), distance_m: 500, duration_sec: 131, split_sec: 131 })];
+    expect(checkPRProximity(erg, [], prs, NOW)).toHaveLength(0);
+  });
+
+  it("never emits NaN when the only sessions are at another distance", () => {
+    const prs = [{ category: "erg" as const, distance_m: 500, time_sec: 130 }];
+    const erg = [makeErg({ date: d(2), distance_m: 1000, duration_sec: 260, split_sec: 130 })];
+    const result = checkPRProximity(erg, [], prs, NOW);
+    expect(result).toHaveLength(0);
+    for (const r of result) {
+      expect(Number.isFinite(r.gapSec)).toBe(true);
+      expect(Number.isFinite(r.recentTimeSec)).toBe(true);
+    }
+  });
+
+  it("reports beating the PR as a negative gap, matching the copy", () => {
+    const prs = [{ category: "erg" as const, distance_m: 500, time_sec: 130 }];
+    const erg = [makeErg({ date: d(1), distance_m: 500, duration_sec: 126, split_sec: 126 })];
+    const [result] = checkPRProximity(erg, [], prs, NOW);
+    expect(result).toBeDefined();
+    // templates.ts renders gapSec <= 0 as "New PR! Beat old best by 4.0s".
+    expect(result.gapSec).toBeCloseTo(-4, 0);
+    expect(result.severity).toBe("ok");
+  });
+
+  it("scales split to total time for distances other than 500m", () => {
+    const prs = [{ category: "erg" as const, distance_m: 2000, time_sec: 520 }];
+    // 130s per 500m over 2000m => 520s total, exactly on the PR.
+    const erg = [makeErg({ date: d(2), distance_m: 2000, duration_sec: 520, split_sec: 130 })];
+    const [result] = checkPRProximity(erg, [], prs, NOW);
+    expect(result).toBeDefined();
+    expect(result.recentTimeSec).toBeCloseTo(520, 0);
+    expect(result.gapSec).toBeCloseTo(0, 0);
   });
 });
 

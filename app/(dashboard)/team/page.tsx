@@ -42,7 +42,32 @@ const DEMO_LB = [
 ];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type Member = typeof DEMO_TEAM.members[0];
+
+// Declared explicitly rather than inferred from DEMO_TEAM: the fixtures fill in
+// every field, so inference made seat_number, weight_kg and performance_role
+// look non-nullable when the database allows all three to be empty.
+type Member = {
+  id: string;
+  user_id: string;
+  full_name: string;
+  paddle_side: string;
+  seat_number: number | null;
+  role_in_team: string;
+  performance_role?: PerformanceRole;
+  weight_kg: number | null;
+  joined_at: string;
+};
+
+const PERFORMANCE_ROLES: readonly PerformanceRole[] = [
+  "pacer_stroke", "engine_room", "rocket", "tech",
+];
+
+/** Narrows the free-form column to the union, dropping anything unrecognised. */
+function asPerformanceRole(value: string | null): PerformanceRole | undefined {
+  return PERFORMANCE_ROLES.includes(value as PerformanceRole)
+    ? (value as PerformanceRole)
+    : undefined;
+}
 
 type Team = {
   id: string;
@@ -330,20 +355,26 @@ export default function TeamPage() {
 
       if (!teamData) { setTeam(null); return; }
 
+      type ProfileRef = { full_name: string | null };
       type MemberRow = {
         id: string; user_id: string; seat_number: number | null;
         paddle_side: string | null; role_in_team: string | null;
         performance_role: string | null; weight_kg: number | null;
-        joined_at: string; profiles: { full_name: string | null } | null;
+        joined_at: string;
+        // PostgREST returns a many-to-one embed as an object while its
+        // generated types call it an array. Accept either.
+        profiles: ProfileRef | ProfileRef[] | null;
       };
-      const members: Member[] = (membersData ?? []).map((m: MemberRow) => ({
+      const rows = (membersData ?? []) as unknown as MemberRow[];
+      const members: Member[] = rows.map((m: MemberRow) => ({
         id: m.id,
         user_id: m.user_id,
-        full_name: m.profiles?.full_name ?? "Athlete",
+        full_name:
+          (Array.isArray(m.profiles) ? m.profiles[0] : m.profiles)?.full_name ?? "Athlete",
         paddle_side: m.paddle_side ?? "left",
         seat_number: m.seat_number ?? null,
         role_in_team: m.role_in_team ?? "paddler",
-        performance_role: m.performance_role ?? undefined,
+        performance_role: asPerformanceRole(m.performance_role),
         weight_kg: m.weight_kg ?? null,
         joined_at: m.joined_at,
       }));

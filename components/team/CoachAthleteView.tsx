@@ -90,9 +90,16 @@ export default function CoachAthleteView({
           teamSessions: (teamRes.data ?? [] as MinRow[]).map((s: MinRow) => ({
             date: s.date, rpe: s.rpe ?? 6, duration_min: s.duration_min ?? 0,
           })),
-          prs: (prRes.data ?? [] as PRRow[]).map((p: PRRow) => ({
-            category: p.category, distance_m: p.distance_m, time_sec: p.time_sec,
-          })),
+          // category comes back from Supabase as a plain string; drop anything
+          // outside the union rather than asserting it away.
+          prs: (prRes.data ?? [] as PRRow[])
+            .map((p: PRRow) => ({
+              category: p.category, distance_m: p.distance_m, time_sec: p.time_sec,
+            }))
+            .filter(
+              (p): p is { category: "erg" | "water"; distance_m: number; time_sec: number } =>
+                p.category === "erg" || p.category === "water"
+            ),
         });
 
         const allFlags: RenderedInsight[] = [

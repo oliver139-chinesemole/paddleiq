@@ -119,12 +119,20 @@ export default function FeedTab({
   const [text, setText] = useState("");
   const [posting, setPosting] = useState(false);
 
+  type ProfileRef = { full_name: string | null };
   type FeedRow = {
     id: string; post_type: string; author_id: string | null; content: string;
     created_at: string; is_pinned: boolean;
     reactions: { kudos: string[] } | null;
     metadata: Record<string, unknown> | null;
-    profiles: { full_name: string | null } | null;
+    // PostgREST returns an embedded relation as an object for a many-to-one,
+    // but its generated types describe it as an array. Accept both.
+    profiles: ProfileRef | ProfileRef[] | null;
+  };
+
+  const authorNameOf = (p: FeedRow) => {
+    const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+    return profile?.full_name ?? "Team";
   };
 
   const loadPosts = useCallback(async () => {
@@ -140,11 +148,14 @@ export default function FeedTab({
         .order("created_at", { ascending: false })
         .limit(50);
 
-      setPosts((data ?? [] as FeedRow[]).map((p: FeedRow) => ({
+      // The cast has to wrap the whole expression: `data ?? [] as FeedRow[]`
+      // only types the fallback, leaving `data` with its inferred shape.
+      const rows = (data ?? []) as unknown as FeedRow[];
+      setPosts(rows.map((p: FeedRow) => ({
         id: p.id,
         post_type: p.post_type as FeedPostType,
-        author_id: p.author_id,
-        author_name: p.profiles?.full_name ?? "Team",
+        author_id: p.author_id ?? undefined,
+        author_name: authorNameOf(p),
         content: p.content,
         created_at: p.created_at,
         is_pinned: p.is_pinned,

@@ -9,6 +9,7 @@
 
 import type { PoseLandmarker } from "@mediapipe/tasks-vision";
 import type { PoseFrame, Point } from "./landmarks";
+import type { MultiPoseFrame } from "./sync";
 
 export type ModelQuality = "lite" | "full";
 
@@ -28,17 +29,24 @@ export const QUALITY_FOR: { live: ModelQuality; file: ModelQuality } = {
   file: "full",
 };
 
+/**
+ * Ceiling on paddlers tracked at once. Inference cost scales with this, and a
+ * side-on shot of a boat rarely frames more than a few seats cleanly anyway.
+ */
+export const MAX_TRACKED_PADDLERS = 6;
+
 const cache = new Map<string, Promise<PoseLandmarker>>();
 
 /**
- * Loads a landmarker, reusing one per (quality, mode) pair. The wasm runtime is
- * ~11MB and the weights 5–9MB, so this must not be called per frame.
+ * Loads a landmarker, reusing one per (quality, mode, numPoses) triple. The
+ * wasm runtime is ~11MB and the weights 5–9MB, so this must not run per frame.
  */
 export function loadPoseLandmarker(
   quality: ModelQuality,
-  runningMode: "VIDEO" | "IMAGE" = "VIDEO"
+  runningMode: "VIDEO" | "IMAGE" = "VIDEO",
+  numPoses = 1
 ): Promise<PoseLandmarker> {
-  const key = `${quality}:${runningMode}`;
+  const key = `${quality}:${runningMode}:${numPoses}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
@@ -48,7 +56,7 @@ export function loadPoseLandmarker(
     return PL.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: MODEL_PATH[quality], delegate: "GPU" },
       runningMode,
-      numPoses: 1,
+      numPoses,
       minPoseDetectionConfidence: 0.5,
       minPosePresenceConfidence: 0.5,
       minTrackingConfidence: 0.5,
@@ -63,8 +71,12 @@ export function loadPoseLandmarker(
 }
 
 /** True once the assets are in the HTTP cache and startup will be instant. */
-export function isPoseModelLoaded(quality: ModelQuality, runningMode = "VIDEO"): boolean {
-  return cache.has(`${quality}:${runningMode}`);
+export function isPoseModelLoaded(
+  quality: ModelQuality,
+  runningMode = "VIDEO",
+  numPoses = 1
+): boolean {
+  return cache.has(`${quality}:${runningMode}:${numPoses}`);
 }
 
 function toPoints(landmarks: Array<{ x: number; y: number; visibility?: number }>): Point[] {
@@ -81,6 +93,17 @@ export function detectFrame(
   const first = res.landmarks?.[0];
   if (!first?.length) return null;
   return { tMs, landmarks: toPoints(first) };
+}
+
+/** Every paddler found in one frame. Empty `poses` means nobody was detected. */
+export function detectFrameMulti(
+  landmarker: PoseLandmarker,
+  video: HTMLVideoElement,
+  tMs: number
+): MultiPoseFrame {
+  const res = landmarker.detectForVideo(video, tMs);
+  const poses = (res.landmarks ?? []).filter((l) => l?.length).map(toPoints);
+  return { tMs, poses };
 }
 
 // ─── file analysis ───────────────────────────────────────────────────────────
@@ -130,17 +153,17 @@ function loadMetadata(video: HTMLVideoElement): Promise<void> {
 }
 
 /**
- * Walks a recorded clip and returns a pose frame per sample point.
+ * Walks a recorded clip, calling `extract` at each sample point.
  *
  * Seeks rather than plays: sampling is then independent of how fast the device
  * can decode, timestamps are exact, and a 30s clip doesn't take 30s to read.
- * Frames where no pose is found are still recorded as gaps by the caller —
- * analyzeStrokes uses the ratio to judge whether the clip was usable at all.
  */
-export async function scanVideoFile(
+async function scanFrames<T>(
   source: Blob | string,
-  opts: FileScanOptions = {}
-): Promise<{ frames: PoseFrame[]; sampledCount: number; durationSec: number }> {
+  numPoses: number,
+  opts: FileScanOptions,
+  extract: (lm: PoseLandmarker, video: HTMLVideoElement, tMs: number) => T
+): Promise<{ frames: T[]; sampledCount: number; durationSec: number }> {
   const { onProgress, signal, quality = QUALITY_FOR.file } = opts;
 
   const url = typeof source === "string" ? source : URL.createObjectURL(source);
@@ -151,14 +174,14 @@ export async function scanVideoFile(
   video.src = url;
 
   try {
-    const landmarker = await loadPoseLandmarker(quality, "VIDEO");
+    const landmarker = await loadPoseLandmarker(quality, "VIDEO", numPoses);
     await loadMetadata(video);
 
     const durationSec = Number.isFinite(video.duration) ? video.duration : 0;
     if (!durationSec) throw new Error("Could not read video duration");
 
     const step = 1 / FILE_SAMPLE_HZ;
-    const frames: PoseFrame[] = [];
+    const frames: T[] = [];
     let sampledCount = 0;
 
     for (let t = 0; t < durationSec; t += step) {
@@ -168,14 +191,7 @@ export async function scanVideoFile(
 
       // t only ever increases, so ms timestamps are already strictly increasing
       // — which is what detectForVideo requires.
-      const tMs = Math.round(t * 1000);
-      const f = detectFrame(landmarker, video, tMs);
-
-      // Record a blank frame when nothing was found rather than skipping it.
-      // analyzeStrokes judges a clip by the ratio of usable to total frames, so
-      // dropping the misses here would make every clip look perfectly tracked.
-      frames.push(f ?? { tMs, landmarks: BLANK_LANDMARKS });
-
+      frames.push(extract(landmarker, video, Math.round(t * 1000)));
       onProgress?.(Math.min(1, t / durationSec));
     }
 
@@ -187,4 +203,29 @@ export async function scanVideoFile(
     video.load();
     if (typeof source !== "string") URL.revokeObjectURL(url);
   }
+}
+
+/**
+ * Single-paddler scan.
+ *
+ * Frames where no pose is found are recorded as blanks rather than skipped:
+ * analyzeStrokes judges a clip by the ratio of usable to total frames, so
+ * dropping the misses would make every clip look perfectly tracked.
+ */
+export function scanVideoFile(
+  source: Blob | string,
+  opts: FileScanOptions = {}
+): Promise<{ frames: PoseFrame[]; sampledCount: number; durationSec: number }> {
+  return scanFrames(source, 1, opts, (lm, video, tMs) =>
+    detectFrame(lm, video, tMs) ?? { tMs, landmarks: BLANK_LANDMARKS }
+  );
+}
+
+/** Multi-paddler scan, for reading crew timing off a boat video. */
+export function scanVideoFileMulti(
+  source: Blob | string,
+  opts: FileScanOptions & { numPoses?: number } = {}
+): Promise<{ frames: MultiPoseFrame[]; sampledCount: number; durationSec: number }> {
+  const numPoses = Math.min(opts.numPoses ?? MAX_TRACKED_PADDLERS, MAX_TRACKED_PADDLERS);
+  return scanFrames(source, numPoses, opts, detectFrameMulti);
 }

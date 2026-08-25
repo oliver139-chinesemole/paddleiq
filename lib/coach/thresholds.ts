@@ -31,4 +31,5 @@ export const THRESHOLDS = {
 
   // PR proximity — flag when within this fraction of a PR
   prProximityFraction: 0.05, // within 5% of PR time
+  prProximityWindowDays: 14, // only look back this far for a near-PR effort
 } as const;

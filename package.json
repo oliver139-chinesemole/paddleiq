@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "fetch-pose-assets": "node scripts/fetch-pose-assets.mjs",
     "postinstall": "node scripts/fetch-pose-assets.mjs",
-    "prebuild": "node scripts/fetch-pose-assets.mjs"
+    "prebuild": "node scripts/fetch-pose-assets.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

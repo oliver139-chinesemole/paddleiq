@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BookOpen, ChevronRight, ChevronDown, Star, Check, Video, ScanLine } from "lucide-react";
+import { BookOpen, ChevronRight, ChevronDown, Star, Check, Video, ScanLine, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { techniqueLessons } from "@/lib/data/seed";
@@ -167,6 +167,20 @@ function TechniqueLibrary() {
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-bold text-[#F1F5F9]">Form Check</h3>
             <p className="text-xs text-[#64748B] mt-0.5">Point your camera at yourself — or read a saved clip — and get your stroke measured</p>
+          </div>
+          <ChevronRight size={16} className="text-[#475569] shrink-0" />
+        </div>
+      </Link>
+
+      {/* Team Sync card */}
+      <Link href="/technique/team-sync">
+        <div className="flex items-center gap-4 rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4 hover:border-[#334155] transition-colors cursor-pointer">
+          <div className="w-11 h-11 rounded-xl bg-[#A855F7]/20 flex items-center justify-center shrink-0">
+            <Users size={22} className="text-[#A855F7]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-[#F1F5F9]">Team Sync</h3>
+            <p className="text-xs text-[#64748B] mt-0.5">Film the boat side-on and see who&apos;s catching early or late, in milliseconds</p>
           </div>
           <ChevronRight size={16} className="text-[#475569] shrink-0" />
         </div>

@@ -271,22 +271,31 @@ export function checkPRProximity(
   ergSessions: ErgSessionInput[],
   waterSessions: WaterSessionInput[],
   prs: PRInput[],
+  now = new Date(),
 ): PRProximityResult[] {
   const results: PRProximityResult[] = [];
-  const recent = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+  const recent = new Date(now.getTime() - THRESHOLDS.prProximityWindowDays * 24 * 60 * 60 * 1000);
 
   for (const pr of prs) {
-    const sessions = pr.category === "erg"
-      ? ergSessions.filter((s) => s.distance_m === pr.distance_m && new Date(s.date) >= recent)
-      : waterSessions.filter((s) => s.distance_m === pr.distance_m && new Date(s.date) >= recent);
+    const isRecent = (date: string) => new Date(date) >= recent;
 
-    const bestRecent = pr.category === "erg"
-      ? (sessions as ErgSessionInput[]).sort((a, b) => a.split_sec - b.split_sec)[0]?.split_sec * (pr.distance_m / 500)
-      : (sessions as WaterSessionInput[]).sort((a, b) => a.avg_pace_sec - b.avg_pace_sec)[0]?.avg_pace_sec * (pr.distance_m / 500);
+    // Take the fastest 500m pace first, then scale — multiplying a possibly
+    // missing session straight through yields NaN, which slips past a null
+    // check and quietly poisons every comparison below.
+    const bestPace = pr.category === "erg"
+      ? ergSessions
+          .filter((s) => s.distance_m === pr.distance_m && isRecent(s.date))
+          .sort((a, b) => a.split_sec - b.split_sec)[0]?.split_sec
+      : waterSessions
+          .filter((s) => s.distance_m === pr.distance_m && isRecent(s.date))
+          .sort((a, b) => a.avg_pace_sec - b.avg_pace_sec)[0]?.avg_pace_sec;
 
-    if (bestRecent == null) continue;
+    if (bestPace === undefined) continue;
+    const bestRecent = bestPace * (pr.distance_m / 500);
 
-    const gap = pr.time_sec - bestRecent;  // positive = below PR (or beating it)
+    // Negative = faster than the PR, i.e. beaten it; positive = still short of
+    // it. templates.ts and the severity below both read the sign this way.
+    const gap = bestRecent - pr.time_sec;
     const fraction = Math.abs(gap) / pr.time_sec;
 
     if (fraction <= THRESHOLDS.prProximityFraction || gap <= 0) {

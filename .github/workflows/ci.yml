@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Build & Lint
+    name: Typecheck, Test, Lint & Build
     runs-on: ubuntu-latest
 
     steps:
@@ -23,6 +23,15 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      # The Render build sets typescript.ignoreBuildErrors so it fits in the
+      # free tier's memory budget, which means this is the only thing standing
+      # between a type error and production.
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
 
       - name: Lint
         run: npm run lint
