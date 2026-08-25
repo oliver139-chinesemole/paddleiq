@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
-import { CheckCircle, Droplets, MapPin } from "lucide-react";
+import { CheckCircle, Droplets, Satellite } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EffortPicker } from "@/components/ui/effort-picker";
@@ -11,6 +11,9 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatTime, formatPace, calcPacePer500m, toLocalDateStr } from "@/lib/utils";
 import { validateWaterForm, isValid, type FieldErrors } from "@/lib/validation/session";
+import { useGpsTrack, GPS_STATUS_MESSAGE, SIGNAL_LOST_MESSAGE } from "@/hooks/useGpsTrack";
+import { summarise, type Fix } from "@/lib/gps/track";
+import { RouteMap } from "@/components/train/RouteMap";
 
 const DISTANCES = [
   { value: "200", label: "200m" },
@@ -26,6 +29,25 @@ export default function WaterSessionPage() {
   const { userId } = useUser();
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const gps = useGpsTrack();
+  const [trackedFixes, setTrackedFixes] = useState<Fix[]>([]);
+
+  function handleStopTracking() {
+    const fixes = gps.stop();
+    setTrackedFixes([...fixes]);
+    const summary = summarise(fixes);
+    if (summary.distanceM <= 0) return;
+    // Fill the form in rather than saving directly: the athlete still picks
+    // the craft, conditions and effort, and can correct the distance.
+    const mins = Math.floor(summary.durationSec / 60);
+    setForm((f) => ({
+      ...f,
+      distancePreset: "custom",
+      customDistance: String(Math.round(summary.distanceM)),
+      minutes: String(mins),
+      seconds: String(Math.round(summary.durationSec - mins * 60)),
+    }));
+  }
   const [form, setForm] = useState({
     date: toLocalDateStr(new Date()),
     distancePreset: "500",
@@ -114,6 +136,89 @@ export default function WaterSessionPage() {
           <h1 className="text-xl font-black text-[#F1F5F9]">Solo Water Time Trial</h1>
           <p className="text-xs text-[#8A98AC]">OC / kayak / canoe / solo paddle craft</p>
         </div>
+      </div>
+
+
+      {/* GPS tracking — the landing page has advertised this since launch while
+          the form was manual entry only. Sits above the form and fills it in on
+          stop, so it augments manual entry rather than replacing it. */}
+      <div className="rounded-2xl border border-[#0EA5E9]/30 bg-[#0EA5E9]/10 p-5 flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-bold text-[#F1F5F9]">Track with GPS</h2>
+            <p className="text-xs text-[#8A98AC] mt-0.5">
+              {gps.isTracking
+                ? "Recording — keep the screen on and the phone in the boat."
+                : "Records your distance, pace and route as you paddle."}
+            </p>
+          </div>
+          <Satellite size={20} className={gps.isTracking ? "text-[#22C55E]" : "text-[#0EA5E9]"} />
+        </div>
+
+        {gps.isTracking && (
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl bg-[#0B1220] p-3 text-center">
+              <div className="text-lg font-black text-[#F1F5F9] tabular-nums">
+                {(gps.stats.distanceM / 1000).toFixed(2)}
+              </div>
+              <div className="text-[10px] text-[#8A98AC]">km</div>
+            </div>
+            <div className="rounded-xl bg-[#0B1220] p-3 text-center">
+              <div className="text-lg font-black text-[#F1F5F9] tabular-nums">
+                {gps.stats.pacePer500Sec > 0 ? formatTime(gps.stats.pacePer500Sec) : "—"}
+              </div>
+              <div className="text-[10px] text-[#8A98AC]">/500m</div>
+            </div>
+            <div className="rounded-xl bg-[#0B1220] p-3 text-center">
+              <div className="text-lg font-black text-[#F1F5F9] tabular-nums">
+                {formatTime(gps.stats.durationSec)}
+              </div>
+              <div className="text-[10px] text-[#8A98AC]">elapsed</div>
+            </div>
+          </div>
+        )}
+
+        {gps.status !== "idle" && gps.status !== "tracking" && gps.status !== "requesting" && (
+          <p className="text-xs text-[#FBBF24]">{GPS_STATUS_MESSAGE[gps.status]}</p>
+        )}
+
+        {gps.isTracking && gps.signalLost && (
+          <p className="text-xs text-[#FBBF24]">{SIGNAL_LOST_MESSAGE}</p>
+        )}
+
+        {gps.isTracking ? (
+          <button
+            onClick={handleStopTracking}
+            className="w-full bg-[#EF4444] text-white font-bold py-3 rounded-xl"
+          >
+            Stop and fill in the form
+          </button>
+        ) : (
+          <button
+            onClick={() => void gps.start()}
+            className="w-full bg-[#0EA5E9] text-[#0A0F1E] font-bold py-3 rounded-xl"
+          >
+            Start GPS tracking
+          </button>
+        )}
+
+        {gps.accuracy !== null && gps.isTracking && (
+          <p className="text-[10px] text-[#7C8AA0] text-center">
+            Signal accurate to about {Math.round(gps.accuracy)}m · tracking stops if the
+            screen locks or you switch apps
+          </p>
+        )}
+
+        {!gps.isTracking && trackedFixes.length > 1 && (
+          <div className="flex flex-col gap-2">
+            <RouteMap fixes={trackedFixes} className="block w-full rounded-xl" />
+            <p className="text-[10px] text-[#7C8AA0] text-center">
+              {gps.stats.rejectedFixes > 0
+                ? `${gps.stats.usedFixes} fixes used, ${gps.stats.rejectedFixes} discarded as inaccurate`
+                : `${gps.stats.usedFixes} fixes recorded`}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Distance Selection */}
@@ -234,15 +339,6 @@ export default function WaterSessionPage() {
             onChange={(v) => updateField("rpe", v)}
             error={errors.rpe}
           />
-      </div>
-
-      {/* GPS / Location placeholder */}
-      <div className="rounded-2xl border border-dashed border-[#334155] p-5 flex items-center gap-3">
-        <MapPin size={20} className="text-[#8A98AC]" />
-        <div>
-          <div className="text-sm font-semibold text-[#8A98AC]">GPS Route Tracking</div>
-          <div className="text-xs text-[#7C8AA0]">Live GPS recording — coming in next update</div>
-        </div>
       </div>
 
       {/* Notes */}

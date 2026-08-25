@@ -194,6 +194,47 @@ test.describe("accessibility", () => {
   }
 });
 
+test.describe("GPS tracking", () => {
+  // The landing page advertised "GPS-based time trials" while the water form
+  // was manual entry only, and the page carried a "coming in next update"
+  // placeholder. This covers the round trip.
+  test("records a paddle and fills the form in", async ({ page, context }) => {
+    await context.grantPermissions(["geolocation"]);
+    await context.setGeolocation({ latitude: 37.865, longitude: -122.315, accuracy: 5 });
+
+    await page.goto("/train/water", { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: /start gps tracking/i }).click();
+    await expect(page.getByRole("button", { name: /stop and fill in the form/i })).toBeVisible();
+
+    // ~18 km/h: 5m per second. Slower than the 35 km/h jump filter, faster than
+    // the 2m noise floor, so every fix should be kept.
+    const METRE = 1 / 111_320;
+    let lat = 37.865;
+    for (let i = 0; i < 6; i++) {
+      lat += 5 * METRE;
+      await context.setGeolocation({ latitude: lat, longitude: -122.315, accuracy: 5 });
+      await page.waitForTimeout(1000);
+    }
+
+    await page.getByRole("button", { name: /stop and fill in the form/i }).click();
+
+    // Duration lands in the form, and the route is drawn.
+    const seconds = page.locator('input[placeholder="Seconds"]');
+    await expect.poll(async () => Number(await seconds.inputValue())).toBeGreaterThan(0);
+    await expect(page.locator("canvas")).toHaveCount(1);
+  });
+
+  test("a denied permission falls back to manual entry", async ({ page, context }) => {
+    await context.clearPermissions();
+    await page.goto("/train/water", { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: /start gps tracking/i }).click();
+
+    // Must explain itself and leave the manual fields usable, not dead-end.
+    await expect(page.getByText(/by hand below/i)).toBeVisible();
+    await expect(page.locator('input[placeholder="Minutes"]')).toBeEditable();
+  });
+});
+
 test.describe("offline", () => {
   /** Waits for the service worker to install and take control. */
   async function waitForServiceWorker(page: Page) {
