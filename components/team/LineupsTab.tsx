@@ -7,11 +7,14 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Save, Loader2, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { Save, Loader2, ChevronDown, Plus, Trash2, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import type { SeatAssignment, PerformanceRole } from "@/lib/types";
+import {
+  analyzeBalance, autoBalance, describeSide, describeTrim, type BalanceGrade,
+} from "@/lib/lineup/balance";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 type MemberSummary = {
@@ -118,32 +121,116 @@ function SeatSlot({ seat, side, occupant, selected, onTap }: {
   );
 }
 
-// ── Balance bar ───────────────────────────────────────────────────────────────
-function BalanceBar({ assignments, members }: { assignments: SeatAssignment[]; members: MemberSummary[] }) {
-  const assigned = assignments.filter(a => a.user_id);
-  const memberMap = Object.fromEntries(members.map(m => [m.user_id, m]));
-  const leftN  = assigned.filter(a => memberMap[a.user_id!]?.paddle_side === "left").length;
-  const rightN = assigned.filter(a => memberMap[a.user_id!]?.paddle_side === "right").length;
-  const total  = leftN + rightN;
-  const weights = assigned.map(a => memberMap[a.user_id!]?.weight_kg ?? 0).filter(Boolean);
-  const totalW = weights.reduce((s, w) => s + w, 0);
+// ── Balance panel ─────────────────────────────────────────────────────────────
+
+const GRADE_COLOR: Record<BalanceGrade, string> = {
+  good: "#22C55E",
+  ok: "#F59E0B",
+  poor: "#EF4444",
+};
+
+/** Weight difference rendered as a bar leaning away from centre. */
+function TrimRow({
+  label, diffKg, grade, detail, leftTag, rightTag,
+}: {
+  label: string;
+  diffKg: number;
+  grade: BalanceGrade;
+  detail: string;
+  leftTag: string;
+  rightTag: string;
+}) {
+  // 25kg of difference fills half the bar; beyond that it pins.
+  const pct = Math.min(Math.abs(diffKg) / 25, 1) * 50;
+  const leansFirst = diffKg > 0;
 
   return (
-    <div className="rounded-xl bg-[#111827] border border-[#1E293B] p-3">
-      <div className="flex items-center justify-between text-xs mb-2">
-        <span className="font-bold text-[#0EA5E9]">{leftN}L</span>
-        <span className="text-[#475569]">{assigned.length} / {members.length} placed</span>
-        <span className="font-bold text-[#06B6D4]">{rightN}R</span>
+    <div>
+      <div className="flex items-center justify-between text-[10px] mb-1">
+        <span className="font-bold text-[#64748B] uppercase tracking-wide">{label}</span>
+        <span className="font-bold tabular-nums" style={{ color: GRADE_COLOR[grade] }}>
+          {Math.abs(diffKg) < 0.5 ? "even" : `${Math.abs(diffKg).toFixed(1)}kg`}
+        </span>
       </div>
-      <div className="h-2.5 rounded-full bg-[#1E293B] overflow-hidden">
+      <div className="relative h-2.5 rounded-full bg-[#0B1220] overflow-hidden">
+        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-[#334155]" />
         <div
-          className="h-full rounded-full bg-gradient-to-r from-[#0EA5E9] to-[#06B6D4] transition-all"
-          style={{ width: total > 0 ? `${(leftN / total) * 100}%` : "50%" }}
+          className="absolute top-0 bottom-0 rounded-full transition-all"
+          style={{
+            backgroundColor: GRADE_COLOR[grade],
+            left: leansFirst ? `${50 - pct}%` : "50%",
+            width: `${Math.max(pct, 1)}%`,
+          }}
         />
       </div>
-      <div className="flex items-center justify-between text-[10px] mt-1.5 text-[#475569]">
-        <span>{leftN === rightN ? "✓ Balanced" : `${Math.abs(leftN - rightN)} imbalance`}</span>
-        {totalW > 0 && <span>{totalW.toFixed(0)} kg total</span>}
+      <div className="flex items-center justify-between text-[10px] mt-1 text-[#475569]">
+        <span>{leftTag}</span>
+        <span className="text-[#64748B]">{detail}</span>
+        <span>{rightTag}</span>
+      </div>
+    </div>
+  );
+}
+
+function BalancePanel({
+  assignments, members, boatSize,
+}: {
+  assignments: SeatAssignment[];
+  members: MemberSummary[];
+  boatSize: number;
+}) {
+  const report = analyzeBalance(assignments, members, boatSize);
+
+  return (
+    <div className="rounded-xl bg-[#111827] border border-[#1E293B] p-3 flex flex-col gap-3">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-bold text-[#0EA5E9]">
+          {report.leftCount}L · {report.leftWeightKg.toFixed(0)}kg
+        </span>
+        <span className="text-[#475569]">
+          {report.seatedCount} / {members.length} placed
+        </span>
+        <span className="font-bold text-[#06B6D4]">
+          {report.rightWeightKg.toFixed(0)}kg · {report.rightCount}R
+        </span>
+      </div>
+
+      <TrimRow
+        label="Side balance"
+        diffKg={report.sideDiffKg}
+        grade={report.sideGrade}
+        detail={describeSide(report)}
+        leftTag="left"
+        rightTag="right"
+      />
+
+      <TrimRow
+        label="Bow / stern trim"
+        diffKg={report.trimDiffKg}
+        grade={report.trimGrade}
+        detail={describeTrim(report)}
+        leftTag="bow"
+        rightTag="stern"
+      />
+
+      {(report.offSide.length > 0 || report.missingWeight.length > 0) && (
+        <div className="flex flex-col gap-1 pt-1 border-t border-[#1E293B]">
+          {report.offSide.length > 0 && (
+            <div className="text-[10px] text-[#FBBF24]">
+              {report.offSide.length} on their off side: {report.offSide.map(m => m.full_name).join(", ")}
+            </div>
+          )}
+          {report.missingWeight.length > 0 && (
+            <div className="text-[10px] text-[#64748B]">
+              No weight recorded for {report.missingWeight.map(m => m.full_name).join(", ")} — balance
+              figures exclude them.
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="text-[10px] text-[#475569]">
+        {report.totalWeightKg.toFixed(0)} kg of paddlers aboard
       </div>
     </div>
   );
@@ -286,6 +373,27 @@ export default function LineupsTab({
     setShowSaved(false);
   }
 
+  function handleAutoBalance() {
+    // Keep whoever the coach has already put in the specialist seats — those
+    // are picked on skill, not weight, so the optimiser shouldn't reshuffle them.
+    const drummerId = assignments.find(a => a.seat === "drummer")?.user_id;
+    const steererId = assignments.find(a => a.seat === "steerer")?.user_id;
+
+    const { assignments: next, unseated, movedOffSide } = autoBalance(members, effectiveSize, {
+      drummer: members.find(m => m.user_id === drummerId),
+      steerer: members.find(m => m.user_id === steererId),
+    });
+
+    setAssignments(next);
+    setSelected(null);
+
+    const report = analyzeBalance(next, members, effectiveSize);
+    const notes = [describeSide(report)];
+    if (movedOffSide.length) notes.push(`${movedOffSide.length} moved off their usual side`);
+    if (unseated.length) notes.push(`${unseated.length} left in the pool`);
+    toast.success("Boat balanced", { description: notes.join(" · ") });
+  }
+
   async function deleteLineup(id: string) {
     if (isDemoMode) return;
     const { createClient } = await import("@/lib/supabase/client");
@@ -372,8 +480,18 @@ export default function LineupsTab({
           )}
         </div>
 
-        {/* Balance bar */}
-        <BalanceBar assignments={assignments} members={members} />
+        {/* Balance + auto-fill */}
+        <BalancePanel assignments={assignments} members={members} boatSize={effectiveSize} />
+
+        {isCoach && members.length > 0 && (
+          <button
+            onClick={handleAutoBalance}
+            className="flex items-center justify-center gap-2 w-full rounded-xl border border-[#0EA5E9]/30 bg-[#0EA5E9]/10 hover:bg-[#0EA5E9]/20 text-[#0EA5E9] text-xs font-bold py-3 transition-colors"
+          >
+            <Scale size={15} />
+            Auto-balance the boat
+          </button>
+        )}
 
         {/* Instruction */}
         {selected ? (
