@@ -6,6 +6,7 @@
  */
 
 import { THRESHOLDS } from "./thresholds";
+import { toLocalDateStr, daysBefore } from "@/lib/utils";
 import type {
   SplitFadeResult, PacingConsistencyResult, TrainingLoadResult,
   HighRPEStreakResult, ModalityGapResult, BoatErgGapResult,
@@ -141,22 +142,37 @@ export function calculateTrainingLoad(
     load: s.rpe * durationMinutes(s),
   }));
 
-  // Acute = 7-day sum; Chronic = 28-day average
-  const cutoffAcute = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const cutoffChronic = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
+  // Acute = 7-day sum; chronic = weekly average over the 28-day window.
+  const acuteFrom = toLocalDateStr(daysBefore(now, 6));
+  const chronicFrom = toLocalDateStr(daysBefore(now, 27));
 
   const acuteLoad = withLoad
-    .filter((s) => new Date(s.date) >= cutoffAcute)
+    .filter((s) => s.date >= acuteFrom)
     .reduce((sum, s) => sum + s.load, 0);
 
-  const chronicSessions = withLoad.filter((s) => new Date(s.date) >= cutoffChronic);
-  const chronicLoad = chronicSessions.reduce((sum, s) => sum + s.load, 0) / 4; // 4 weeks → weekly avg
+  const chronicSessions = withLoad.filter((s) => s.date >= chronicFrom);
 
+  // How long this athlete has actually been logging. Dividing by a flat four
+  // weeks when they have three days of history made the chronic baseline a
+  // quarter of the acute load, so ACWR came out at exactly 4.00 for every new
+  // athlete regardless of how little they had done — and 4.00 reads as a
+  // severe overtraining warning on their first week.
+  const earliest = withLoad.map((s) => s.date).sort()[0];
+  const historyDays = earliest ? daysSince(earliest, now) : 0;
+  const weeksCovered = Math.min(4, Math.max(1, historyDays / 7));
+
+  const chronicLoad = chronicSessions.reduce((sum, s) => sum + s.load, 0) / weeksCovered;
   const acwr = chronicLoad > 0 ? acuteLoad / chronicLoad : 1.0;
 
+  // Even with the divisor fixed, the ratio doesn't mean much until there's a
+  // real base to compare against, so hold off on advice rather than guessing.
+  const sufficientHistory = historyDays >= THRESHOLDS.acwrMinHistoryDays;
+
   let sev: Severity = "ok";
-  if (acwr > THRESHOLDS.acwrHigh) sev = "severe";
-  else if (acwr < THRESHOLDS.acwrLow) sev = "warn";
+  if (sufficientHistory) {
+    if (acwr > THRESHOLDS.acwrHigh) sev = "severe";
+    else if (acwr < THRESHOLDS.acwrLow) sev = "warn";
+  }
 
   return {
     kind: "training-load",
@@ -164,6 +180,8 @@ export function calculateTrainingLoad(
     severity: sev,
     weeklyLoadSRPE: Math.round(acuteLoad),
     monthlyAvgSRPE: Math.round(chronicLoad),
+    historyDays,
+    sufficientHistory,
   };
 }
 

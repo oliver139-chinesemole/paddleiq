@@ -20,6 +20,9 @@ export function insightTitle(i: CoachInsight): string {
     case "split-fade": return `2k split fades ${i.fadeSec.toFixed(1)}s in the ${i.fadingSegment}`;
     case "pacing-consistency": return `Split variance ±${i.stdDevSec}s/500m across ${i.sampleCount} sessions`;
     case "training-load":
+      // Until there's a chronic base, the ratio is arithmetic rather than
+      // signal, so it must not be reported as a spike or a shortfall.
+      if (!i.sufficientHistory) return `Building your training baseline (${i.historyDays} days logged)`;
       if (i.acwr > 1.3) return `Training spike: ACWR ${i.acwr} (above 1.3 safe ceiling)`;
       if (i.acwr < 0.8) return `Undertraining detected: ACWR ${i.acwr} (below 0.8)`;
       return `Training load healthy: ACWR ${i.acwr}`;
@@ -49,6 +52,7 @@ export function insightBody(i: CoachInsight): string {
     case "pacing-consistency":
       return `Your splits have a standard deviation of ±${i.stdDevSec}s/500m. ${i.stdDevSec >= 8 ? "This is high — your effort varies a lot session to session, which makes it hard to track real improvement." : "This is moderate — consistent pacing will help you know your true capability."} Try 4–5 steady-state pieces at the same target split without looking at the display.`;
     case "training-load":
+      if (!i.sufficientHistory) return `You've logged ${i.historyDays} days so far. Training load is judged by comparing this week against a four-week baseline, so there isn't enough history yet to tell a hard week from a normal one. Keep logging — the reading becomes meaningful after about three weeks.`;
       if (i.acwr > THRESHOLDS_INLINE.acwrHigh) return `Your 7-day training load (${i.weeklyLoadSRPE} sRPE) is ${Math.round(i.acwr * 100 - 100)}% above your 4-week baseline. This places you in the overreaching zone. Add 1–2 easy technique sessions or complete rest days before increasing intensity again.`;
       if (i.acwr < THRESHOLDS_INLINE.acwrLow) return `Your recent training volume (${i.weeklyLoadSRPE} sRPE this week vs ${i.monthlyAvgSRPE} average) is below your baseline. This may indicate undertraining — consider adding one more session this week at low intensity to maintain adaptation.`;
       return `Your training load is in the optimal zone (ACWR ${i.acwr}). Continue at this volume and intensity.`;
@@ -76,7 +80,7 @@ const THRESHOLDS_INLINE = { acwrHigh: 1.3, acwrLow: 0.8, highRpeMinimum: 8, wate
 // ── Weekly summary (synthesised plain-language string) ────────────────────────
 export function buildWeeklySummary(
   ergTrend: { improvementSec: number; sessions: number; distance: number } | null,
-  load: { acwr: number; weeklyLoadSRPE: number },
+  load: { acwr: number; weeklyLoadSRPE: number; sufficientHistory: boolean },
   streakDays: number,
   totalSessionsThisWeek: number,
   prCount: number,
@@ -99,7 +103,11 @@ export function buildWeeklySummary(
     parts.push(`You came within range of ${prCount} personal record${prCount !== 1 ? "s" : ""} this week.`);
   }
 
-  if (load.acwr > 1.3) {
+  if (!load.sufficientHistory) {
+    // No chronic baseline yet, so any verdict here — spike or optimal — would
+    // be arithmetic dressed up as a judgement.
+    parts.push(`Still building your training baseline, so load figures aren't meaningful yet.`);
+  } else if (load.acwr > 1.3) {
     parts.push(`Training load is elevated (ACWR ${load.acwr}) — prioritise a recovery session before your next hard block.`);
   } else if (load.acwr < 0.8) {
     parts.push(`Training volume is low this week — adding one more session would keep your fitness on track.`);

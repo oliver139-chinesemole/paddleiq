@@ -22,6 +22,10 @@ export interface TrainingLoadResult {
   severity: Severity;              // ok | warn (low) | severe (high)
   weeklyLoadSRPE: number;
   monthlyAvgSRPE: number;
+  /** Days between the athlete's first logged session and now. */
+  historyDays: number;
+  /** False until there is enough chronic base for ACWR to mean anything. */
+  sufficientHistory: boolean;
 }
 
 export interface HighRPEStreakResult {

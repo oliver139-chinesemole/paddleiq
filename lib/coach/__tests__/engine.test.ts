@@ -173,6 +173,36 @@ describe("clock", () => {
   });
 });
 
+// ── Training load copy ───────────────────────────────────────────────────────
+
+describe("training load messaging", () => {
+  const heavyWeek = () => [erg({ date: d(1) }), erg({ date: d(2) }), erg({ date: d(3) })];
+
+  it("doesn't warn a first-week athlete about overtraining", () => {
+    // Regression: every new athlete was told their load was elevated and to
+    // take a recovery day, because ACWR was 4.00 by arithmetic.
+    const out = runCoachEngine(input({ ergSessions: heavyWeek() }));
+    expect(out.summary).not.toMatch(/elevated|recovery session|spike/i);
+    expect(out.summary).toMatch(/building your training baseline/i);
+    expect(out.warnings.find((w) => w.kind === "training-load")).toBeUndefined();
+  });
+
+  it("says it can't tell yet rather than giving false reassurance", () => {
+    const out = runCoachEngine(input({ ergSessions: heavyWeek() }));
+    const answer = out.questionAnswers["Am I overtraining?"];
+    expect(answer).toMatch(/not enough history|isn't enough history/i);
+    expect(answer).not.toMatch(/^No\./);
+  });
+
+  it("gives a real verdict once the athlete has a baseline", () => {
+    const sessions = [];
+    for (let w = 0; w < 5; w++) for (const off of [1, 3, 5]) sessions.push(erg({ date: d(w * 7 + off) }));
+    const out = runCoachEngine(input({ ergSessions: sessions }));
+    expect(out.summary).not.toMatch(/building your training baseline/i);
+    expect(out.questionAnswers["Am I overtraining?"]).not.toMatch(/isn't enough history/i);
+  });
+});
+
 // ── Categorisation ───────────────────────────────────────────────────────────
 
 describe("categorisation", () => {

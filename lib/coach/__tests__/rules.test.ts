@@ -3,6 +3,7 @@
  * All tests are pure — no DB, no network, no Supabase.
  */
 import { describe, it, expect } from "vitest";
+import { THRESHOLDS } from "../thresholds";
 import {
   checkSplitFade,
   checkPacingConsistency,
@@ -231,6 +232,78 @@ describe("checkBoatErgGap", () => {
     const result = checkBoatErgGap(erg, water);
     expect(result!.gapSec).toBe(10);
     expect(result!.severity).toBe("ok");
+  });
+});
+
+// ── Training load / ACWR ─────────────────────────────────────────────────────
+
+describe("calculateTrainingLoad", () => {
+  const NOW = new Date(TODAY);
+  const session = (daysAgo: number, rpe = 7, min = 60) => ({
+    date: d(daysAgo), rpe, duration_min: min,
+  });
+
+  it("doesn't cry overtraining at an athlete with no history", () => {
+    // Regression: dividing by a flat four weeks made chronic = acute / 4, so
+    // ACWR came out at exactly 4.00 for every new athlete — well past the 1.3
+    // "overreaching" ceiling — on their very first week.
+    const r = calculateTrainingLoad([session(1), session(2), session(3)], NOW);
+    expect(r.acwr).toBeLessThan(THRESHOLDS.acwrHigh);
+    expect(r.severity).toBe("ok");
+    expect(r.sufficientHistory).toBe(false);
+  });
+
+  it("gave the same 4.00 whatever the effort, which was the tell", () => {
+    const hard = calculateTrainingLoad([session(1, 9, 120), session(2, 9, 120)], NOW);
+    const easy = calculateTrainingLoad([session(1, 3, 20), session(2, 3, 20)], NOW);
+    // Both are ~1.0 now; before, both were exactly 4.00 regardless of load.
+    expect(hard.acwr).toBeLessThan(THRESHOLDS.acwrHigh);
+    expect(easy.acwr).toBeLessThan(THRESHOLDS.acwrHigh);
+  });
+
+  it("reports a steady four-week athlete as balanced", () => {
+    const sessions = [];
+    for (let w = 0; w < 4; w++) for (const off of [1, 3, 5]) sessions.push(session(w * 7 + off));
+    const r = calculateTrainingLoad(sessions, NOW);
+    expect(r.sufficientHistory).toBe(true);
+    expect(r.acwr).toBeGreaterThan(0.75);
+    expect(r.acwr).toBeLessThan(1.3);
+    expect(r.severity).toBe("ok");
+  });
+
+  it("still flags a genuine spike once there's a baseline to spike against", () => {
+    const sessions = [];
+    // Four weeks of light work...
+    for (let w = 1; w < 5; w++) for (const off of [1, 3]) sessions.push(session(w * 7 + off, 4, 30));
+    // ...then a very heavy current week.
+    for (const off of [1, 2, 3, 4, 5]) sessions.push(session(off, 9, 150));
+    const r = calculateTrainingLoad(sessions, NOW);
+    expect(r.sufficientHistory).toBe(true);
+    expect(r.acwr).toBeGreaterThan(THRESHOLDS.acwrHigh);
+    expect(r.severity).toBe("severe");
+  });
+
+  it("still flags a drop-off once there's a baseline", () => {
+    const sessions = [];
+    for (let w = 1; w < 5; w++) for (const off of [1, 3, 5]) sessions.push(session(w * 7 + off, 8, 90));
+    sessions.push(session(2, 3, 20)); // one easy session this week
+    const r = calculateTrainingLoad(sessions, NOW);
+    expect(r.acwr).toBeLessThan(THRESHOLDS.acwrLow);
+    expect(r.severity).toBe("warn");
+  });
+
+  it("reports how much history it has to work with", () => {
+    const r = calculateTrainingLoad([session(30), session(1)], NOW);
+    expect(r.historyDays).toBe(30);
+    expect(r.sufficientHistory).toBe(true);
+  });
+
+  it("handles an athlete with nothing logged", () => {
+    const r = calculateTrainingLoad([], NOW);
+    expect(Number.isFinite(r.acwr)).toBe(true);
+    expect(r.severity).toBe("ok");
+    expect(r.historyDays).toBe(0);
+    expect(r.sufficientHistory).toBe(false);
   });
 });
 

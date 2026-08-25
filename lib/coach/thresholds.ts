@@ -15,6 +15,7 @@ export const THRESHOLDS = {
   // Acute:Chronic Workload Ratio band
   acwrLow: 0.8,              // undertraining / detraining below this
   acwrHigh: 1.3,             // overreaching / injury risk above this
+  acwrMinHistoryDays: 21,    // ACWR is meaningless without a chronic base
 
   // High-RPE streak
   highRpeMinimum: 8,         // what counts as "high RPE"

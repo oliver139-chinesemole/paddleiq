@@ -10,6 +10,7 @@ import {
   type TeamSessionInput, type PRInput,
 } from "./rules";
 import { buildWeeklySummary, insightTitle, insightBody } from "./templates";
+import { THRESHOLDS } from "./thresholds";
 import { computeStreak, toLocalDateStr, daysBefore } from "@/lib/utils";
 import type { CoachInsight } from "./types";
 
@@ -100,7 +101,7 @@ export function runCoachEngine(input: EngineInput): RenderedCoachOutput {
 
   const summaryText = buildWeeklySummary(
     ergTrend ? { improvementSec: ergTrend.improvementSec, sessions: ergTrend.sessions, distance: ergTrend.distanceM } : null,
-    { acwr: load.acwr, weeklyLoadSRPE: load.weeklyLoadSRPE },
+    { acwr: load.acwr, weeklyLoadSRPE: load.weeklyLoadSRPE, sufficientHistory: load.sufficientHistory },
     streakDays,
     sessionsThisWeek,
     prNearCount,
@@ -118,11 +119,14 @@ export function runCoachEngine(input: EngineInput): RenderedCoachOutput {
       ? insightBody(splitFade)
       : "Log at least one 2k erg session to get a personalised answer.",
 
-    "Am I overtraining?": load.acwr > 1.3
+    // Answering "no, you're fine" on a baseline that doesn't exist yet is as
+    // misleading as crying overtraining, so defer to the same copy the insight
+    // uses when there isn't enough history.
+    "Am I overtraining?": !load.sufficientHistory
       ? insightBody(load)
-      : load.acwr < 0.8
+      : load.acwr > THRESHOLDS.acwrHigh || load.acwr < THRESHOLDS.acwrLow
       ? insightBody(load)
-      : `No. Your training load (ACWR ${load.acwr}) is in the optimal 0.8–1.3 band. Your weekly sRPE is ${load.weeklyLoadSRPE} vs a 4-week average of ${load.monthlyAvgSRPE}.`,
+      : `No. Your training load (ACWR ${load.acwr}) is in the optimal ${THRESHOLDS.acwrLow}–${THRESHOLDS.acwrHigh} band. Your weekly sRPE is ${load.weeklyLoadSRPE} vs a 4-week average of ${load.monthlyAvgSRPE}.`,
 
     "Which distance am I improving fastest at?": (() => {
       const trends = [500, 1000, 2000]
