@@ -59,7 +59,7 @@ function SideToggle({ side, onChange }: { side: PaddleSide; onChange: (s: Paddle
           onClick={() => onChange(s)}
           className={`flex-1 py-3 rounded-xl font-bold text-sm capitalize transition-colors ${
             side === s
-              ? "bg-[#0EA5E9] text-white"
+              ? "bg-[#0EA5E9] text-[#0A0F1E]"
               : "bg-[#1E293B] text-[#94A3B8] hover:bg-[#334155]"
           }`}
         >
@@ -425,7 +425,7 @@ export default function FormCheckPage() {
         <FramingTipsSpacer />
         <button
           onClick={() => setScreen({ id: "home" })}
-          className="w-full mt-5 bg-[#0EA5E9] text-white font-bold py-4 rounded-2xl"
+          className="w-full mt-5 bg-[#0EA5E9] text-[#0A0F1E] font-bold py-4 rounded-2xl"
         >
           Try again
         </button>
@@ -527,12 +527,12 @@ export default function FormCheckPage() {
         <div className="flex flex-col gap-3">
           <button
             onClick={openCamera}
-            className="flex items-center gap-3 bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-bold px-5 py-4 rounded-2xl transition-colors"
+            className="flex items-center gap-3 bg-[#0EA5E9] hover:bg-[#0284C7] text-[#0A0F1E] font-bold px-5 py-4 rounded-2xl transition-colors"
           >
             <Camera size={20} />
             <span className="flex-1 text-left">
               Live camera
-              <span className="block text-xs font-normal text-white/70">
+              <span className="block text-xs font-normal text-[#0A0F1E]/75">
                 Watch the skeleton track you as you paddle
               </span>
             </span>

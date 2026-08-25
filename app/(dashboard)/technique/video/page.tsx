@@ -315,7 +315,7 @@ function SaveView({
             {VIDEO_CATEGORIES.map((cat) => (
               <button key={cat} onClick={() => setCategory(cat)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer ${
-                  category === cat ? "bg-[#0EA5E9] text-white" : "bg-[#1E293B] text-[#8A98AC] hover:bg-[#334155]"
+                  category === cat ? "bg-[#0EA5E9] text-[#0A0F1E]" : "bg-[#1E293B] text-[#8A98AC] hover:bg-[#334155]"
                 }`}>
                 {cat}
               </button>
@@ -390,7 +390,7 @@ function LibraryView({ onRecord, onDetail }: { onRecord: () => void; onDetail: (
               className="w-full bg-[#111827] border border-[#1E293B] rounded-xl pl-9 pr-4 py-2 text-sm text-white placeholder:text-[#7C8AA0] outline-none focus:border-[#0EA5E9]" />
           </div>
           <button onClick={onRecord}
-            className="flex items-center gap-1.5 bg-[#0EA5E9] hover:bg-[#0284C7] text-white text-sm font-semibold px-4 py-2 rounded-xl shrink-0 transition-colors">
+            className="flex items-center gap-1.5 bg-[#0EA5E9] hover:bg-[#0284C7] text-[#0A0F1E] text-sm font-semibold px-4 py-2 rounded-xl shrink-0 transition-colors">
             <Camera size={15} /> Record
           </button>
         </div>
@@ -415,7 +415,7 @@ function LibraryView({ onRecord, onDetail }: { onRecord: () => void; onDetail: (
               </p>
             </div>
             {!query && (
-              <button onClick={onRecord} className="bg-[#0EA5E9] text-white font-semibold px-6 py-2.5 rounded-xl text-sm">
+              <button onClick={onRecord} className="bg-[#0EA5E9] text-[#0A0F1E] font-semibold px-6 py-2.5 rounded-xl text-sm">
                 Record Now
               </button>
             )}
@@ -591,7 +591,7 @@ function ErrorView({ reason, onRetry }: { reason: string; onRetry: () => void })
         <h2 className="text-lg font-bold text-white mb-1">{title}</h2>
         <p className="text-[#8A98AC] text-sm leading-relaxed">{body}</p>
       </div>
-      <button onClick={onRetry} className="bg-[#0EA5E9] text-white font-bold px-8 py-3 rounded-2xl">Retry</button>
+      <button onClick={onRetry} className="bg-[#0EA5E9] text-[#0A0F1E] font-bold px-8 py-3 rounded-2xl">Retry</button>
     </div>
   );
 }

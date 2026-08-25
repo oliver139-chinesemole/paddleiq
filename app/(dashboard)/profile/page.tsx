@@ -172,7 +172,7 @@ export default function ProfilePage() {
               <div
                 key={badge.id}
                 className={`rounded-xl border p-3 text-center transition-colors ${
-                  earned ? "border-[#334155] bg-[#0D1528]" : "border-[#1E293B] opacity-40"
+                  earned ? "border-[#334155] bg-[#0D1528]" : "border-[#1E293B] opacity-85 grayscale"
                 }`}
               >
                 <div className="text-2xl mb-1">{badge.icon}</div>

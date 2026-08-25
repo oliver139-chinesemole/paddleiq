@@ -24,7 +24,7 @@ export function InstallBanner() {
               <p className="text-xs text-[#8A98AC] mt-0.5">Add to your home screen for the full app experience — offline included.</p>
               <button
                 onClick={() => { install.prompt(); dismiss(); }}
-                className="mt-2.5 flex items-center gap-1.5 bg-[#0EA5E9] text-white text-xs font-semibold px-4 py-2 rounded-xl hover:bg-[#0284C7] transition-colors"
+                className="mt-2.5 flex items-center gap-1.5 bg-[#0EA5E9] text-[#0A0F1E] text-xs font-semibold px-4 py-2 rounded-xl hover:bg-[#0284C7] transition-colors"
               >
                 <Download size={12} />
                 Add to Home Screen

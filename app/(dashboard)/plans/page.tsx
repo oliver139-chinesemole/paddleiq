@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { trainingPlans } from "@/lib/data/seed";
 import { cn } from "@/lib/utils";
+import { useActivePlan, writeActivePlan } from "@/lib/plans/active";
 
 const difficultyColor = {
   beginner: "success" as const,
@@ -15,7 +16,13 @@ const difficultyColor = {
 };
 
 export default function PlansPage() {
-  const [activePlan, setActivePlan] = useState<string | null>(null);
+  // Persisted, not component-local: "Start This Plan" used to vanish on
+  // refresh and the dashboard had no way to see it.
+  const activePlan = useActivePlan();
+
+  function toggleActivePlan(planId: string) {
+    writeActivePlan(activePlan === planId ? null : planId);
+  }
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   const plan = selectedPlan ? trainingPlans.find((p) => p.id === selectedPlan) : null;
@@ -96,7 +103,7 @@ export default function PlansPage() {
 
         <Button
           onClick={() => {
-            setActivePlan(activePlan === plan.id ? null : plan.id);
+            toggleActivePlan(plan.id);
             setSelectedPlan(null);
           }}
           variant={activePlan === plan.id ? "secondary" : "default"}

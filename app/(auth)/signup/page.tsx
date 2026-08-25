@@ -101,9 +101,9 @@ function SignupForm() {
 
             <p className="text-center text-xs text-[#7C8AA0]">
               By signing up you agree to our{" "}
-              <Link href="/legal/terms" className="text-[#0EA5E9] hover:underline">Terms of Service</Link>
+              <Link href="/legal/terms" className="text-[#0EA5E9] underline underline-offset-2">Terms of Service</Link>
               {" "}and{" "}
-              <Link href="/legal/privacy" className="text-[#0EA5E9] hover:underline">Privacy Policy</Link>.
+              <Link href="/legal/privacy" className="text-[#0EA5E9] underline underline-offset-2">Privacy Policy</Link>.
             </p>
           </form>
         </div>

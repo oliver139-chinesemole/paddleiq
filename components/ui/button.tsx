@@ -9,7 +9,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-[#0EA5E9] text-white hover:bg-[#0284C7] shadow-lg shadow-[#0EA5E9]/20",
+        // Dark text on the brand cyan: white gave 2.77:1, well under the 4.5
+        // minimum, on the most-clicked element in the app. This keeps the brand
+        // colour exactly and reads 6.89:1.
+        default: "bg-[#0EA5E9] text-[#0A0F1E] hover:bg-[#38BDF8] shadow-lg shadow-[#0EA5E9]/20",
         secondary: "bg-[#1E293B] text-[#F1F5F9] hover:bg-[#334155]",
         outline: "border border-[#1E293B] text-[#F1F5F9] hover:bg-[#1E293B]",
         ghost: "text-[#94A3B8] hover:text-[#F1F5F9] hover:bg-[#1E293B]",

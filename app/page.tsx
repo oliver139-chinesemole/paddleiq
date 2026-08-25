@@ -19,7 +19,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/signup"
-              className="bg-[#0EA5E9] hover:bg-[#0284C7] text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-[#0EA5E9]/20"
+              className="bg-[#0EA5E9] hover:bg-[#0284C7] text-[#0A0F1E] text-sm font-semibold px-5 py-2.5 rounded-xl transition-colors shadow-lg shadow-[#0EA5E9]/20"
             >
               Get Started Free
             </Link>
@@ -46,7 +46,7 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/signup"
-            className="inline-flex items-center justify-center gap-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-bold px-8 py-4 rounded-xl transition-colors text-base shadow-xl shadow-[#0EA5E9]/25"
+            className="inline-flex items-center justify-center gap-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-[#0A0F1E] font-bold px-8 py-4 rounded-xl transition-colors text-base shadow-xl shadow-[#0EA5E9]/25"
           >
             Start Training Free
             <ArrowRight size={18} />
@@ -165,7 +165,7 @@ export default function LandingPage() {
         </p>
         <Link
           href="/signup"
-          className="inline-flex items-center justify-center gap-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-bold px-10 py-4 rounded-xl transition-colors text-base shadow-xl shadow-[#0EA5E9]/25"
+          className="inline-flex items-center justify-center gap-2 bg-[#0EA5E9] hover:bg-[#0284C7] text-[#0A0F1E] font-bold px-10 py-4 rounded-xl transition-colors text-base shadow-xl shadow-[#0EA5E9]/25"
         >
           Create Free Account
           <ArrowRight size={18} />

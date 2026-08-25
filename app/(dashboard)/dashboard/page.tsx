@@ -9,7 +9,8 @@ import {
 import { Card, CardHeader, CardTitle, CardValue, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { mockStats, mockErgSessions, mockPRs, weeklyVolumeData } from "@/lib/data/seed";
+import { mockStats, mockErgSessions, mockPRs, weeklyVolumeData, trainingPlans } from "@/lib/data/seed";
+import { useActivePlan, dashboardPrompt } from "@/lib/plans/active";
 import { formatTime, formatDistance, formatRelativeDate } from "@/lib/utils";
 import { VolumeChart } from "@/components/charts/volume-chart";
 import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
@@ -66,6 +67,12 @@ export default function DashboardPage() {
   const [volumeData, setVolumeData] = useState<{ week: string; distance: number }[]>(
     IS_CONFIGURED ? [] : weeklyVolumeData.map(d => ({ week: d.week, distance: d.distance }))
   );
+  const activePlanId = useActivePlan();
+
+  const prompt = dashboardPrompt(stats.total_sessions, activePlanId);
+  const activePlanName = activePlanId
+    ? trainingPlans.find((p) => p.id === activePlanId)?.name ?? null
+    : null;
 
   useEffect(() => {
     if (isDemoMode) return;
@@ -124,28 +131,44 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Today's Workout Card */}
+      {/* Headline card — derived from what the app actually knows, rather than
+          the hardcoded "4 × 500m Erg Intervals" prescription it used to show
+          every athlete including ones who had never logged a session. */}
       <div className="rounded-2xl bg-gradient-to-br from-[#0284C7] to-[#0D9488] p-5">
         <div className="flex items-start justify-between mb-3">
           <div>
-            <p className="text-[#BAE6FD] text-xs font-semibold uppercase tracking-wider">Today&apos;s Workout</p>
-            <h2 className="text-white font-black text-lg mt-1">4 × 500m Erg Intervals</h2>
-            <p className="text-[#BAE6FD] text-xs mt-1">Target split: 128–132s/500m · RPE 8</p>
+            <p className="text-[#BAE6FD] text-xs font-semibold uppercase tracking-wider">
+              {prompt.kind === "first-session" ? "Get started"
+                : prompt.kind === "active-plan" ? "Your plan"
+                : "No plan running"}
+            </p>
+            <h2 className="text-white font-black text-lg mt-1">
+              {prompt.kind === "first-session" ? "Log your first session"
+                : prompt.kind === "active-plan" ? (activePlanName ?? "Training plan")
+                : "Pick a training plan"}
+            </h2>
+            <p className="text-[#BAE6FD] text-xs mt-1">
+              {prompt.kind === "first-session"
+                ? "Anything counts — an erg piece, a paddle, or a gym session."
+                : prompt.kind === "active-plan"
+                  ? "Keep logging and your coach insights sharpen as the weeks build."
+                  : "Eight built-in plans, from first-timer to race prep."}
+            </p>
           </div>
           <Zap size={20} className="text-white/70" />
         </div>
         <div className="flex gap-2 mt-4">
           <Link
-            href="/train/erg"
+            href={prompt.kind === "pick-plan" ? "/plans" : "/train"}
             className="flex-1 bg-white/20 hover:bg-white/30 text-white font-semibold text-sm text-center py-2.5 rounded-xl transition-colors"
           >
-            Start Erg Session
+            {prompt.kind === "pick-plan" ? "Browse plans" : "Log a session"}
           </Link>
           <Link
             href="/plans"
             className="bg-white/10 hover:bg-white/20 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors"
           >
-            View Plan
+            {prompt.kind === "active-plan" ? "View plan" : "Plans"}
           </Link>
         </div>
       </div>

@@ -204,7 +204,7 @@ function TechniqueLibrary() {
             className={cn(
               "rounded-full px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer shrink-0",
               category === cat
-                ? "bg-[#0EA5E9] text-white"
+                ? "bg-[#0EA5E9] text-[#0A0F1E]"
                 : "bg-[#1E293B] text-[#8A98AC] hover:bg-[#334155]"
             )}
           >

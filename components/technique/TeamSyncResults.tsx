@@ -151,7 +151,7 @@ export function TeamSyncResults({
         {onDone && (
           <button
             onClick={onDone}
-            className="flex-1 bg-[#0EA5E9] hover:bg-[#0284C7] text-white font-bold py-4 rounded-2xl transition-colors"
+            className="flex-1 bg-[#0EA5E9] hover:bg-[#0284C7] text-[#0A0F1E] font-bold py-4 rounded-2xl transition-colors"
           >
             Done
           </button>

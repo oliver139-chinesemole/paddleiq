@@ -14,7 +14,7 @@ export default function OfflinePage() {
           synced automatically when you reconnect.
         </p>
       </div>
-      <Link href="/dashboard" className="bg-[#0EA5E9] text-white font-bold px-8 py-3 rounded-2xl text-sm">
+      <Link href="/dashboard" className="bg-[#0EA5E9] text-[#0A0F1E] font-bold px-8 py-3 rounded-2xl text-sm">
         Go to Dashboard
       </Link>
     </div>

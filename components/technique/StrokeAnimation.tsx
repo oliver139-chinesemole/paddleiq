@@ -259,7 +259,7 @@ export function StrokeAnimation({ lessonId }: { lessonId: string }) {
         <button
           onClick={() => setPlaying((p) => !p)}
           aria-label={playing ? "Pause" : "Play"}
-          className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#0EA5E9] text-white shrink-0"
+          className="flex items-center justify-center w-9 h-9 rounded-xl bg-[#0EA5E9] text-[#0A0F1E] shrink-0"
         >
           {playing ? <Pause size={16} /> : <Play size={16} />}
         </button>
