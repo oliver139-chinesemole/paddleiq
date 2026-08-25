@@ -147,6 +147,65 @@ test.describe("technique library", () => {
   });
 });
 
+test.describe("offline", () => {
+  /** Waits for the service worker to install and take control. */
+  async function waitForServiceWorker(page: Page) {
+    await page.waitForFunction(
+      async () => {
+        const reg = await navigator.serviceWorker.getRegistration();
+        return !!reg?.active;
+      },
+      undefined,
+      { timeout: 30_000 }
+    );
+  }
+
+  test("the precache excludes the MediaPipe assets", async ({ page }) => {
+    // Regression: globPublicPatterns defaults to everything under public/, so
+    // adding the pose models and wasm there put ~48MB into the precache. Every
+    // visitor downloaded it on first load, whether or not they opened Form
+    // Check. Those are fetched on demand instead.
+    await page.goto("/dashboard", { waitUntil: "networkidle" });
+    await waitForServiceWorker(page);
+
+    const precached: string[] = await page.evaluate(async () => {
+      const names = await caches.keys();
+      const out: string[] = [];
+      for (const n of names) {
+        const keys = await (await caches.open(n)).keys();
+        out.push(...keys.map((r) => new URL(r.url).pathname));
+      }
+      return out;
+    });
+
+    expect(precached.length).toBeGreaterThan(0);
+    expect(precached.filter((p) => p.startsWith("/mediapipe/"))).toEqual([]);
+    // The document fallback needs this, or an offline navigation has nothing
+    // to serve and fails outright.
+    expect(precached).toContain("/offline");
+  });
+
+  test("navigating offline degrades instead of failing", async ({ page, context }) => {
+    // Regression: with no route caching and no precached fallback, every
+    // offline navigation died with ERR_FAILED — in an app that ships an
+    // offline page, an install banner and a sync queue.
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await waitForServiceWorker(page);
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+
+    await context.setOffline(true);
+    try {
+      const response = await page.goto("/train/erg", { waitUntil: "domcontentloaded" });
+      expect(response?.status()).toBe(200);
+      // Either the real page or the offline fallback is fine; a failure isn't.
+      const body = await page.locator("body").innerText();
+      expect(body.length).toBeGreaterThan(50);
+    } finally {
+      await context.setOffline(false);
+    }
+  });
+});
+
 test.describe("lineup balance", () => {
   // Regression: bow/stern trim reported 239kg on a boat carrying 375kg,
   // because rows were split into halves rather than weighted by distance

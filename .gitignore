@@ -58,3 +58,10 @@ next-env.d.ts
 /playwright-report
 /blob-report
 /playwright/.cache
+
+# Generated service workers — rebuilt by `npm run build`, which Render runs.
+# The swe-worker filename is content-hashed, so committing it leaves an orphan
+# on every change.
+/public/sw.js
+/public/sw.js.map
+/public/swe-worker-*.js
