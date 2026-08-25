@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { BookOpen, ChevronRight, ChevronDown, Star, Check, Video } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { BookOpen, ChevronRight, ChevronDown, Star, Check, Video, ScanLine } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { techniqueLessons } from "@/lib/data/seed";
@@ -16,8 +17,11 @@ const difficultyColor = {
   advanced: "#EF4444",
 } as const;
 
-export default function TechniquePage() {
-  const [selected, setSelected] = useState<string | null>(null);
+function TechniqueLibrary() {
+  // Form check deep-links here as /technique?lesson=t2 to open the lesson
+  // behind a specific finding.
+  const searchParams = useSearchParams();
+  const [selected, setSelected] = useState<string | null>(searchParams.get("lesson"));
   const [category, setCategory] = useState("All");
   const [weeklyFocus, setWeeklyFocus] = useState<string | null>("t1");
 
@@ -154,6 +158,20 @@ export default function TechniquePage() {
         </div>
       )}
 
+      {/* Form Check card */}
+      <Link href="/technique/form-check">
+        <div className="flex items-center gap-4 rounded-2xl border border-[#0EA5E9]/30 bg-[#0EA5E9]/10 p-4 hover:border-[#0EA5E9]/50 transition-colors cursor-pointer">
+          <div className="w-11 h-11 rounded-xl bg-[#0EA5E9]/20 flex items-center justify-center shrink-0">
+            <ScanLine size={22} className="text-[#0EA5E9]" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-[#F1F5F9]">Form Check</h3>
+            <p className="text-xs text-[#64748B] mt-0.5">Point your camera at yourself — or read a saved clip — and get your stroke measured</p>
+          </div>
+          <ChevronRight size={16} className="text-[#475569] shrink-0" />
+        </div>
+      </Link>
+
       {/* Video Review card */}
       <Link href="/technique/video">
         <div className="flex items-center gap-4 rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4 hover:border-[#334155] transition-colors cursor-pointer">
@@ -217,8 +235,18 @@ export default function TechniquePage() {
 
       <div className="rounded-xl border border-dashed border-[#334155] p-4 text-center">
         <div className="text-sm text-[#64748B]">More technique lessons coming soon.</div>
-        <div className="text-xs text-[#475569] mt-1">Video analysis, AI feedback, and drill libraries in development.</div>
+        <div className="text-xs text-[#475569] mt-1">Drill libraries and coach review in development.</div>
       </div>
     </div>
+  );
+}
+
+// useSearchParams needs a Suspense boundary or the production build fails on
+// this statically-rendered route.
+export default function TechniquePage() {
+  return (
+    <Suspense fallback={<div className="p-4 text-sm text-[#64748B]">Loading…</div>}>
+      <TechniqueLibrary />
+    </Suspense>
   );
 }

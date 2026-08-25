@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     // Generated service worker — linting bundled/minified output is meaningless
     "public/sw.js",
     "public/sw.js.map",
+    // Vendored MediaPipe wasm runtime, staged by scripts/fetch-pose-assets.mjs
+    "public/mediapipe/**",
   ]),
 ]);
 
