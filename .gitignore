@@ -52,3 +52,9 @@ next-env.d.ts
 
 # mediapipe pose assets (staged at build time by scripts/fetch-pose-assets.mjs)
 /public/mediapipe
+
+# playwright
+/test-results
+/playwright-report
+/blob-report
+/playwright/.cache

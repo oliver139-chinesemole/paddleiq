@@ -44,3 +44,25 @@ jobs:
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      # Only chromium — the suite asserts behaviour, not cross-browser
+      # rendering, and the other engines would triple install time.
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      # Runs against the build produced above. These catch what the unit suite
+      # structurally can't: a component nobody rendered, or a correct
+      # calculation over a wrong input.
+      - name: Smoke tests
+        run: npm run test:e2e
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+
+      - name: Upload traces on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
