@@ -6,6 +6,7 @@
  */
 import { getLocalDB, type SyncQueueItem } from "./schema";
 import { formatTime } from "@/lib/utils";
+import { isDue, onFailure, QUEUE_WARN_SIZE } from "./retry-policy";
 
 // Fields that exist only in the local Dexie row and must not reach Supabase
 const LOCAL_ONLY = new Set(["localId", "userId", "serverId", "synced"]);
@@ -23,7 +24,10 @@ export async function enqueue(
 ): Promise<void> {
   const db = getLocalDB();
   const localId = `${table}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  await db.syncQueue.add({ table, operation, payload, localId, createdAt: Date.now(), retries: 0 });
+  await db.syncQueue.add({
+    table, operation, payload, localId,
+    createdAt: Date.now(), retries: 0, failed: 0,
+  });
   // Fire-and-forget flush
   flushQueue().catch(console.warn);
 }
@@ -38,7 +42,21 @@ export async function flushQueue(): Promise<void> {
   _syncing = true;
   try {
     const db = getLocalDB();
-    const pending = await db.syncQueue.orderBy("createdAt").limit(50).toArray();
+    const now = Date.now();
+
+    // Take a wider slice than we'll attempt, because most of the head of the
+    // queue may be backing off. Fetching exactly 50 and then filtering would
+    // let a handful of failing items starve everything behind them.
+    const queued = await db.syncQueue.orderBy("createdAt").limit(200).toArray();
+    if (queued.length === 0) return;
+
+    if (queued.length >= QUEUE_WARN_SIZE) {
+      console.warn(
+        `[sync] ${queued.length} items queued — sessions are not reaching the server.`
+      );
+    }
+
+    const pending = queued.filter((item) => isDue(item, now)).slice(0, 50);
     if (pending.length === 0) return;
 
     const { createClient } = await import("@/lib/supabase/client");
@@ -69,10 +87,25 @@ export async function flushQueue(): Promise<void> {
         if (item.operation === "insert" && (item.table === "erg_sessions" || item.table === "water_sessions")) {
           await maybePostPRToFeed(supabase, item.table, remote).catch(() => { /* non-fatal */ });
         }
-      } catch {
-        // Increment retry counter; exponential backoff handled at next flush
+      } catch (error) {
+        // Back off, and stop entirely once the failure is permanent or the
+        // retries are spent. The item is marked rather than deleted so the
+        // athlete's local row survives and the failure can be surfaced.
         if (item.id != null) {
-          await db.syncQueue.update(item.id, { retries: (item.retries ?? 0) + 1 });
+          const update = onFailure(item, error, Date.now());
+          // Spelled out rather than passed as an object, so Dexie's UpdateSpec
+          // matches against SyncQueueItem's optional fields.
+          await db.syncQueue.update(item.id, {
+            retries: update.retries,
+            lastAttemptAt: update.lastAttemptAt,
+            failed: update.failed,
+            lastError: update.lastError,
+          });
+          if (update.failed) {
+            console.warn(
+              `[sync] giving up on ${item.operation} ${item.table} after ${update.retries} attempts: ${update.lastError}`
+            );
+          }
         }
       }
     }
@@ -142,4 +175,50 @@ async function markLocalSynced(table: SyncQueueItem["table"], localId: string): 
   if (!t || localId == null) return;
   const numId = parseInt(localId, 10);
   if (!isNaN(numId)) await (t as ReturnType<typeof getLocalDB>["ergSessions"]).update(numId, { synced: 1 });
+}
+
+// ── Queue health ─────────────────────────────────────────────────────────────
+
+export interface QueueHealth {
+  /** Items still expected to sync, including ones currently backing off. */
+  pending: number;
+  /** Items we've stopped retrying. These need a human decision. */
+  failed: number;
+  /** Why the first of them stopped, for diagnosis. */
+  firstError?: string;
+}
+
+/**
+ * Lets the app surface a stuck queue rather than leaving the athlete to notice
+ * their sessions never appear on another device.
+ */
+export async function getQueueHealth(): Promise<QueueHealth> {
+  if (typeof window === "undefined") return { pending: 0, failed: 0 };
+  const db = getLocalDB();
+  const all = await db.syncQueue.toArray();
+  const failed = all.filter((i) => i.failed === 1);
+  return {
+    pending: all.length - failed.length,
+    failed: failed.length,
+    firstError: failed[0]?.lastError,
+  };
+}
+
+/**
+ * Clears the failed flag so the next flush tries again — for a "retry sync"
+ * button, or after the user fixes whatever caused the rejection.
+ */
+export async function retryFailedItems(): Promise<number> {
+  if (typeof window === "undefined") return 0;
+  const db = getLocalDB();
+  const failed = await db.syncQueue.filter((i) => i.failed === 1).toArray();
+  await Promise.all(
+    failed.map((i) =>
+      i.id != null
+        ? db.syncQueue.update(i.id, { failed: 0, retries: 0, lastAttemptAt: undefined })
+        : Promise.resolve(0)
+    )
+  );
+  if (failed.length) flushQueue().catch(console.warn);
+  return failed.length;
 }

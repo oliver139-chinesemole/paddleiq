@@ -12,6 +12,12 @@ export interface SyncQueueItem {
   localId: string;            // client-generated id for dedup
   createdAt: number;
   retries: number;
+  /** When the last attempt was made, for backoff. Absent until first failure. */
+  lastAttemptAt?: number;
+  /** 1 once we've stopped retrying. Indexed, so 0/1 rather than a boolean. */
+  failed?: 0 | 1;
+  /** Why it stopped, so a stuck queue can be diagnosed. */
+  lastError?: string;
 }
 
 // Local row shape: same as Supabase types but with a local numeric id
@@ -71,6 +77,11 @@ export class PaddleIQDatabase extends Dexie {
       personalRecords: "++localId, userId, category, distance_m, synced",
       syncQueue:       "++id, table, localId, createdAt",
     });
+    // No version bump for lastAttemptAt / failed / lastError: IndexedDB object
+    // stores don't enforce a schema, and nothing queries those fields by index
+    // — the queue is small enough to filter in JS. Declaring an index we never
+    // read would mean an upgrade path to maintain for no benefit, and rows
+    // written before the fields existed simply read as undefined.
   }
 }
 
