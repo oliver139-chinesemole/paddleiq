@@ -7,6 +7,7 @@ import { BookOpen, ChevronRight, ChevronDown, Star, Check, Video, ScanLine, User
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { techniqueLessons } from "@/lib/data/seed";
+import { StrokeAnimation } from "@/components/technique/StrokeAnimation";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = ["All", "Stroke Mechanics", "Power & Mechanics", "Team Synchronization", "Race Strategy", "Erg Training", "Technique & Position"];
@@ -92,14 +93,8 @@ function TechniqueLibrary() {
           </ul>
         </div>
 
-        {/* Video Placeholder */}
-        <div className="rounded-2xl border border-dashed border-[#334155] p-6 text-center">
-          <div className="w-12 h-12 rounded-full bg-[#1E293B] flex items-center justify-center mx-auto mb-3">
-            <span className="text-2xl">▶</span>
-          </div>
-          <div className="text-sm font-semibold text-[#64748B]">Video Tutorial</div>
-          <div className="text-xs text-[#475569] mt-1">Record and review your technique below.</div>
-        </div>
+        {/* Animated demonstration of the phase this lesson is about */}
+        <StrokeAnimation lessonId={lesson.id} />
 
         <Link href="/technique/video">
           <div className="flex items-center gap-3 rounded-xl border border-[#0EA5E9]/20 bg-[#0EA5E9]/10 p-3 hover:bg-[#0EA5E9]/15 transition-colors cursor-pointer">
