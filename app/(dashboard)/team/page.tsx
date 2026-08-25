@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Users, Plus, Trophy, ChevronRight, Crown, UserPlus, Loader2,
+  Users, Plus, ChevronRight, UserPlus, Loader2,
   Copy, Check, X, Shield, Zap, Flame, Anchor, Cpu,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -254,7 +254,7 @@ function NoTeamView({ userId, onJoined }: { userId: string; onJoined: () => void
       await sb.from("profiles").update({ team_id: team.id }).eq("id", userId);
       toast.success("Team created!");
       onJoined();
-    } catch (e) {
+    } catch {
       toast.error("Failed to create team. Try again.");
     } finally {
       setBusy(false);
@@ -277,7 +277,7 @@ function NoTeamView({ userId, onJoined }: { userId: string; onJoined: () => void
       try { await sb.from("team_feed").insert({ team_id: team.id, author_id: userId, post_type: "new_member", content: `${joinerName} joined the team! Welcome 🐉`, metadata: {} }); } catch { /* non-fatal */ }
       toast.success(`Joined ${team.name}!`);
       onJoined();
-    } catch (e) {
+    } catch {
       toast.error("Failed to join team. Try again.");
     } finally {
       setBusy(false);

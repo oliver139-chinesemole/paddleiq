@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Brain, TrendingUp, AlertTriangle, Target, Lightbulb, CheckCircle, RefreshCw } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Brain, AlertTriangle, Target, CheckCircle, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useUser } from "@/hooks/useUser";
 
@@ -61,7 +61,7 @@ export default function AICoachPage() {
   const [activeQ, setActiveQ] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  async function loadInsights() {
+  const loadInsights = useCallback(async () => {
     try {
       if (isDemoMode) {
         // Yield to the event loop before setting state so this is not synchronous
@@ -126,9 +126,15 @@ export default function AICoachPage() {
     } finally {
       setLoading(false);
     }
-  }
+    // Depends only on identity inputs; everything else it reads is a constant
+    // or a setter. Declaring it lets the effect track it honestly instead of
+    // silently capturing whichever render defined it.
+  }, [userId, isDemoMode]);
 
-  useEffect(() => { void (async () => { await loadInsights(); })(); }, [userId]);
+  // Wrapped rather than called directly: loadInsights runs synchronously up to
+  // its first await, so a bare call sets state during the effect and cascades
+  // a render.
+  useEffect(() => { void (async () => { await loadInsights(); })(); }, [loadInsights]);
 
   return (
     <div className="py-6 flex flex-col gap-5 animate-fade-in">

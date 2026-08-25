@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Plus, MapPin, Clock, Calendar, ChevronDown, ChevronUp, Check, X, HelpCircle, Loader2, Users } from "lucide-react";
+import { Plus, MapPin, Clock, Calendar, ChevronDown, ChevronUp, Check, X, HelpCircle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

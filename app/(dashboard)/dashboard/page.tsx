@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  Flame, TrendingUp, Timer, Zap, Target, ChevronRight,
+  Flame, TrendingUp, Zap, Target, ChevronRight,
   Dumbbell, Droplets, Users, Activity,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardValue, CardContent } from "@/components/ui/card";

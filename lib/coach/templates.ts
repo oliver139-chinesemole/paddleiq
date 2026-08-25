@@ -3,12 +3,9 @@
  * No model, no external API. Every string here is statically verified.
  */
 
-import { formatTime, formatPace } from "@/lib/utils";
+import { formatTime } from "@/lib/utils";
 import type {
-  CoachInsight, SplitFadeResult, PacingConsistencyResult, TrainingLoadResult,
-  HighRPEStreakResult, ModalityGapResult, BoatErgGapResult,
-  PRProximityResult, PRTrendResult,
-} from "./types";
+  CoachInsight, } from "./types";
 
 function distLabel(m: number): string {
   return m >= 1000 ? `${m / 1000}k` : `${m}m`;

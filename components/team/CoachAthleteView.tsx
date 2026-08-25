@@ -7,7 +7,7 @@
  */
 import { useState, useEffect } from "react";
 import {
-  AlertTriangle, CheckCircle, TrendingDown, Loader2,
+  AlertTriangle, CheckCircle, Loader2,
   Dumbbell, Droplets, Activity, Users, Plus, Calendar,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";

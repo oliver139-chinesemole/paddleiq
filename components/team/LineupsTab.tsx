@@ -7,7 +7,7 @@ import {
   type DragEndEvent,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import { Save, Loader2, ChevronDown, Plus, Trash2, Scale } from "lucide-react";
+import { Save, Loader2, ChevronDown, Trash2, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -47,8 +47,8 @@ function parseSlot(id: string): { seat: number | "drummer" | "steerer"; side?: "
 }
 
 // ── Draggable athlete chip ────────────────────────────────────────────────────
-function AthleteChip({ member, selected, onClick, dragging }: {
-  member: MemberSummary; selected: boolean; onClick: () => void; dragging?: boolean;
+function AthleteChip({ member, selected, onClick }: {
+  member: MemberSummary; selected: boolean; onClick: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: `athlete-${member.user_id}` });
   const style = { transform: CSS.Translate.toString(transform), opacity: isDragging ? 0.4 : 1 };
@@ -300,8 +300,14 @@ export default function LineupsTab({
     );
 
     if (selected) {
-      // Place selected athlete
-      assignToSlot(selected, seat, side);
+      if (occupant?.user_id === selected) {
+        // Tapping the seat of the paddler you just picked takes them out.
+        // Without this there was no way to remove one athlete — clearSeat
+        // existed but nothing called it, so the only option was Clear all.
+        clearSeat(seat, side);
+      } else {
+        assignToSlot(selected, seat, side);
+      }
       setSelected(null);
     } else if (occupant?.user_id) {
       // Select the occupant (to move them)

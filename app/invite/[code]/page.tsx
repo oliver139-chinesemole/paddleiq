@@ -41,7 +41,8 @@ export default function InvitePage() {
       if (!team) { setState({ id: "not_found" }); return; }
       setState({ id: "found", teamName: team.name, teamId: team.id });
     })();
-  }, [code, IS_CONFIGURED]);
+    // IS_CONFIGURED is a module constant, not reactive state.
+  }, [code]);
 
   async function join() {
     if (state.id !== "found") return;
@@ -79,7 +80,7 @@ export default function InvitePage() {
       try { await sb.from("team_feed").insert({ team_id: state.teamId, author_id: user.id, post_type: "new_member", content: `${joinerName} joined the team! Welcome 🐉`, metadata: {} }); } catch { /* non-fatal */ }
       setState({ id: "joined", teamName: state.teamName });
       setTimeout(() => router.push("/team"), 1800);
-    } catch (e) {
+    } catch {
       setState({ id: "error", msg: "Failed to join. Please try again." });
     }
   }

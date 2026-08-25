@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Crown, Heart, Pin, Loader2, Send } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Heart, Pin, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { FeedPostType } from "@/lib/types";
@@ -45,8 +44,8 @@ const TYPE_COLOR: Record<FeedPostType, string> = {
 };
 
 // ── Single post card ──────────────────────────────────────────────────────────
-function PostCard({ post, userId, isDemoMode, onKudos, onPin, isCoach }: {
-  post: Post; userId: string; isDemoMode: boolean; isCoach: boolean;
+function PostCard({ post, userId, onKudos, onPin, isCoach }: {
+  post: Post; userId: string; isCoach: boolean;
   onKudos: (id: string, kudos: string[]) => void;
   onPin: (id: string, pinned: boolean) => void;
 }) {
@@ -105,6 +104,25 @@ function PostCard({ post, userId, isDemoMode, onKudos, onPin, isCoach }: {
 }
 
 // ── FeedTab ───────────────────────────────────────────────────────────────────
+// Declared at module scope so authorNameOf is stable across renders — defined
+// inside the component it changed identity every render, which made the
+// loadPosts callback it feeds a lying dependency.
+type ProfileRef = { full_name: string | null };
+type FeedRow = {
+  id: string; post_type: string; author_id: string | null; content: string;
+  created_at: string; is_pinned: boolean;
+  reactions: { kudos: string[] } | null;
+  metadata: Record<string, unknown> | null;
+  // PostgREST returns an embedded relation as an object for a many-to-one,
+  // but its generated types describe it as an array. Accept both.
+  profiles: ProfileRef | ProfileRef[] | null;
+};
+
+function authorNameOf(p: FeedRow): string {
+  const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+  return profile?.full_name ?? "Team";
+}
+
 export default function FeedTab({
   teamId, userId, authorName, isCoach, isDemoMode,
 }: {
@@ -118,22 +136,6 @@ export default function FeedTab({
   const [loading, setLoading] = useState(!isDemoMode);
   const [text, setText] = useState("");
   const [posting, setPosting] = useState(false);
-
-  type ProfileRef = { full_name: string | null };
-  type FeedRow = {
-    id: string; post_type: string; author_id: string | null; content: string;
-    created_at: string; is_pinned: boolean;
-    reactions: { kudos: string[] } | null;
-    metadata: Record<string, unknown> | null;
-    // PostgREST returns an embedded relation as an object for a many-to-one,
-    // but its generated types describe it as an array. Accept both.
-    profiles: ProfileRef | ProfileRef[] | null;
-  };
-
-  const authorNameOf = (p: FeedRow) => {
-    const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
-    return profile?.full_name ?? "Team";
-  };
 
   const loadPosts = useCallback(async () => {
     if (isDemoMode) return;
@@ -258,7 +260,6 @@ export default function FeedTab({
             key={p.id}
             post={p}
             userId={userId}
-            isDemoMode={isDemoMode}
             isCoach={isCoach}
             onKudos={handleKudos}
             onPin={handlePin}

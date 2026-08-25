@@ -5,7 +5,11 @@ services:
     region: oregon
     plan: free
     buildCommand: npm ci && npm run build
-    startCommand: node .next/standalone/server.js
+    # `next start`, not the standalone server: next.config sets no
+    # `output: "standalone"`, so .next/standalone is never produced and this
+    # file would have failed on a path that doesn't exist. The live service
+    # runs from the Render dashboard settings, which is why nobody noticed.
+    startCommand: npm run start
     healthCheckPath: /
     envVars:
       - key: NODE_ENV

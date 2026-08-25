@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { BookOpen, ChevronRight, ChevronDown, Star, Check, Video, ScanLine, Users } from "lucide-react";
+import { BookOpen, ChevronRight, Star, Check, Video, ScanLine, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { techniqueLessons } from "@/lib/data/seed";

@@ -8,8 +8,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  deriveNotifications, unreadCount, latestAt,
-  type AppNotification, type NotificationSources,
+  deriveNotifications, unreadCount, type AppNotification, type NotificationSources,
 } from "@/lib/notifications/derive";
 
 const SEEN_KEY = "paddleiq:notifications:lastSeenAt";

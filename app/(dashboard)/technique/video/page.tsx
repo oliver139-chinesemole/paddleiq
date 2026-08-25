@@ -207,7 +207,14 @@ function PlaybackView({
 
   useEffect(() => () => URL.revokeObjectURL(objectUrl), [objectUrl]);
 
-  const toggle = () => { const v = videoRef.current!; playing ? v.pause() : v.play(); };
+  const toggle = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    // play() rejects when a pause interrupts it, which is routine when tapping
+    // quickly; swallowing that is intentional, letting it float is not.
+    if (playing) v.pause();
+    else void v.play().catch(() => {});
+  };
   const step = (d: 1 | -1) => { const v = videoRef.current!; v.pause(); v.currentTime = Math.max(0, Math.min(v.currentTime + d / 30, dur)); };
   const cycleSpeed = () => {
     const v = videoRef.current!;
@@ -476,7 +483,14 @@ function DetailView({ clipId, onBack }: { clipId: number; onBack: () => void }) 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clipId]);
 
-  const toggle = () => { const v = videoRef.current!; playing ? v.pause() : v.play(); };
+  const toggle = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    // play() rejects when a pause interrupts it, which is routine when tapping
+    // quickly; swallowing that is intentional, letting it float is not.
+    if (playing) v.pause();
+    else void v.play().catch(() => {});
+  };
   const step = (d: 1 | -1) => { const v = videoRef.current!; v.pause(); v.currentTime = Math.max(0, Math.min(v.currentTime + d / 30, dur)); };
   const cycleSpeed = () => {
     const v = videoRef.current!;

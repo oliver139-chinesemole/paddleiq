@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle, Dumbbell, TrendingUp } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import { formatTime, formatPace, toLocalDateStr } from "@/lib/utils";
 
 type WorkoutType = "steady" | "intervals" | "test" | "pyramid";
@@ -43,6 +42,14 @@ export default function ErgSessionPage() {
     intervalTemplate: "",
     notes: "",
   });
+
+  // The screen must stay awake while an athlete is on the erg with the form
+  // open. release() was already called on save, but nothing ever acquired the
+  // lock, so it did nothing at all.
+  useEffect(() => {
+    void wakeLockAcquire();
+    return () => { void wakeLockRelease(); };
+  }, [wakeLockAcquire, wakeLockRelease]);
 
   const durationSec = parseInt(form.minutes || "0") * 60 + parseInt(form.seconds || "0");
   const distM = parseInt(form.distanceM || "0");

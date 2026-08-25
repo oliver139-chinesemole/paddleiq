@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { TrendingUp, Flame, Dumbbell, TrendingDown, Minus } from "lucide-react";
+import { TrendingUp, Flame, Dumbbell, TrendingDown } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardValue, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { VolumeChart } from "@/components/charts/volume-chart";
 import { ProgressChart } from "@/components/charts/progress-chart";
 import { mockStats, mockErgSessions, weeklyVolumeData, ergProgressData } from "@/lib/data/seed";
-import { formatTime, formatDistance, formatRelativeDate, formatPace, toLocalDateStr } from "@/lib/utils";
+import { formatTime, formatDistance, formatRelativeDate, formatPace } from "@/lib/utils";
 import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
 import type { DashboardStats } from "@/lib/types";
 import type { LocalErgSession } from "@/lib/db/schema";
@@ -56,13 +56,6 @@ export default function AnalyticsPage() {
 
   const totalVolume = volumeData.reduce((s, d) => s + d.distance, 0);
   const avgWeeklyVolume = volumeData.length > 0 ? totalVolume / volumeData.length : 0;
-
-  // Training load breakdown: % of weekly sessions by type (rough)
-  const ergCount = ergSessions.filter(s => {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 28);
-    return s.date >= toLocalDateStr(cutoff);
-  }).length;
 
   return (
     <div className="py-6 flex flex-col gap-5 animate-fade-in">

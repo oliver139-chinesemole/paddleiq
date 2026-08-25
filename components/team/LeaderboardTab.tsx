@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Trophy, Loader2 } from "lucide-react";
-import { formatTime, formatDistance, toLocalDateStr } from "@/lib/utils";
+import { formatTime, toLocalDateStr } from "@/lib/utils";
 
 type Category = "erg500" | "erg2k" | "weekly_dist" | "attendance" | "most_improved";
 type Period  = "all" | "30d" | "7d";
