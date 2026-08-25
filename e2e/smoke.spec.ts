@@ -265,12 +265,19 @@ test.describe("GPS tracking", () => {
 });
 
 test.describe("offline", () => {
-  /** Waits for the service worker to install and take control. */
+  /**
+   * Waits until the service worker is actually *controlling* the page.
+   *
+   * Waiting only for `registration.active` was a race: an activated worker
+   * isn't necessarily controlling the client yet, so on a slower runner the
+   * caching navigation went straight to the network and nothing was cached.
+   * The SW sets clientsClaim, so `controller` is the honest signal.
+   */
   async function waitForServiceWorker(page: Page) {
     await page.waitForFunction(
       async () => {
         const reg = await navigator.serviceWorker.getRegistration();
-        return !!reg?.active;
+        return !!reg?.active && !!navigator.serviceWorker.controller;
       },
       undefined,
       { timeout: 30_000 }
@@ -308,15 +315,23 @@ test.describe("offline", () => {
     // offline page, an install banner and a sync queue.
     await page.goto("/train/erg", { waitUntil: "networkidle" });
     await waitForServiceWorker(page);
+    // Now that the worker is controlling, this navigation is the one that
+    // actually gets cached.
     await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await page.waitForTimeout(500); // let the cache write settle
 
     await context.setOffline(true);
     try {
-      const response = await page.goto("/train/erg", { waitUntil: "domcontentloaded" });
-      expect(response?.status()).toBe(200);
-      // Either the real page or the offline fallback is fine; a failure isn't.
+      await page.goto("/train/erg", { waitUntil: "domcontentloaded" });
+
+      // Asserted on what rendered, not on response.status(): a navigation
+      // served by a service worker legitimately reports no response object in
+      // Playwright, so checking the status made a passing case look like a
+      // failure. What matters is that something usable came back — the real
+      // page or the offline fallback — rather than ERR_FAILED.
       const body = await page.locator("body").innerText();
-      expect(body.length).toBeGreaterThan(50);
+      expect(body.length, "offline navigation rendered nothing").toBeGreaterThan(50);
+      expect(body).not.toMatch(/ERR_(FAILED|INTERNET_DISCONNECTED)/);
     } finally {
       await context.setOffline(false);
     }
