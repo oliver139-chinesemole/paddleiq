@@ -60,7 +60,11 @@ export default function PrivacyPage() {
             <h2 className="text-base font-bold text-[#F1F5F9] mb-2">Contact</h2>
             <p>
               Questions? Email us at{" "}
-              <a href="mailto:privacy@paddleiq.app" className="text-[#0EA5E9] hover:underline">
+              {/* Underlined always, not just on hover: a link inside a
+                  paragraph distinguished only by colour fails WCAG 1.4.1 —
+                  the blue measures 1.08:1 against the surrounding grey, well
+                  under the 3:1 needed to rely on colour alone. */}
+              <a href="mailto:privacy@paddleiq.app" className="text-[#0EA5E9] underline">
                 privacy@paddleiq.app
               </a>
               .

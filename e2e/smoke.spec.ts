@@ -174,24 +174,30 @@ test.describe("technique library", () => {
 });
 
 test.describe("accessibility", () => {
-  // Guards the rules that were actually broken and are now fixed. Kept to a
-  // named list rather than "no violations at all" so the suite stays honest:
-  // colour contrast on the primary button is a live, known failure and a
-  // pending design decision, not something to quietly allow through a filter.
-  const RULES = ["label", "select-name", "button-name", "link-name", "meta-viewport"];
+  // This used to check a named list of five rules rather than the whole
+  // ruleset, because colour contrast was a live known failure and filtering it
+  // out silently would have been dishonest. That failure is fixed — the
+  // destructive badge measured 3.97:1 against its own tint, and the legal
+  // pages had links in prose distinguished only by colour — so the suite now
+  // asserts the real thing: no WCAG 2.1 AA violations at all.
+  //
+  // If this starts failing, the fix is the markup, not the filter.
+  const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
   const ROUTES = [
-    "/login", "/dashboard", "/train/erg", "/train/water", "/train/team",
-    "/train/dryland", "/technique", "/technique/video", "/profile", "/onboarding",
+    "/", "/login", "/signup", "/dashboard", "/train", "/train/erg", "/train/water",
+    "/train/team", "/train/dryland", "/records", "/analytics", "/plans", "/profile",
+    "/team", "/technique", "/technique/video", "/onboarding",
+    "/legal/privacy", "/legal/terms", "/offline",
   ];
 
   for (const route of ROUTES) {
-    test(`${route} has labelled controls and allows zoom`, async ({ page }) => {
+    test(`${route} meets WCAG 2.1 AA`, async ({ page }) => {
       await page.goto(route, { waitUntil: "networkidle" });
-      const results = await new AxeBuilder({ page }).withRules(RULES).analyze();
+      const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
 
       const detail = results.violations.flatMap((v) =>
-        v.nodes.map((n) => `${v.id}: ${n.html.replace(/\s+/g, " ").slice(0, 80)}`)
+        v.nodes.map((n) => `${v.id} [${v.impact}]: ${n.html.replace(/\s+/g, " ").slice(0, 80)}`)
       );
       expect(detail, `${route} accessibility violations`).toEqual([]);
     });

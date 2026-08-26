@@ -44,7 +44,7 @@ export default function TermsPage() {
             <p>
               You own your training data. By using PaddleIQ you grant us a limited licence to store
               and process your data to provide the service. See our{" "}
-              <Link href="/legal/privacy" className="text-[#0EA5E9] hover:underline">Privacy Policy</Link>
+              <Link href="/legal/privacy" className="text-[#0EA5E9] underline">Privacy Policy</Link>
               {" "}for details.
             </p>
           </section>
@@ -79,7 +79,7 @@ export default function TermsPage() {
             <h2 className="text-base font-bold text-[#F1F5F9] mb-2">Contact</h2>
             <p>
               Questions?{" "}
-              <a href="mailto:support@paddleiq.app" className="text-[#0EA5E9] hover:underline">
+              <a href="mailto:support@paddleiq.app" className="text-[#0EA5E9] underline">
                 support@paddleiq.app
               </a>
             </p>
