@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { trainingPlans } from "@/lib/data/seed";
 import { cn } from "@/lib/utils";
-import { useActivePlan, writeActivePlan, writePlanStart } from "@/lib/plans/active";
+import { useActivePlan, useActivePlanStart, writeActivePlan, writePlanStart, currentPlanWeek, planProgressPercent } from "@/lib/plans/active";
 import { phaseForWeek, isDeloadWeek, weekInPhase } from "@/lib/plans/generate";
 import { PLAN_SPECS } from "@/lib/plans/specs";
 import { toLocalDateStr } from "@/lib/utils";
@@ -29,6 +29,7 @@ export default function PlansPage() {
   // Persisted, not component-local: "Start This Plan" used to vanish on
   // refresh and the dashboard had no way to see it.
   const activePlan = useActivePlan();
+  const planStart = useActivePlanStart();
 
   function toggleActivePlan(planId: string) {
     const next = activePlan === planId ? null : planId;
@@ -192,8 +193,22 @@ export default function PlansPage() {
           <h2 className="text-base font-black text-white">
             {trainingPlans.find((p) => p.id === activePlan)?.name}
           </h2>
-          <Progress value={15} color="rgba(255,255,255,0.8)" className="mt-3 bg-white/20" />
-          <p className="text-xs text-[#BAE6FD] mt-1">Week 1 of {trainingPlans.find((p) => p.id === activePlan)?.duration_weeks} · 15% complete</p>
+          {/* Was a hardcoded 15% and "Week 1", shown to an athlete four weeks
+              into a plan just the same. The start date is stored, so both of
+              these are things the app actually knows. */}
+          {(() => {
+            const weeks = trainingPlans.find((p) => p.id === activePlan)?.duration_weeks ?? 1;
+            const week = currentPlanWeek(planStart, weeks);
+            const pct = planProgressPercent(planStart, weeks);
+            return (
+              <>
+                <Progress value={pct} color="rgba(255,255,255,0.8)" className="mt-3 bg-white/20" />
+                <p className="text-xs text-[#BAE6FD] mt-1">
+                  Week {week} of {weeks} · {pct}% complete
+                </p>
+              </>
+            );
+          })()}
         </div>
       )}
 
@@ -205,7 +220,14 @@ export default function PlansPage() {
         {ranked.map(({ plan, score, reasons }, i) => (
           <button
             key={plan.id}
-            onClick={() => setSelectedPlan(plan.id)}
+            onClick={() => {
+              setSelectedPlan(plan.id);
+              // Opening your own running plan on week 1 hides the week you
+              // actually need to look at.
+              setViewWeek(
+                plan.id === activePlan ? currentPlanWeek(planStart, plan.duration_weeks) : 1,
+              );
+            }}
             className={cn(
               "rounded-2xl border p-5 text-left transition-all cursor-pointer w-full hover:border-[#334155]",
               activePlan === plan.id ? "border-[#0EA5E9] bg-[#0EA5E9]/10" : "border-[#1E293B] bg-[#0D1528]"

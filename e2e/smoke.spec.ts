@@ -627,3 +627,47 @@ test.describe("plan recommendations", () => {
     await expect(page).toHaveURL(/\/ai-coach/);
   });
 });
+
+test.describe("plan progress", () => {
+  test("shows the week you are actually in, not always week 1", async ({ page }) => {
+    // Regression: the banner rendered a hardcoded 15% and "Week 1" for every
+    // athlete, including one four weeks into a plan.
+    await page.goto("/plans");
+    await page.evaluate(() => {
+      const start = new Date();
+      start.setDate(start.getDate() - 21); // three weeks ago → week 4
+      const iso = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
+      localStorage.setItem("paddleiq:activePlanId", "plan-500m");
+      localStorage.setItem("paddleiq:activePlanStartedAt", iso);
+    });
+    await page.goto("/plans", { waitUntil: "networkidle" });
+
+    const banner = page.getByText(/Week \d+ of \d+ · \d+% complete/);
+    await expect(banner).toBeVisible();
+    await expect(banner).toContainText("Week 4 of 6");
+    // 21 of 42 days.
+    await expect(banner).toContainText("50% complete");
+  });
+
+  test("opens the active plan on the current week", async ({ page }) => {
+    await page.goto("/plans");
+    await page.evaluate(() => {
+      const start = new Date();
+      start.setDate(start.getDate() - 14);
+      const iso = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
+      localStorage.setItem("paddleiq:activePlanId", "plan-500m");
+      localStorage.setItem("paddleiq:activePlanStartedAt", iso);
+    });
+    await page.goto("/plans", { waitUntil: "networkidle" });
+
+    await page.locator("button").filter({ hasText: /500m Race Prep/ }).first().click();
+    // Two weeks in, so week 3 — not the week 1 the page always used to show.
+    await expect(page.getByText(/Week 3/).first()).toBeVisible();
+  });
+
+  test("starts a newly chosen plan at week 1", async ({ page }) => {
+    await page.goto("/plans", { waitUntil: "networkidle" });
+    await page.locator("button").filter({ hasText: /Erg Improvement/ }).first().click();
+    await expect(page.getByText(/Week 1/).first()).toBeVisible();
+  });
+});

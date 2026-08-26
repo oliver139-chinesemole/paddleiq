@@ -96,6 +96,30 @@ export function currentPlanWeek(
 }
 
 /**
+ * How far through the plan the athlete is, 0-100.
+ *
+ * Measured in elapsed days rather than whole weeks so the bar moves during a
+ * week instead of jumping every Monday. Week 1 day 1 is 0% — nothing has been
+ * done yet — and it clamps at 100 so a plan left running past its end doesn't
+ * report 140% complete.
+ *
+ * The plans page used to render a hardcoded 15% and "Week 1" for every plan,
+ * whatever week the athlete was actually in.
+ */
+export function planProgressPercent(
+  startedOn: string | null,
+  totalWeeks: number,
+  now = new Date(),
+): number {
+  if (!startedOn || totalWeeks < 1) return 0;
+  const start = new Date(`${startedOn}T00:00:00`);
+  if (Number.isNaN(start.getTime())) return 0;
+  const days = Math.floor((now.getTime() - start.getTime()) / 86_400_000);
+  if (days <= 0) return 0;
+  return Math.min(100, Math.round((days / (totalWeeks * 7)) * 100));
+}
+
+/**
  * Day index within the training week, 1-based, Monday first.
  *
  * The plans are written Monday to Sunday, and getDay() puts Sunday at 0.

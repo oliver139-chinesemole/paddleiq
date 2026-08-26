@@ -8,6 +8,7 @@
  * plan rather than in the code. Those assertions run over the shipped specs.
  */
 import { describe, it, expect } from "vitest";
+import { planProgressPercent } from "../active";
 import {
   volumeFactor,
   isDeloadWeek,
@@ -199,5 +200,41 @@ describe("the shipped plans", () => {
       const spec = PLAN_SPECS.find((p) => p.id === id)!;
       expect(spec.phases[spec.phases.length - 1].taper, id).toBe(true);
     }
+  });
+});
+
+describe("planProgressPercent", () => {
+  const start = "2026-06-01";
+  const at = (iso: string) => new Date(`${iso}T12:00:00`);
+
+  it("is zero on day one — nothing has been done yet", () => {
+    expect(planProgressPercent(start, 6, at("2026-06-01"))).toBe(0);
+  });
+
+  it("moves during a week rather than jumping every Monday", () => {
+    // The bar used to be a hardcoded 15% regardless of the actual week.
+    const midweek = planProgressPercent(start, 6, at("2026-06-04"));
+    const later = planProgressPercent(start, 6, at("2026-06-06"));
+    expect(midweek).toBeGreaterThan(0);
+    expect(later).toBeGreaterThan(midweek);
+  });
+
+  it("reaches about half way at the half way point", () => {
+    // 6 weeks = 42 days; day 21 is halfway.
+    expect(planProgressPercent(start, 6, at("2026-06-22"))).toBe(50);
+  });
+
+  it("clamps at 100 for a plan left running past its end", () => {
+    expect(planProgressPercent(start, 6, at("2026-12-01"))).toBe(100);
+  });
+
+  it("stays at zero before the start date", () => {
+    expect(planProgressPercent(start, 6, at("2026-05-20"))).toBe(0);
+  });
+
+  it("handles missing or nonsense input without producing NaN", () => {
+    expect(planProgressPercent(null, 6)).toBe(0);
+    expect(planProgressPercent("not-a-date", 6)).toBe(0);
+    expect(planProgressPercent(start, 0)).toBe(0);
   });
 });
