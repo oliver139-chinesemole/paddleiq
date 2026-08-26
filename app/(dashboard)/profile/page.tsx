@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { User, Settings, Award, Bell, LogOut, ChevronRight, Shield } from "lucide-react";
+import { ExportData } from "@/components/profile/ExportData";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { mockStats, mockPRs } from "@/lib/data/seed";
@@ -229,6 +230,9 @@ export default function ProfilePage() {
           </Link>
         ))}
       </div>
+
+      {/* Data export */}
+      <ExportData userId={userId} isDemoMode={isDemoMode} />
 
       {/* About */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4 text-center">

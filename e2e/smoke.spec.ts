@@ -431,3 +431,63 @@ test.describe("race projections", () => {
     }
   });
 });
+
+test.describe("data export", () => {
+  test("downloads a session an athlete actually logged", async ({ page }) => {
+    // The round trip that matters: log a session, then get it back out as a
+    // file. Unit tests cover the CSV shape; this covers the wiring — reading
+    // from IndexedDB, building the blob, and the browser accepting a download.
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await page.locator('input[type="number"]').first().fill("2000");
+
+    const mins = page.locator('input[type="number"]').nth(1);
+    const secs = page.locator('input[type="number"]').nth(2);
+    await mins.fill("8");
+    await secs.fill("0");
+    await page.getByRole("button", { name: /save erg session/i }).click();
+    await page.waitForURL(/dashboard/, { timeout: 15_000 });
+
+    await page.goto("/profile", { waitUntil: "networkidle" });
+
+    const downloadPromise = page.waitForEvent("download", { timeout: 15_000 });
+    await page.getByRole("button", { name: /export sessions/i }).click();
+    const download = await downloadPromise;
+
+    expect(download.suggestedFilename()).toMatch(/^paddleiq-sessions-\d{4}-\d{2}-\d{2}\.csv$/);
+
+    const stream = await download.createReadStream();
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) chunks.push(chunk as Buffer);
+    const csv = Buffer.concat(chunks).toString("utf8");
+
+    expect(csv).toContain("Date,Type,Distance (m)");
+    expect(csv).toContain("erg");
+    expect(csv).toContain("2000");
+    // Placeholder leakage would make the file useless in a spreadsheet.
+    expect(csv).not.toContain("undefined");
+    expect(csv).not.toContain("NaN");
+
+    // The effort column must hold a value the five-level picker can produce.
+    // A default of 7 (left from the old 1-10 slider) showed "Very hard" while
+    // storing something no selection maps to, and fed that into training load.
+    const effort = csv.split("\r\n")[1].split(",")[8];
+    expect([2, 4, 6, 8, 10]).toContain(Number(effort));
+
+    await expect(page.getByText(/Exported 1 session\./)).toBeVisible();
+  });
+
+  test("says so plainly when there is nothing to export", async ({ page }) => {
+    // A fresh browser has an empty IndexedDB; the sample sessions shown
+    // elsewhere are seed data and deliberately not part of the export.
+    await page.goto("/profile", { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: /export sessions/i }).click();
+    await expect(page.getByText(/Nothing to export yet/)).toBeVisible();
+  });
+
+  test("export stays available without an account", async ({ page }) => {
+    // Demo mode means Supabase isn't configured, so anything logged lives only
+    // in this browser — the case where a local copy matters most.
+    await page.goto("/profile", { waitUntil: "networkidle" });
+    await expect(page.getByRole("button", { name: /export sessions/i })).toBeEnabled();
+  });
+});

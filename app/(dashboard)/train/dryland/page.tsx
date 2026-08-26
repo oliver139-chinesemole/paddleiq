@@ -39,7 +39,11 @@ export default function DrylandPage() {
   const [form, setForm] = useState({
     date: toLocalDateStr(new Date()),
     durationMin: "",
-    rpe: "7",
+    // Must be a value the five-level picker can actually produce (2/4/6/8/10).
+    // This was 7, left over from the old 1-10 slider: the picker rounds up, so
+    // an untouched form highlighted "Very hard" and then saved 7 — a value no
+    // selection maps to, and a harder default than anyone means to log.
+    rpe: "6",
     notes: "",
   });
 
