@@ -491,3 +491,66 @@ test.describe("data export", () => {
     await expect(page.getByRole("button", { name: /export sessions/i })).toBeEnabled();
   });
 });
+
+test.describe("training preferences", () => {
+  /** Walks the four onboarding steps, picking the first option on each. */
+  async function completeOnboarding(page: Page) {
+    await page.goto("/onboarding", { waitUntil: "networkidle" });
+    for (let i = 0; i < 4; i++) {
+      await page.locator("button").filter({ hasText: /^(Paddler|Dragon Boat|Build Endurance|200m)/ }).first().click();
+      await page.getByRole("button", { name: /continue|go to dashboard|save preferences/i }).first().click();
+    }
+    await page.waitForURL(/dashboard|profile/, { timeout: 15_000 });
+  }
+
+  test("keeps the answers onboarding collected", async ({ page }) => {
+    // Regression: onboarding saved only when Supabase was configured, so on
+    // the deployed site all four answers were discarded on the way to the
+    // dashboard — right after promising to personalise things with them.
+    await completeOnboarding(page);
+
+    await page.goto("/profile", { waitUntil: "networkidle" });
+    const panel = page.getByRole("heading", { name: /how you train/i }).locator("..").locator("..");
+    await expect(panel).toContainText("Paddler");
+    await expect(panel).toContainText("Dragon Boat");
+    await expect(panel).not.toContainText(/haven't told us/i);
+  });
+
+  test("prefills those answers when you go back to edit", async ({ page }) => {
+    // Otherwise revisiting silently overwrites four saved answers.
+    await completeOnboarding(page);
+
+    await page.goto("/onboarding", { waitUntil: "networkidle" });
+    await expect(page.getByText(/editing your preferences/i)).toBeVisible();
+    // Already-answered, so Continue is available without picking anything.
+    await expect(page.getByRole("button", { name: /continue/i }).first()).toBeEnabled();
+  });
+
+  test("invites you to set them when you haven't", async ({ page }) => {
+    await page.goto("/profile", { waitUntil: "networkidle" });
+    const panel = page.getByRole("heading", { name: /how you train/i }).locator("..").locator("..");
+    await expect(panel).toContainText(/haven't told us how you train/i);
+    await expect(panel.locator('a[href="/onboarding"]')).toBeVisible();
+  });
+
+  test("every settings row goes somewhere real", async ({ page }) => {
+    // Regression: all four pointed at "#". A settings menu where nothing
+    // opens reads as a broken app.
+    await page.goto("/profile", { waitUntil: "networkidle" });
+    const links = page.locator('a[href^="/"]');
+    const hrefs = await links.evaluateAll((els) => els.map((e) => e.getAttribute("href")));
+
+    expect(hrefs).toContain("/legal/privacy");
+    expect(hrefs).toContain("/legal/terms");
+    expect(await page.locator('a[href="#"]').count(), "no dead links").toBe(0);
+  });
+
+  test("the records page's plan link is a real link", async ({ page }) => {
+    // Was a styled div with cursor-pointer and no handler.
+    await page.goto("/records", { waitUntil: "networkidle" });
+    const link = page.locator('a[href="/plans"]').filter({ hasText: /2k prep/i });
+    await expect(link).toBeVisible();
+    await link.click();
+    await expect(page).toHaveURL(/\/plans/);
+  });
+});

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import { Trophy, TrendingUp, Calendar, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { mockPRs } from "@/lib/data/seed";
@@ -288,9 +289,11 @@ export default function RecordsPage() {
             Your current 2k erg PR is {formatTime(best2k.time_sec)} ({formatTime(Math.round(best2k.time_sec / 4))}/500m split).
             To beat it, focus on sustaining split consistency across all four 500m segments.
           </p>
-          <div className="text-xs text-[#0EA5E9] font-semibold cursor-pointer hover:underline">
-            → Start 2k Prep Training Plan
-          </div>
+          {/* Was a styled div with cursor-pointer and no handler — it looked
+              like a link and did nothing. Plans are real, so it points there. */}
+          <Link href="/plans" className="text-xs text-[#0EA5E9] font-semibold hover:underline">
+            → Start a 2k prep training plan
+          </Link>
         </div>
       )}
     </div>

@@ -1,10 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  fromOnboardingAnswers,
+  toOnboardingAnswers,
+  savePreferences,
+  hasPreferences,
+  subscribePreferences,
+  getPreferencesSnapshot,
+  getPreferencesServerSnapshot,
+} from "@/lib/profile/preferences";
 
 const IS_CONFIGURED =
   typeof window !== "undefined" &&
@@ -71,9 +80,26 @@ type StepId = typeof steps[number]["id"];
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<StepId, string | string[]>>({} as Record<StepId, string | string[]>);
   const [saving, setSaving] = useState(false);
   const current = steps[step];
+
+  // Prefill from what the athlete already told us, so this doubles as the
+  // editor reached from Profile. Without it, revisiting would silently
+  // overwrite four saved answers with whatever was picked this time.
+  //
+  // Derived rather than copied into state in an effect: edits start as null
+  // and only exist once something is actually changed, so there's no mount-time
+  // setState and no window where the form shows empty before the saved values
+  // appear.
+  const stored = useSyncExternalStore(
+    subscribePreferences,
+    getPreferencesSnapshot,
+    getPreferencesServerSnapshot,
+  );
+  const returning = hasPreferences(stored);
+  const [edits, setEdits] = useState<Record<StepId, string | string[]> | null>(null);
+  const answers = edits ?? (toOnboardingAnswers(stored) as Record<StepId, string | string[]>);
+  const setAnswers = setEdits;
 
   function toggle(value: string) {
     if (current.multi) {
@@ -104,6 +130,12 @@ export default function OnboardingPage() {
     // Last step — save profile then redirect
     setSaving(true);
     try {
+      // Saved locally first and unconditionally. This used to run only when
+      // Supabase was configured, so on the deployed site every answer was
+      // discarded on the way to the dashboard — after promising to
+      // personalise things based on them.
+      savePreferences(fromOnboardingAnswers(answers), new Date().toISOString());
+
       if (IS_CONFIGURED) {
         const { createClient } = await import("@/lib/supabase/client");
         const supabase = createClient();
@@ -124,7 +156,7 @@ export default function OnboardingPage() {
       console.warn("Profile save failed:", err);
     } finally {
       setSaving(false);
-      router.push("/dashboard");
+      router.push(returning ? "/profile" : "/dashboard");
     }
   }
 
@@ -138,7 +170,9 @@ export default function OnboardingPage() {
       </div>
 
       <div className="flex-1 flex flex-col justify-center px-6 py-12 max-w-lg mx-auto w-full">
-        <p className="text-xs text-[#7C8AA0] font-medium mb-6">Step {step + 1} of {steps.length}</p>
+        <p className="text-xs text-[#7C8AA0] font-medium mb-6">
+          {returning ? "Editing your preferences · " : ""}Step {step + 1} of {steps.length}
+        </p>
 
         <h2 className="text-2xl font-black text-[#F1F5F9] mb-2">{current.title}</h2>
         <p className="text-[#8A98AC] text-sm mb-8">{current.subtitle}</p>
@@ -186,7 +220,7 @@ export default function OnboardingPage() {
             {saving
               ? <><span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Saving…</>
               : step === steps.length - 1
-                ? <>Go to Dashboard <ArrowRight size={16} /></>
+                ? <>{returning ? "Save preferences" : "Go to Dashboard"} <ArrowRight size={16} /></>
                 : <>Continue <ArrowRight size={16} /></>
             }
           </Button>

@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { User, Settings, Award, Bell, LogOut, ChevronRight, Shield } from "lucide-react";
+import { Award, LogOut, ChevronRight, Shield, Sliders, FileText } from "lucide-react";
 import { ExportData } from "@/components/profile/ExportData";
+import { YourTraining } from "@/components/profile/YourTraining";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { mockStats, mockPRs } from "@/lib/data/seed";
@@ -210,14 +211,22 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* How they train */}
+      <YourTraining />
+
       {/* Settings */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] overflow-hidden">
         <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider p-4 pb-2">Settings</h2>
+        {/* Every row here pointed at "#". A settings menu where nothing opens
+            reads as a broken app, so these are now the destinations that
+            actually exist — the preferences editor and the legal pages.
+            Notifications and App Settings are gone rather than dead: there is
+            no screen behind either, and an entry that does nothing is worse
+            than no entry. */}
         {[
-          { icon: User,     label: "Edit Profile",   href: "#" },
-          { icon: Bell,     label: "Notifications",  href: "#" },
-          { icon: Shield,   label: "Privacy",        href: "#" },
-          { icon: Settings, label: "App Settings",   href: "#" },
+          { icon: Sliders, label: "Training Preferences", href: "/onboarding" },
+          { icon: Shield,  label: "Privacy Policy",       href: "/legal/privacy" },
+          { icon: FileText, label: "Terms of Service",    href: "/legal/terms" },
         ].map(({ icon: Icon, label, href }) => (
           <Link
             key={label}
