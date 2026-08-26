@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Trophy, TrendingUp, Calendar, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { mockPRs } from "@/lib/data/seed";
 import { formatTime, formatDate, formatPace } from "@/lib/utils";
 import { Skeleton, SkeletonCard, SkeletonRow, LoadingAnnouncement } from "@/components/ui/skeleton";
 import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
+import { RaceProjections } from "@/components/records/RaceProjections";
+import { predictMissing, type Prediction, type Confidence } from "@/lib/predict/race";
 import type { LocalPR } from "@/lib/db/schema";
 
 const ALL_DISTANCES = [200, 250, 500, 1000, 2000];
@@ -20,12 +22,30 @@ const EMPTY_OTHER: OtherRecord[] = [
   { label: "Best Watts (Erg)", value: "—", sub: "No data yet" },
 ];
 
-function PRCard({ category, distance, prs }: { category: "erg" | "water"; distance: number; prs: LocalPR[] }) {
+const CONFIDENCE_COPY: Record<Confidence, string> = {
+  high: "Projected from a nearby PR",
+  moderate: "Projected — a fair reach from your nearest PR",
+  rough: "Rough projection — no PR close to this distance",
+};
+
+function PRCard({
+  category,
+  distance,
+  prs,
+  projection,
+}: {
+  category: "erg" | "water";
+  distance: number;
+  prs: LocalPR[];
+  projection?: Prediction;
+}) {
   const pr = prs.find((p) => p.category === category && p.distance_m === distance);
   const accent = category === "erg" ? "#0EA5E9" : "#06B6D4";
 
   return (
-    <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4">
+    // The label is uppercased by CSS, so the DOM text is still "200m" — tests
+    // locate by this id rather than by text that only looks uppercase.
+    <div data-testid={`pr-${category}-${distance}`} className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-4">
       <div className="flex items-center gap-1.5 mb-2">
         <Target size={12} style={{ color: accent }} />
         <span className="text-[10px] font-semibold text-[#8A98AC] uppercase">
@@ -54,6 +74,20 @@ function PRCard({ category, distance, prs }: { category: "erg" | "water"; distan
             </div>
           )}
         </>
+      ) : projection ? (
+        // An empty card is dead space; a projection turns it into a target.
+        // Styled distinctly from a real PR so it can't be mistaken for one.
+        <div className="py-1">
+          <div className="text-2xl font-black text-[#7C8AA0] leading-none">
+            ~{formatTime(projection.time_sec)}
+          </div>
+          <div className="text-[10px] text-[#7C8AA0] mt-1.5">
+            {formatTime(projection.split_sec)}/500m target
+          </div>
+          <div className="text-[10px] text-[#7C8AA0] mt-1 leading-snug">
+            {CONFIDENCE_COPY[projection.confidence]}
+          </div>
+        </div>
       ) : (
         <div className="py-2">
           <div className="text-lg font-bold text-[#7C8AA0]">—</div>
@@ -134,6 +168,27 @@ export default function RecordsPage() {
 
   const best2k = prs.find(p => p.category === "erg" && p.distance_m === 2000);
 
+  // Erg and water are projected separately — a machine time says nothing about
+  // what a boat will do, so mixing them would fit a curve through two sports.
+  const ergPoints = useMemo(
+    () => prs.filter(p => p.category === "erg" && p.time_sec > 0)
+             .map(p => ({ distance_m: p.distance_m, time_sec: p.time_sec })),
+    [prs],
+  );
+  const waterPoints = useMemo(
+    () => prs.filter(p => p.category === "water" && p.time_sec > 0)
+             .map(p => ({ distance_m: p.distance_m, time_sec: p.time_sec })),
+    [prs],
+  );
+  const ergProjections = useMemo(
+    () => new Map(predictMissing(ergPoints, ALL_DISTANCES).map(p => [p.distance_m, p])),
+    [ergPoints],
+  );
+  const waterProjections = useMemo(
+    () => new Map(predictMissing(waterPoints, ALL_DISTANCES).map(p => [p.distance_m, p])),
+    [waterPoints],
+  );
+
   if (loading) {
     return (
       <div className="py-6 flex flex-col gap-5 animate-fade-in">
@@ -185,10 +240,14 @@ export default function RecordsPage() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           {ALL_DISTANCES.map((d) => (
-            <PRCard key={`erg-${d}`} category="erg" distance={d} prs={prs} />
+            <PRCard key={`erg-${d}`} category="erg" distance={d} prs={prs} projection={ergProjections.get(d)} />
           ))}
         </div>
       </div>
+
+      {/* What the erg PRs together say about the athlete's fitness. Erg only:
+          water times carry too much weather to fit a curve through. */}
+      <RaceProjections prs={ergPoints} />
 
       {/* Water PRs */}
       <div>
@@ -199,7 +258,7 @@ export default function RecordsPage() {
         </div>
         <div className="grid grid-cols-2 gap-3">
           {ALL_DISTANCES.map((d) => (
-            <PRCard key={`water-${d}`} category="water" distance={d} prs={prs} />
+            <PRCard key={`water-${d}`} category="water" distance={d} prs={prs} projection={waterProjections.get(d)} />
           ))}
         </div>
       </div>

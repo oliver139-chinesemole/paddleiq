@@ -272,26 +272,38 @@ test.describe("offline", () => {
   /**
    * Waits until the service worker is actually *controlling* the page.
    *
-   * Waiting only for `registration.active` was a race: an activated worker
-   * isn't necessarily controlling the client yet, so on a slower runner the
-   * caching navigation went straight to the network and nothing was cached.
-   * The SW sets clientsClaim, so `controller` is the honest signal.
+   * The predicate has to stay synchronous. An `async` one returns a Promise,
+   * and `waitForFunction` tests the returned value for truthiness without
+   * awaiting it — a Promise is always truthy, so `waitForFunction(async () =>
+   * false)` resolves on the first poll. An earlier version of this helper was
+   * async and therefore never waited for anything; the offline test failed
+   * roughly one full-suite run in three with ERR_INTERNET_DISCONNECTED,
+   * because it went offline while the worker was still installing.
+   *
+   * `navigator.serviceWorker.controller` is a synchronous property and is the
+   * honest signal anyway: the SW sets clientsClaim, and a non-null controller
+   * means this document's requests go through it.
    */
   async function waitForServiceWorker(page: Page) {
-    await page.waitForFunction(
-      async () => {
-        const reg = await navigator.serviceWorker.getRegistration();
-        return !!reg?.active && !!navigator.serviceWorker.controller;
-      },
-      undefined,
-      { timeout: 30_000 }
-    );
+    await page.waitForFunction(() => !!navigator.serviceWorker.controller, undefined, {
+      timeout: 30_000,
+    });
+  }
+
+  /** True once `path` is in any cache. Uses evaluate, which does await. */
+  async function isCached(page: Page, path: string) {
+    return page.evaluate(async (p) => {
+      for (const name of await caches.keys()) {
+        if (await (await caches.open(name)).match(p)) return true;
+      }
+      return false;
+    }, path);
   }
 
   test("the precache excludes the MediaPipe assets", async ({ page }) => {
     // Regression: globPublicPatterns defaults to everything under public/, so
     // adding the pose models and wasm there put ~48MB into the precache. Every
-    // visitor downloaded it on first load, whether or not they opened Form
+    // visitor downloaded it on first load, whether or not they ever opened Form
     // Check. Those are fetched on demand instead.
     await page.goto("/dashboard", { waitUntil: "networkidle" });
     await waitForServiceWorker(page);
@@ -319,10 +331,20 @@ test.describe("offline", () => {
     // offline page, an install banner and a sync queue.
     await page.goto("/train/erg", { waitUntil: "networkidle" });
     await waitForServiceWorker(page);
+
     // Now that the worker is controlling, this navigation is the one that
     // actually gets cached.
     await page.goto("/train/erg", { waitUntil: "networkidle" });
-    await page.waitForTimeout(500); // let the cache write settle
+    // A fresh document can start out uncontrolled, so re-establish it here
+    // rather than assuming control carries across the navigation.
+    await waitForServiceWorker(page);
+
+    // Wait for the cache entry itself instead of sleeping a fixed interval.
+    // A 500ms sleep was enough on an idle machine and not when the rest of the
+    // suite runs beside it. The write either landed or it didn't.
+    await expect
+      .poll(() => isCached(page, "/train/erg"), { timeout: 15_000 })
+      .toBe(true);
 
     await context.setOffline(true);
     try {
@@ -363,5 +385,49 @@ test.describe("lineup balance", () => {
     expect(total).toBeGreaterThan(0);
     // Trim can never sensibly approach the whole crew's weight.
     expect(trim).toBeLessThan(total / 2);
+  });
+});
+
+test.describe("race projections", () => {
+  test("turns a distance with no PR into a target instead of a dash", async ({ page }) => {
+    await page.goto("/records");
+
+    // The demo athlete has erg PRs at 500m, 1k and 2k but not 200m, so that
+    // card is where a projection should appear.
+    const card = page.getByTestId("pr-erg-200");
+    await expect(card).toContainText(/~\d+:\d\d/);
+    await expect(card).toContainText("/500m target");
+    await expect(card).not.toContainText("No PR yet");
+  });
+
+  test("leaves a real PR alone", async ({ page }) => {
+    await page.goto("/records");
+    // A projection is prefixed with ~; an actual result must never be.
+    const card = page.getByTestId("pr-erg-2000");
+    await expect(card).toContainText("8:32");
+    await expect(card).not.toContainText("~");
+  });
+
+  test("reads the athlete's endurance profile off their PRs", async ({ page }) => {
+    await page.goto("/records");
+    const panel = page.getByRole("heading", { name: "Your Endurance Profile" }).locator("..").locator("..");
+
+    await expect(panel).toContainText(/Balanced|Endurance-leaning|Speed-leaning/);
+    // The fitted exponent is the whole point; a fallback would print 1.06 flat.
+    await expect(panel).toContainText(/fade rate is 1\.\d{3}/);
+    await expect(panel).toContainText("Fitted to 3 PRs");
+  });
+
+  test("projected times are plausible, not NaN or zero", async ({ page }) => {
+    await page.goto("/records");
+    const projected = page.getByText(/^~\d+:\d\d$/);
+    const count = await projected.count();
+    expect(count).toBeGreaterThan(0);
+
+    for (let i = 0; i < count; i++) {
+      const text = await projected.nth(i).innerText();
+      expect(text).not.toContain("NaN");
+      expect(text).not.toMatch(/^~0:00$/);
+    }
   });
 });
