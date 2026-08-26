@@ -45,12 +45,29 @@ export interface PhaseSpec {
   taper?: boolean;
 }
 
+/**
+ * Who a plan is for, in the same vocabulary onboarding asks in.
+ *
+ * Kept on the plan rather than in a lookup table beside the recommender, so
+ * that adding a plan means describing it in one place and it becomes
+ * recommendable immediately — rather than being silently unrecommendable
+ * because someone forgot the second edit.
+ */
+export interface PlanSuitability {
+  roles: string[];
+  goals: string[];
+  env: string[];
+  /** Race distances in metres. Empty means the plan isn't distance-specific. */
+  distances: number[];
+}
+
 export interface PlanSpec {
   id: string;
   name: string;
   description: string;
   difficulty: TrainingPlan["difficulty"];
   focus: string[];
+  suits?: PlanSuitability;
   phases: PhaseSpec[];
 }
 

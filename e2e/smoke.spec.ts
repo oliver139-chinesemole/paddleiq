@@ -554,3 +554,76 @@ test.describe("training preferences", () => {
     await expect(page).toHaveURL(/\/plans/);
   });
 });
+
+test.describe("plan recommendations", () => {
+  const PREFS_KEY = "paddleiq.preferences.v1";
+
+  async function setPreferences(page: Page, prefs: object) {
+    // Visit first so localStorage is on the right origin, then reload.
+    await page.goto("/plans");
+    await page.evaluate(
+      ([k, v]) => localStorage.setItem(k as string, v as string),
+      [PREFS_KEY, JSON.stringify(prefs)] as const,
+    );
+    await page.goto("/plans", { waitUntil: "networkidle" });
+  }
+
+  test("puts the sprint plan first for a sprinter", async ({ page }) => {
+    // Regression: all eight plans were listed in one fixed order for everyone,
+    // so a beginner who only ergs saw a 200m peaking block first.
+    await setPreferences(page, {
+      role: "competitive", trainingEnv: ["team_boat", "erg"],
+      goals: ["race"], preferredDistances: [200, 250],
+    });
+
+    const first = page.locator("button").filter({ hasText: /weeks/ }).first();
+    await expect(first).toContainText("200m Sprint Plan");
+    await expect(first).toContainText("Best match for you");
+  });
+
+  test("puts the foundation plan first for a beginner", async ({ page }) => {
+    await setPreferences(page, {
+      role: "beginner", trainingEnv: ["team_boat"],
+      goals: ["technique", "fitness"], preferredDistances: [],
+    });
+
+    const first = page.locator("button").filter({ hasText: /weeks/ }).first();
+    await expect(first).toContainText("Dragon Boat Foundation");
+  });
+
+  test("explains the recommendation in the athlete's own answers", async ({ page }) => {
+    await setPreferences(page, {
+      role: "competitive", trainingEnv: ["erg"],
+      goals: ["erg_score"], preferredDistances: [2000],
+    });
+
+    const first = page.locator("button").filter({ hasText: /weeks/ }).first();
+    await expect(first).toContainText("Erg Improvement");
+    await expect(first).toContainText(/You race 2km/);
+    await expect(first).toContainText(/Works on better erg score/i);
+  });
+
+  test("claims nothing personalised when it knows nothing", async ({ page }) => {
+    // Better an honest list than a fake recommendation.
+    await page.goto("/plans", { waitUntil: "networkidle" });
+    await expect(page.getByText("Structured plans for every goal.")).toBeVisible();
+    await expect(page.getByText("Best match for you")).toHaveCount(0);
+  });
+
+  test("still lists every plan, not just the matching ones", async ({ page }) => {
+    await setPreferences(page, {
+      role: "competitive", trainingEnv: ["erg"],
+      goals: ["erg_score"], preferredDistances: [2000],
+    });
+    await expect(page.locator("button").filter({ hasText: /weeks/ })).toHaveCount(8);
+  });
+
+  test("the custom-plan prompt is a real link", async ({ page }) => {
+    // Was a button with no handler.
+    await page.goto("/plans", { waitUntil: "networkidle" });
+    const link = page.locator('a[href="/ai-coach"]').filter({ hasText: /ask ai coach/i });
+    await expect(link).toBeVisible();
+    await link.click();
+    await expect(page).toHaveURL(/\/ai-coach/);
+  });
+});

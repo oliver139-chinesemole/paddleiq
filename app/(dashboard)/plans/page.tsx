@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useSyncExternalStore } from "react";
+import Link from "next/link";
 import { ChevronRight, Calendar, Target, CheckCircle2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,12 @@ import { useActivePlan, writeActivePlan, writePlanStart } from "@/lib/plans/acti
 import { phaseForWeek, isDeloadWeek, weekInPhase } from "@/lib/plans/generate";
 import { PLAN_SPECS } from "@/lib/plans/specs";
 import { toLocalDateStr } from "@/lib/utils";
+import { rankPlans, RECOMMEND_THRESHOLD } from "@/lib/plans/recommend";
+import {
+  subscribePreferences,
+  getPreferencesSnapshot,
+  getPreferencesServerSnapshot,
+} from "@/lib/profile/preferences";
 
 const difficultyColor = {
   beginner: "success" as const,
@@ -31,6 +38,23 @@ export default function PlansPage() {
   }
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [viewWeek, setViewWeek] = useState(1);
+
+  // Order the list by what the athlete told onboarding. Every eight plans were
+  // shown to everyone in a fixed order, so a beginner who only ergs saw a 200m
+  // peaking block first with no way to tell which one was meant for them.
+  const prefs = useSyncExternalStore(
+    subscribePreferences,
+    getPreferencesSnapshot,
+    getPreferencesServerSnapshot,
+  );
+  const ranked = useMemo(() => {
+    const byId = new Map(trainingPlans.map((p) => [p.id, p]));
+    return rankPlans(PLAN_SPECS, prefs)
+      .map((r) => ({ ...r, plan: byId.get(r.spec.id) }))
+      .filter((r): r is typeof r & { plan: NonNullable<typeof r.plan> } => !!r.plan);
+  }, [prefs]);
+
+  const hasRecommendation = ranked[0]?.score >= RECOMMEND_THRESHOLD;
 
   const plan = selectedPlan ? trainingPlans.find((p) => p.id === selectedPlan) : null;
 
@@ -151,7 +175,11 @@ export default function PlansPage() {
     <div className="py-6 flex flex-col gap-5 animate-fade-in">
       <div>
         <h1 className="text-2xl font-black text-[#F1F5F9]">Training Plans</h1>
-        <p className="text-sm text-[#8A98AC] mt-1">Structured plans for every goal.</p>
+        <p className="text-sm text-[#8A98AC] mt-1">
+          {hasRecommendation
+            ? "Ordered by what you told us about how you train."
+            : "Structured plans for every goal."}
+        </p>
       </div>
 
       {/* Active Plan Banner */}
@@ -169,9 +197,12 @@ export default function PlansPage() {
         </div>
       )}
 
-      {/* Plans Grid */}
+      {/* Plans, best match first. No "recommended" badge unless the score is
+          strong enough to justify one — a single shared training environment is
+          a coincidence, not a match, and a fake personalised pick is worse than
+          an honest list. */}
       <div className="flex flex-col gap-4">
-        {trainingPlans.map((plan) => (
+        {ranked.map(({ plan, score, reasons }, i) => (
           <button
             key={plan.id}
             onClick={() => setSelectedPlan(plan.id)}
@@ -188,6 +219,9 @@ export default function PlansPage() {
                 {activePlan === plan.id && (
                   <Badge variant="default" className="text-[10px]">Active</Badge>
                 )}
+                {i === 0 && hasRecommendation && activePlan !== plan.id && (
+                  <Badge variant="success" className="text-[10px]">Best match for you</Badge>
+                )}
               </div>
               <ChevronRight size={16} className="text-[#7C8AA0] shrink-0" />
             </div>
@@ -197,6 +231,15 @@ export default function PlansPage() {
               <span className="flex items-center gap-1"><Calendar size={11} /> {plan.duration_weeks} weeks</span>
               <span className="flex items-center gap-1"><Target size={11} /> {plan.focus.slice(0, 2).join(", ")}</span>
             </div>
+            {/* Why this plan is here, in the athlete's own answers. A pick you
+                can't interrogate is one you can't disagree with. */}
+            {score >= RECOMMEND_THRESHOLD && reasons.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-[#1E293B] flex flex-wrap gap-x-3 gap-y-1">
+                {reasons.map((r) => (
+                  <span key={r} className="text-[10px] text-[#10B981] font-medium">· {r}</span>
+                ))}
+              </div>
+            )}
           </button>
         ))}
       </div>
@@ -205,7 +248,10 @@ export default function PlansPage() {
       <div className="rounded-xl border border-dashed border-[#334155] p-5 text-center">
         <div className="text-sm font-semibold text-[#8A98AC] mb-1">Want a custom plan?</div>
         <div className="text-xs text-[#7C8AA0]">The AI Coach can generate a personalized plan based on your goals and schedule.</div>
-        <button className="text-xs text-[#0EA5E9] mt-2 hover:underline font-semibold">Ask AI Coach →</button>
+        {/* Was a button with no handler. */}
+        <Link href="/ai-coach" className="inline-block text-xs text-[#0EA5E9] mt-2 hover:underline font-semibold">
+          Ask AI Coach →
+        </Link>
       </div>
     </div>
   );

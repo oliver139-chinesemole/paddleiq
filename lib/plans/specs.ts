@@ -55,6 +55,7 @@ export const PLAN_SPECS: PlanSpec[] = [
       "Eight weeks for new paddlers. Builds an aerobic base, introduces stroke mechanics, and gets you ready for your first team practice.",
     difficulty: "beginner",
     focus: ["technique", "endurance", "erg base"],
+    suits: { roles: ["beginner"], goals: ["technique", "fitness", "endurance"], env: ["team_boat", "erg"], distances: [] },
     phases: [
       {
         name: "Base",
@@ -94,6 +95,7 @@ export const PLAN_SPECS: PlanSpec[] = [
       "Six weeks to peak for a 500m. Erg testing, race-pace intervals, start practice and a taper into race day.",
     difficulty: "intermediate",
     focus: ["500m speed", "race starts", "peak"],
+    suits: { roles: ["competitive", "paddler", "captain"], goals: ["race", "erg_score"], env: ["team_boat", "erg"], distances: [500] },
     phases: [
       {
         name: "Build",
@@ -147,6 +149,7 @@ export const PLAN_SPECS: PlanSpec[] = [
       "Ten weeks aimed squarely at your erg splits across 500m, 1k and 2k. Threshold work, testing, and a progression you can see.",
     difficulty: "intermediate",
     focus: ["erg performance", "split improvement", "threshold"],
+    suits: { roles: ["competitive", "paddler"], goals: ["erg_score", "endurance"], env: ["erg"], distances: [1000, 2000] },
     phases: [
       {
         name: "Aerobic Base",
@@ -200,6 +203,7 @@ export const PLAN_SPECS: PlanSpec[] = [
       "Four focused weeks before team tryouts. Erg testing, team stroke technique and the conditioning selectors look for.",
     difficulty: "intermediate",
     focus: ["tryout readiness", "team technique", "conditioning"],
+    suits: { roles: ["beginner", "paddler"], goals: ["team", "fitness"], env: ["team_boat", "erg", "dryland"], distances: [] },
     phases: [
       {
         name: "Sharpen",
@@ -239,6 +243,7 @@ export const PLAN_SPECS: PlanSpec[] = [
       "Six weeks for the 200m. Starts, top-end rate and the anaerobic power a sprint lives on — a different event from the 500m.",
     difficulty: "advanced",
     focus: ["sprint", "race starts", "peak rate"],
+    suits: { roles: ["competitive", "paddler", "captain"], goals: ["race"], env: ["team_boat", "erg"], distances: [200, 250] },
     phases: [
       {
         name: "Power Base",
@@ -292,6 +297,7 @@ export const PLAN_SPECS: PlanSpec[] = [
       "Twelve weeks away from racing to build the strength base next season sits on, without losing the feel of the water.",
     difficulty: "intermediate",
     focus: ["strength", "power", "durability"],
+    suits: { roles: ["competitive", "paddler", "captain"], goals: ["fitness", "endurance"], env: ["dryland", "erg"], distances: [] },
     phases: [
       {
         name: "Hypertrophy",
@@ -348,6 +354,7 @@ export const PLAN_SPECS: PlanSpec[] = [
       "Eight weeks on the water in a solo craft. Pacing, steering economy and a repeatable time trial you can actually compare.",
     difficulty: "intermediate",
     focus: ["water pace", "steering", "solo craft"],
+    suits: { roles: ["paddler", "competitive"], goals: ["endurance", "technique"], env: ["solo_water"], distances: [1000, 2000] },
     phases: [
       {
         name: "Water Base",
@@ -387,6 +394,7 @@ export const PLAN_SPECS: PlanSpec[] = [
       "Six weeks of holding fitness through a racing block. Enough stimulus to keep sharp, little enough to arrive at each race fresh.",
     difficulty: "intermediate",
     focus: ["maintenance", "recovery", "race readiness"],
+    suits: { roles: ["competitive", "captain", "paddler"], goals: ["race", "team"], env: ["team_boat"], distances: [200, 250, 500] },
     phases: [
       {
         name: "Maintain",
