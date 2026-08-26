@@ -102,7 +102,7 @@ function PRCard({
 export default function RecordsPage() {
   const { userId, isDemoMode } = useUser();
   // Only real accounts wait on anything — demo data is there synchronously.
-  const [loading, setLoading] = useState(IS_CONFIGURED);
+  const [loading, setLoading] = useState(true);
   const [prs, setPrs] = useState<LocalPR[]>(IS_CONFIGURED ? [] : (mockPRs as unknown as LocalPR[]));
   const [otherRecords, setOtherRecords] = useState<OtherRecord[]>(
     IS_CONFIGURED ? EMPTY_OTHER : [
@@ -113,22 +113,26 @@ export default function RecordsPage() {
     ]
   );
 
+  // Reads IndexedDB in demo mode too: sample records are a placeholder and
+  // stop the moment the athlete has sessions of their own.
   useEffect(() => {
-    if (isDemoMode) return;
     (async () => {
       try {
-      const [{ getLocalDB }, { getAllSessionsForUser }] = await Promise.all([
+      const [{ getLocalDB }, { getAllSessionsForUser }, { shouldUseSampleData }] = await Promise.all([
         import("@/lib/db/schema"),
         import("@/lib/db/sessions"),
+        import("@/lib/data/source"),
       ]);
 
       const db = getLocalDB();
-      const [localPRs, { erg, water }] = await Promise.all([
+      const [localPRs, bundle] = await Promise.all([
         db.personalRecords.where("userId").equals(userId).toArray(),
         getAllSessionsForUser(userId),
       ]);
+      if (shouldUseSampleData(bundle, isDemoMode)) return;
+      const { erg, water } = bundle;
 
-      if (localPRs.length > 0) setPrs(localPRs);
+      setPrs(localPRs);
 
       // Derive other records from raw sessions
       const allDistances = [

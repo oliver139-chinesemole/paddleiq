@@ -64,8 +64,9 @@ const WEEKLY_GOAL_KM = 20;
 
 export default function DashboardPage() {
   const { userId, isDemoMode } = useUser();
-  // Only real accounts wait on anything — demo data is there synchronously.
-  const [loading, setLoading] = useState(IS_CONFIGURED);
+  // Everyone waits now: demo mode reads IndexedDB too, and painting sample
+  // numbers first would make them visibly swap for the athlete's own.
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>(IS_CONFIGURED ? EMPTY_STATS : mockStats);
   const [recent, setRecent] = useState<RecentItem[]>(IS_CONFIGURED ? [] : DEMO_RECENT);
   const [prs, setPrs] = useState<PRDisplay[]>(IS_CONFIGURED ? [] : (mockPRs as unknown as PRDisplay[]));
@@ -88,18 +89,26 @@ export default function DashboardPage() {
         ?.days.find((d) => d.day === trainingDayOfWeek()) ?? null
     : null;
 
+  // Sample data is a placeholder, so it stops the moment there's something
+  // real to put in its place. This used to bail out on isDemoMode before
+  // reading IndexedDB at all — but sessions save locally whether or not
+  // Supabase is configured, so an athlete on the deployed site logged a
+  // session and then saw 147 sample sessions and someone else's 18.5km week,
+  // with their own session on no screen anywhere.
   useEffect(() => {
-    if (isDemoMode) return;
     (async () => {
       try {
-      const [{ getAllSessionsForUser }, { getLocalDB }, { computeDashboardStats, computeWeeklyVolume }] =
+      const [{ getAllSessionsForUser }, { getLocalDB }, { computeDashboardStats, computeWeeklyVolume }, { shouldUseSampleData }] =
         await Promise.all([
           import("@/lib/db/sessions"),
           import("@/lib/db/schema"),
           import("@/lib/db/stats"),
+          import("@/lib/data/source"),
         ]);
 
-      const { erg, water, team, dryland } = await getAllSessionsForUser(userId);
+      const bundle = await getAllSessionsForUser(userId);
+      if (shouldUseSampleData(bundle, isDemoMode)) return;
+      const { erg, water, team, dryland } = bundle;
 
       setStats(computeDashboardStats(erg, water, team, dryland));
       setVolumeData(computeWeeklyVolume(erg, water, team));
@@ -111,20 +120,21 @@ export default function DashboardPage() {
         ...dryland.map(s => ({ id: s.localId ?? 0, type: "dryland" as const, date: s.date, distance_m: 0, duration_min: s.duration_min })),
       ];
       items.sort((a, b) => b.date.localeCompare(a.date));
-      if (items.length > 0) setRecent(items.slice(0, 3));
+      setRecent(items.slice(0, 3));
 
       const db = getLocalDB();
       const localPRs = await db.personalRecords.where("userId").equals(userId).toArray();
-      if (localPRs.length > 0) {
-        setPrs(localPRs.map(p => ({
-          id: p.localId ?? 0,
-          category: p.category,
-          distance_m: p.distance_m,
-          time_sec: p.time_sec,
-          improvement_sec: p.improvement_sec,
-          date: p.date,
-        })));
-      }
+      // Set unconditionally: past the sample-data check these are the
+      // athlete's own sessions, so leaving sample PRs beside them would mix
+      // two people's numbers on one screen.
+      setPrs(localPRs.map(p => ({
+        id: p.localId ?? 0,
+        category: p.category,
+        distance_m: p.distance_m,
+        time_sec: p.time_sec,
+        improvement_sec: p.improvement_sec,
+        date: p.date,
+      })));
       } finally {
         setLoading(false);
       }

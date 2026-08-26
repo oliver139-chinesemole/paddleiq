@@ -21,7 +21,7 @@ const EMPTY_STATS: DashboardStats = {
 export default function AnalyticsPage() {
   const { userId, isDemoMode } = useUser();
   // Only real accounts wait on anything — demo data is there synchronously.
-  const [loading, setLoading] = useState(IS_CONFIGURED);
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>(IS_CONFIGURED ? EMPTY_STATS : mockStats);
   const [ergSessions, setErgSessions] = useState<LocalErgSession[]>(IS_CONFIGURED ? [] : (mockErgSessions as unknown as LocalErgSession[]));
   const [volumeData, setVolumeData] = useState<{ week: string; distance: number }[]>(
@@ -31,24 +31,26 @@ export default function AnalyticsPage() {
     IS_CONFIGURED ? [] : ergProgressData.map(d => ({ date: d.date, split: d.split }))
   );
 
+  // Reads IndexedDB in demo mode too — see lib/data/source.ts. Charting
+  // sample data next to an athlete's own sessions would be worse than either.
   useEffect(() => {
-    if (isDemoMode) return;
     (async () => {
       try {
-      const [{ getAllSessionsForUser }, { computeDashboardStats, computeWeeklyVolume, computeErgProgress }] =
+      const [{ getAllSessionsForUser }, { computeDashboardStats, computeWeeklyVolume, computeErgProgress }, { shouldUseSampleData }] =
         await Promise.all([
           import("@/lib/db/sessions"),
           import("@/lib/db/stats"),
+          import("@/lib/data/source"),
         ]);
 
-      const { erg, water, team, dryland } = await getAllSessionsForUser(userId);
+      const bundle = await getAllSessionsForUser(userId);
+      if (shouldUseSampleData(bundle, isDemoMode)) return;
+      const { erg, water, team, dryland } = bundle;
 
       setStats(computeDashboardStats(erg, water, team, dryland));
       setVolumeData(computeWeeklyVolume(erg, water, team));
       setErgSessions(erg);
-
-      const prog = computeErgProgress(erg);
-      if (prog.length > 0) setProgressData(prog);
+      setProgressData(computeErgProgress(erg));
       } finally {
         setLoading(false);
       }

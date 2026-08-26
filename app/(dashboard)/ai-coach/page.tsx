@@ -41,8 +41,8 @@ const severityIcon = {
   severe: AlertTriangle,
 };
 
-// ── Demo fallback (shown when no real sessions are logged) ───────────────────
-const DEMO_OUTPUT: CoachData = {
+// ── Shown when no sessions have been logged ──────────────────────────────────
+const EMPTY_OUTPUT: CoachData = {
   summary:
     "No sessions logged yet. Start by logging an erg session or water time trial — your insights will appear here once you have data.",
   focusThisWeek: "Log your first session to get personalised coaching.",
@@ -55,7 +55,7 @@ const DEMO_OUTPUT: CoachData = {
 };
 
 export default function AICoachPage() {
-  const { userId, isDemoMode } = useUser();
+  const { userId } = useUser();
   const [data, setData] = useState<CoachData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeQ, setActiveQ] = useState<string | null>(null);
@@ -63,14 +63,10 @@ export default function AICoachPage() {
 
   const loadInsights = useCallback(async () => {
     try {
-      if (isDemoMode) {
-        // Yield to the event loop before setting state so this is not synchronous
-        await Promise.resolve();
-        setData(DEMO_OUTPUT);
-        return;
-      }
-
-      // Load sessions from Dexie (offline-safe)
+      // Load sessions from Dexie (offline-safe). This used to return the
+      // "no sessions logged yet" placeholder for anyone in demo mode without
+      // looking — so on the deployed site the coach told an athlete with ten
+      // logged sessions that they had none.
       const { getAllSessionsForUser } = await import("@/lib/db/sessions");
       const { erg, water, dryland, team } = await getAllSessionsForUser(userId);
 
@@ -86,7 +82,7 @@ export default function AICoachPage() {
       }));
 
       if (erg.length === 0 && water.length === 0) {
-        setData(DEMO_OUTPUT);
+        setData(EMPTY_OUTPUT);
         return;
       }
 
@@ -122,14 +118,14 @@ export default function AICoachPage() {
       setData(result);
     } catch (err) {
       console.error("Coach engine error:", err);
-      setData(DEMO_OUTPUT);
+      setData(EMPTY_OUTPUT);
     } finally {
       setLoading(false);
     }
     // Depends only on identity inputs; everything else it reads is a constant
     // or a setter. Declaring it lets the effect track it honestly instead of
     // silently capturing whichever render defined it.
-  }, [userId, isDemoMode]);
+  }, [userId]);
 
   // Wrapped rather than called directly: loadInsights runs synchronously up to
   // its first await, so a bare call sets state during the effect and cascades

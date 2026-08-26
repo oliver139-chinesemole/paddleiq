@@ -419,8 +419,11 @@ test.describe("race projections", () => {
   });
 
   test("projected times are plausible, not NaN or zero", async ({ page }) => {
-    await page.goto("/records");
+    await page.goto("/records", { waitUntil: "networkidle" });
     const projected = page.getByText(/^~\d+:\d\d$/);
+    // count() doesn't auto-retry, and the page now shows a skeleton while it
+    // reads IndexedDB — wait for the content before counting it.
+    await expect(projected.first()).toBeVisible();
     const count = await projected.count();
     expect(count).toBeGreaterThan(0);
 
@@ -669,5 +672,58 @@ test.describe("plan progress", () => {
     await page.goto("/plans", { waitUntil: "networkidle" });
     await page.locator("button").filter({ hasText: /Erg Improvement/ }).first().click();
     await expect(page.getByText(/Week 1/).first()).toBeVisible();
+  });
+});
+
+test.describe("sample data gives way to real data", () => {
+  /** Logs one erg session and lands back on the dashboard. */
+  async function logAnErgSession(page: Page, metres: string) {
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await page.locator('input[type="number"]').first().fill(metres);
+    await page.locator('input[type="number"]').nth(1).fill("5");
+    await page.locator('input[type="number"]').nth(2).fill("0");
+    await page.getByRole("button", { name: /save erg session/i }).click();
+    await page.waitForURL(/dashboard/, { timeout: 15_000 });
+  }
+
+  test("shows sample data to a visitor who has logged nothing", async ({ page }) => {
+    // The placeholder is fine — it's what makes the app legible to someone
+    // who has just arrived.
+    await page.goto("/dashboard", { waitUntil: "networkidle" });
+    await expect(page.getByText(/18\.5/).first()).toBeVisible();
+  });
+
+  test("replaces it the moment a session is logged", async ({ page }) => {
+    // Regression: every page returned early on isDemoMode before reading
+    // IndexedDB, but sessions save locally regardless of whether Supabase is
+    // configured. So an athlete on the deployed site logged a session and then
+    // saw 147 sample sessions and someone else's 18.5km week, with their own
+    // session on no screen at all.
+    await logAnErgSession(page, "1234");
+    await page.waitForTimeout(1000);
+
+    const body = await page.locator("body").innerText();
+    expect(body, "sample weekly volume should be gone").not.toContain("18.5");
+    expect(body, "the logged session should be here").toContain("1.23");
+  });
+
+  test("the coach stops claiming you have no sessions", async ({ page }) => {
+    // It returned the "no sessions logged yet" placeholder for anyone in demo
+    // mode without ever looking at their data.
+    await logAnErgSession(page, "2000");
+
+    await page.goto("/ai-coach", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+    await expect(page.getByText(/No sessions logged yet/i)).toHaveCount(0);
+    await expect(page.getByText(/You logged 1 session this week/i)).toBeVisible();
+  });
+
+  test("records show the athlete's own, not the sample PRs", async ({ page }) => {
+    await logAnErgSession(page, "2000");
+
+    await page.goto("/records", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1000);
+    // 8:32 is the sample 2k PR; it must not survive alongside real sessions.
+    await expect(page.getByText("8:32")).toHaveCount(0);
   });
 });
