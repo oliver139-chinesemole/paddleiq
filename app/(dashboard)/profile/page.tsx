@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { mockStats, mockPRs } from "@/lib/data/seed";
 import { formatTime } from "@/lib/utils";
+import { Skeleton, SkeletonCard, LoadingAnnouncement } from "@/components/ui/skeleton";
 import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
 import type { DashboardStats } from "@/lib/types";
 import type { LocalPR } from "@/lib/db/schema";
@@ -38,6 +39,8 @@ type PRDisplay = {
 export default function ProfilePage() {
   const router = useRouter();
   const { user, userId, isDemoMode } = useUser();
+  // Only real accounts wait on anything — demo data is there synchronously.
+  const [loading, setLoading] = useState(IS_CONFIGURED);
 
   const [stats, setStats] = useState<DashboardStats>(IS_CONFIGURED ? EMPTY_STATS : mockStats);
   const [topPRs, setTopPRs] = useState<PRDisplay[]>(IS_CONFIGURED ? [] : [
@@ -56,6 +59,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (isDemoMode) return;
     (async () => {
+      try {
       const [{ getAllSessionsForUser }, { getLocalDB }, { computeDashboardStats }] = await Promise.all([
         import("@/lib/db/sessions"),
         import("@/lib/db/schema"),
@@ -94,6 +98,9 @@ export default function ProfilePage() {
       if (liveStats.current_streak >= 7) badges.add("streak_7");
       if (team.length > 0) badges.add("team_session");
       setEarnedBadges(badges);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [userId, isDemoMode]);
 
@@ -107,6 +114,25 @@ export default function ProfilePage() {
   const displayName = user?.user_metadata?.full_name ?? user?.email?.split("@")[0] ?? "Athlete";
   const displayEmail = user?.email ?? "demo@paddleiq.com";
   const initials = displayName.slice(0, 1).toUpperCase();
+
+  if (loading) {
+    return (
+      <div className="py-6 flex flex-col gap-5 animate-fade-in">
+        <LoadingAnnouncement label="Loading your profile" />
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-14 w-14 rounded-full" />
+          <div className="flex-1">
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-3 w-24 mt-2" />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {[0, 1, 2].map((i) => <SkeletonCard key={i} />)}
+        </div>
+        <Skeleton className="h-32 w-full rounded-2xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="py-6 flex flex-col gap-5 animate-fade-in">

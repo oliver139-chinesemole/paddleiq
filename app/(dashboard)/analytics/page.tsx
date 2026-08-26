@@ -8,6 +8,7 @@ import { VolumeChart } from "@/components/charts/volume-chart";
 import { ProgressChart } from "@/components/charts/progress-chart";
 import { mockStats, mockErgSessions, weeklyVolumeData, ergProgressData } from "@/lib/data/seed";
 import { formatTime, formatDistance, formatRelativeDate, formatPace } from "@/lib/utils";
+import { Skeleton, SkeletonCard, LoadingAnnouncement } from "@/components/ui/skeleton";
 import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
 import type { DashboardStats } from "@/lib/types";
 import type { LocalErgSession } from "@/lib/db/schema";
@@ -19,6 +20,8 @@ const EMPTY_STATS: DashboardStats = {
 
 export default function AnalyticsPage() {
   const { userId, isDemoMode } = useUser();
+  // Only real accounts wait on anything — demo data is there synchronously.
+  const [loading, setLoading] = useState(IS_CONFIGURED);
   const [stats, setStats] = useState<DashboardStats>(IS_CONFIGURED ? EMPTY_STATS : mockStats);
   const [ergSessions, setErgSessions] = useState<LocalErgSession[]>(IS_CONFIGURED ? [] : (mockErgSessions as unknown as LocalErgSession[]));
   const [volumeData, setVolumeData] = useState<{ week: string; distance: number }[]>(
@@ -31,6 +34,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     if (isDemoMode) return;
     (async () => {
+      try {
       const [{ getAllSessionsForUser }, { computeDashboardStats, computeWeeklyVolume, computeErgProgress }] =
         await Promise.all([
           import("@/lib/db/sessions"),
@@ -45,6 +49,9 @@ export default function AnalyticsPage() {
 
       const prog = computeErgProgress(erg);
       if (prog.length > 0) setProgressData(prog);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [userId, isDemoMode]);
 
@@ -56,6 +63,20 @@ export default function AnalyticsPage() {
 
   const totalVolume = volumeData.reduce((s, d) => s + d.distance, 0);
   const avgWeeklyVolume = volumeData.length > 0 ? totalVolume / volumeData.length : 0;
+
+  if (loading) {
+    return (
+      <div className="py-6 flex flex-col gap-5 animate-fade-in">
+        <LoadingAnnouncement label="Loading your analytics" />
+        <Skeleton className="h-8 w-32" />
+        <div className="grid grid-cols-2 gap-3">
+          {[0, 1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+        </div>
+        <Skeleton className="h-48 w-full rounded-2xl" />
+        <Skeleton className="h-48 w-full rounded-2xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="py-6 flex flex-col gap-5 animate-fade-in">

@@ -15,6 +15,7 @@ import {
 } from "@/lib/plans/active";
 import { formatTime, formatDistance, formatRelativeDate } from "@/lib/utils";
 import { VolumeChart } from "@/components/charts/volume-chart";
+import { Skeleton, SkeletonCard, SkeletonRow, LoadingAnnouncement } from "@/components/ui/skeleton";
 import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
 import type { DashboardStats } from "@/lib/types";
 
@@ -63,6 +64,8 @@ const WEEKLY_GOAL_KM = 20;
 
 export default function DashboardPage() {
   const { userId, isDemoMode } = useUser();
+  // Only real accounts wait on anything — demo data is there synchronously.
+  const [loading, setLoading] = useState(IS_CONFIGURED);
   const [stats, setStats] = useState<DashboardStats>(IS_CONFIGURED ? EMPTY_STATS : mockStats);
   const [recent, setRecent] = useState<RecentItem[]>(IS_CONFIGURED ? [] : DEMO_RECENT);
   const [prs, setPrs] = useState<PRDisplay[]>(IS_CONFIGURED ? [] : (mockPRs as unknown as PRDisplay[]));
@@ -88,6 +91,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (isDemoMode) return;
     (async () => {
+      try {
       const [{ getAllSessionsForUser }, { getLocalDB }, { computeDashboardStats, computeWeeklyVolume }] =
         await Promise.all([
           import("@/lib/db/sessions"),
@@ -121,11 +125,32 @@ export default function DashboardPage() {
           date: p.date,
         })));
       }
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [userId, isDemoMode]);
 
   const weeklyDistanceKm = stats.weekly_distance_m / 1000;
   const weeklyProgress = (weeklyDistanceKm / WEEKLY_GOAL_KM) * 100;
+
+  if (loading) {
+    return (
+      <div className="py-6 flex flex-col gap-5 animate-fade-in">
+        <LoadingAnnouncement label="Loading your dashboard" />
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-36 w-full rounded-2xl" />
+        <div className="grid grid-cols-2 gap-3">
+          {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-16 rounded-2xl" />)}
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {[0, 1, 2].map((i) => <SkeletonCard key={i} />)}
+        </div>
+        <Skeleton className="h-40 w-full rounded-2xl" />
+        {[0, 1, 2].map((i) => <SkeletonRow key={i} />)}
+      </div>
+    );
+  }
 
   return (
     <div className="py-6 flex flex-col gap-6 animate-fade-in">

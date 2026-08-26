@@ -5,6 +5,7 @@ import { Trophy, TrendingUp, Calendar, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { mockPRs } from "@/lib/data/seed";
 import { formatTime, formatDate, formatPace } from "@/lib/utils";
+import { Skeleton, SkeletonCard, SkeletonRow, LoadingAnnouncement } from "@/components/ui/skeleton";
 import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
 import type { LocalPR } from "@/lib/db/schema";
 
@@ -65,6 +66,8 @@ function PRCard({ category, distance, prs }: { category: "erg" | "water"; distan
 
 export default function RecordsPage() {
   const { userId, isDemoMode } = useUser();
+  // Only real accounts wait on anything — demo data is there synchronously.
+  const [loading, setLoading] = useState(IS_CONFIGURED);
   const [prs, setPrs] = useState<LocalPR[]>(IS_CONFIGURED ? [] : (mockPRs as unknown as LocalPR[]));
   const [otherRecords, setOtherRecords] = useState<OtherRecord[]>(
     IS_CONFIGURED ? EMPTY_OTHER : [
@@ -78,6 +81,7 @@ export default function RecordsPage() {
   useEffect(() => {
     if (isDemoMode) return;
     (async () => {
+      try {
       const [{ getLocalDB }, { getAllSessionsForUser }] = await Promise.all([
         import("@/lib/db/schema"),
         import("@/lib/db/sessions"),
@@ -118,6 +122,9 @@ export default function RecordsPage() {
           ? { label: "Best Watts (Erg)", value: `${bestWatts.watts} W`, sub: fmtDate(bestWatts.date) }
           : { label: "Best Watts (Erg)", value: "—", sub: "No data yet" },
       ]);
+      } finally {
+        setLoading(false);
+      }
     })();
   }, [userId, isDemoMode]);
 
@@ -126,6 +133,19 @@ export default function RecordsPage() {
   const bestImprovement = improvements.length > 0 ? Math.max(...improvements) : 0;
 
   const best2k = prs.find(p => p.category === "erg" && p.distance_m === 2000);
+
+  if (loading) {
+    return (
+      <div className="py-6 flex flex-col gap-5 animate-fade-in">
+        <LoadingAnnouncement label="Loading your records" />
+        <Skeleton className="h-8 w-36" />
+        <div className="grid grid-cols-2 gap-3">
+          {[0, 1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+        </div>
+        {[0, 1, 2, 3].map((i) => <SkeletonRow key={i} />)}
+      </div>
+    );
+  }
 
   return (
     <div className="py-6 flex flex-col gap-5 animate-fade-in">
