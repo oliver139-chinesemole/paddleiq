@@ -6,10 +6,13 @@
 // per-item read flag: notifications are derived from other records, so there's
 // nowhere to write a flag back to, and one marker is all the bell needs.
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import {
   deriveNotifications, unreadCount, type AppNotification, type NotificationSources,
 } from "@/lib/notifications/derive";
+import {
+  subscribeDataRevision, getDataRevision, getDataRevisionServerSnapshot,
+} from "@/lib/db/revision";
 
 const SEEN_KEY = "paddleiq:notifications:lastSeenAt";
 
@@ -33,6 +36,16 @@ export function useNotifications(isDemoMode: boolean, userId?: string) {
   // first pass, so the unread count is zero on server and client alike.
   const [lastSeenAt, setLastSeenAt] = useState(readLastSeen);
 
+  // The top nav lives in the layout and stays mounted across every client-side
+  // navigation, so an effect keyed only on the user id runs once per hard page
+  // load. Setting a personal best and being redirected to the dashboard left
+  // the bell showing a feed from before the session existed.
+  const dataRevision = useSyncExternalStore(
+    subscribeDataRevision,
+    getDataRevision,
+    getDataRevisionServerSnapshot,
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -40,10 +53,35 @@ export function useNotifications(isDemoMode: boolean, userId?: string) {
       try {
         let sources: NotificationSources = {};
 
+        // Records come from Dexie, not from the server and not from the seed.
+        // They're written locally the moment a session sets one and synced
+        // afterwards, so reading Supabase misses anything not yet flushed —
+        // and misses everything when Supabase isn't configured. Setting a
+        // personal best is the most motivating thing that happens in this app;
+        // it was the one event that never produced a notification.
+        const localPRs = userId
+          ? await import("@/lib/db/schema")
+              .then(({ getLocalDB }) =>
+                getLocalDB().personalRecords.where("userId").equals(userId).toArray(),
+              )
+              .catch(() => [])
+          : [];
+
+        const ownPRs: NotificationSources["prs"] = localPRs.map((pr) => ({
+          id: String(pr.localId ?? `${pr.category}-${pr.distance_m}`),
+          category: pr.category,
+          distance_m: pr.distance_m,
+          time_sec: pr.time_sec,
+          date: pr.date,
+          improvement_sec: pr.improvement_sec,
+        }));
+
         if (isDemoMode) {
           const { mockPRs } = await import("@/lib/data/seed");
           sources = {
-            prs: mockPRs,
+            // Sample records are a placeholder and give way to real ones, the
+            // same rule the dashboard and records page follow.
+            prs: ownPRs.length > 0 ? ownPRs : mockPRs,
             announcements: [
               {
                 id: "demo-ann-1",
@@ -88,7 +126,8 @@ export function useNotifications(isDemoMode: boolean, userId?: string) {
           ]);
 
           sources = {
-            prs: (prRes.data ?? []) as NotificationSources["prs"],
+            // Local records win: they include anything not yet synced.
+            prs: ownPRs.length > 0 ? ownPRs : ((prRes.data ?? []) as NotificationSources["prs"]),
             assignments: (assignRes.data ?? []) as NotificationSources["assignments"],
             announcements: (feedRes.data ?? []) as NotificationSources["announcements"],
             events: (eventRes.data ?? []) as NotificationSources["events"],
@@ -105,7 +144,7 @@ export function useNotifications(isDemoMode: boolean, userId?: string) {
     })();
 
     return () => { cancelled = true; };
-  }, [isDemoMode, userId]);
+  }, [isDemoMode, userId, dataRevision]);
 
   const markSeen = useCallback(() => {
     // Just "now": unreadCount ignores anything still in the future, so there's

@@ -855,3 +855,68 @@ test.describe("personal records", () => {
     await expect(page.getByTestId("pr-erg-200")).toContainText("/500m target");
   });
 });
+
+test.describe("record notifications", () => {
+  async function logErg(page: Page, metres: number, mins: number, secs: number) {
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await page.locator('input[type="number"]').first().fill(String(metres));
+    await page.locator('input[type="number"]').nth(1).fill(String(mins));
+    await page.locator('input[type="number"]').nth(2).fill(String(secs));
+    await page.getByRole("button", { name: /save erg session/i }).click();
+    await page.waitForURL(/dashboard/, { timeout: 15_000 });
+  }
+
+  async function openBell(page: Page) {
+    await page.locator('button[aria-label*="Notification"]').first().click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    return page.getByRole("dialog");
+  }
+
+  test("setting a record produces a notification", async ({ page }) => {
+    // Regression: the feed drew personal records from the seed in demo mode
+    // and from Supabase otherwise, never from Dexie — which is where records
+    // are actually written. The most motivating event in the app was the one
+    // that never announced itself.
+    await logErg(page, 2000, 8, 0);
+
+    const sheet = await openBell(page);
+    await expect(sheet).toContainText(/New 2k erg PR/i);
+  });
+
+  test("it appears without reloading the app", async ({ page }) => {
+    // Regression: the top nav lives in the layout and stays mounted across
+    // client-side navigation, so the feed was read once per hard page load.
+    // The notification existed but only showed up on the athlete's next visit.
+    await logErg(page, 2000, 8, 0);
+
+    // No reload between logging and looking.
+    const sheet = await openBell(page);
+    await expect(sheet).toContainText(/New 2k erg PR/i);
+  });
+
+  test("beating a record says how much faster", async ({ page }) => {
+    await logErg(page, 2000, 8, 0);
+    await logErg(page, 2000, 7, 45);
+
+    const sheet = await openBell(page);
+    await expect(sheet).toContainText(/15\.0s faster than your previous best/);
+  });
+
+  test("a session that sets no record announces nothing", async ({ page }) => {
+    await logErg(page, 6000, 25, 0);
+
+    const sheet = await openBell(page);
+    await expect(sheet).not.toContainText(/PR/);
+  });
+
+  test("the unread dot appears for a new record", async ({ page }) => {
+    const dot = page.locator('button[aria-label*="Notification"] span.rounded-full');
+    await logErg(page, 2000, 8, 0);
+    await expect(dot).toHaveCount(1);
+
+    // And clears once looked at.
+    await openBell(page);
+    await page.getByRole("button", { name: /close notifications/i }).click();
+    await expect(dot).toHaveCount(0);
+  });
+});

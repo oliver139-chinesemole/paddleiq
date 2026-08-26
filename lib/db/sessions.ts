@@ -7,6 +7,7 @@
 import { getLocalDB, type LocalErgSession, type LocalPR, type LocalWaterSession, type LocalTeamSession, type LocalDrylandSession } from "./schema";
 import { enqueue } from "./sync";
 import { candidateFromSession, evaluateRecord, type PRCategory } from "@/lib/records/detect";
+import { bumpDataRevision } from "./revision";
 
 /**
  * Record a personal best if this session set one.
@@ -73,6 +74,9 @@ export async function saveErgSession(
   const id = await db.ergSessions.add({ ...data, synced: 0 });
   await enqueue("erg_sessions", "insert", { ...data, localId: String(id) });
   await recordPRIfSet(data.userId, "erg", data);
+  // Wakes anything mounted that is showing this data — notably the top nav's
+  // notification feed, which otherwise reads Dexie once per page load.
+  bumpDataRevision();
   return id;
 }
 
@@ -92,6 +96,7 @@ export async function saveWaterSession(
   // Water sessions carry no workout_type; a solo time trial at an exact
   // distance is the equivalent of an erg test here.
   await recordPRIfSet(data.userId, "water", data);
+  bumpDataRevision();
   return id;
 }
 
@@ -108,6 +113,7 @@ export async function saveTeamSession(
   const db = getLocalDB();
   const id = await db.teamSessions.add({ ...data, synced: 0 });
   await enqueue("team_sessions", "insert", { ...data, localId: String(id) });
+  bumpDataRevision();
   return id;
 }
 
@@ -124,6 +130,7 @@ export async function saveDrylandSession(
   const db = getLocalDB();
   const id = await db.drylandSessions.add({ ...data, synced: 0 });
   await enqueue("dryland_sessions", "insert", { ...data, localId: String(id) });
+  bumpDataRevision();
   return id;
 }
 

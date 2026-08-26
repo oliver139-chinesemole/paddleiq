@@ -310,3 +310,29 @@ describe("recording a personal best", () => {
     expect(await getErgSessions(USER)).toHaveLength(1);
   });
 });
+
+describe("waking up views that are already mounted", () => {
+  it("bumps the data revision when a session is saved", async () => {
+    // The top nav lives in the layout and stays mounted across navigations,
+    // so without this its notification feed is stuck on whatever it read at
+    // page load — an athlete set a PR and the bell never heard about it.
+    const { getDataRevision } = await import("../revision");
+    const before = getDataRevision();
+    await saveErgSession(erg("2026-06-10"));
+    expect(getDataRevision()).toBeGreaterThan(before);
+  });
+
+  it("bumps it for every session type", async () => {
+    const { getDataRevision } = await import("../revision");
+    for (const save of [
+      () => saveErgSession(erg("2026-06-10")),
+      () => saveWaterSession(water("2026-06-11")),
+      () => saveTeamSession(team("2026-06-12")),
+      () => saveDrylandSession(dryland("2026-06-13")),
+    ]) {
+      const before = getDataRevision();
+      await save();
+      expect(getDataRevision()).toBeGreaterThan(before);
+    }
+  });
+});
