@@ -335,6 +335,11 @@ export default function TeamPage() {
   const [topErgTime, setTopErgTime] = useState<number | null>(null);
   const [loading, setLoading] = useState(!isDemoMode);
   const [selected, setSelected] = useState<Member | null>(null);
+  // Demo members live in state so role changes made in demo mode stay on
+  // screen, the way the schedule, feed and lineup tabs already behave.
+  const [demoMembers, setDemoMembers] = useState<Member[]>(
+    DEMO_TEAM.members as unknown as Member[],
+  );
   const [copied, setCopied] = useState(false);
 
   const loadTeam = useCallback(async () => {
@@ -405,7 +410,21 @@ export default function TeamPage() {
   }, [loadTeam, isDemoMode]);
 
   async function updatePerfRole(memberId: string, role: PerformanceRole | null) {
-    if (isDemoMode) return;
+    if (isDemoMode) {
+      // Was a bare `return`. In demo mode every coach control is visible
+      // (isCoach is forced true), so tapping a performance role changed
+      // nothing and said nothing — the control looked broken rather than
+      // unavailable. The other tabs all apply the change locally and say so.
+      setDemoMembers(ms =>
+        ms.map(m => (m.user_id === memberId ? { ...m, performance_role: role ?? undefined } : m)),
+      );
+      if (selected?.user_id === memberId) {
+        setSelected(s => (s ? { ...s, performance_role: role ?? undefined } : null));
+      }
+      toast.success("Role updated (demo mode — sign in with a team to save it)");
+      return;
+    }
+
     const { createClient } = await import("@/lib/supabase/client");
     const sb = createClient();
     await sb.from("team_members").update({ performance_role: role }).eq("user_id", memberId).eq("team_id", activeTeam.id);
@@ -424,7 +443,7 @@ export default function TeamPage() {
 
   // ── Render: Demo ──────────────────────────────────────────────────────────
   const activeTeam: Team = isDemoMode
-    ? { ...DEMO_TEAM, members: DEMO_TEAM.members as unknown as Member[] }
+    ? { ...DEMO_TEAM, members: demoMembers }
     : (team ?? { id: "", name: "", coach_id: "", invite_code: "", members: [] });
 
   const isCoach = isDemoMode ? true : userId === activeTeam.coach_id;

@@ -727,3 +727,68 @@ test.describe("sample data gives way to real data", () => {
     await expect(page.getByText("8:32")).toHaveCount(0);
   });
 });
+
+test.describe("feedback on team actions", () => {
+  async function openFirstMember(page: Page) {
+    await page.goto("/team", { waitUntil: "networkidle" });
+    await page.locator("button").filter({ hasText: /Seat 1/ }).first().click();
+    await expect(page.getByText("Performance Role")).toBeVisible();
+  }
+
+  test("toasts actually render", async ({ page }) => {
+    // Regression: sonner was a dependency and eighteen toast() calls were
+    // spread across the team pages, but no <Toaster> had ever been mounted.
+    // Every confirmation was invisible — and so was every failure, including
+    // "Failed to create team. Try again."
+    await openFirstMember(page);
+    await page.locator("button").filter({ hasText: /^Rocket$/ }).first().click();
+
+    const toast = page.locator("[data-sonner-toast]");
+    await expect(toast).toBeVisible();
+    await expect(toast).toContainText(/role updated/i);
+  });
+
+  test("assigning a role does something visible", async ({ page }) => {
+    // Regression: in demo mode isCoach is forced true, so every coach control
+    // was on screen — and tapping a performance role hit a bare `return`,
+    // changing nothing and saying nothing. It read as broken, not unavailable.
+    await openFirstMember(page);
+
+    const rocket = page.locator("button").filter({ hasText: /^Rocket$/ }).first();
+    await rocket.click();
+    await page.waitForTimeout(500);
+
+    // The sheet header shows the assigned role; it should now say Rocket.
+    await expect(page.locator("[data-sonner-toast]")).toContainText(/demo mode/i);
+    await expect(page.getByText("No performance role assigned")).toHaveCount(0);
+  });
+
+  test("the toast sits clear of the bottom navigation", async ({ page }) => {
+    // A toast covering the nav would trap someone on the page.
+    await openFirstMember(page);
+    await page.locator("button").filter({ hasText: /^Technician$/ }).first().click();
+
+    await expect(page.locator("[data-sonner-toast]").first()).toBeVisible();
+
+    // Measured in viewport coordinates via getBoundingClientRect. Playwright's
+    // boundingBox is document-relative, which mixes scroll position into a
+    // comparison between two position:fixed elements and gives a number that
+    // means nothing.
+    //
+    // Polled rather than read once: the toast slides up into place, so a
+    // single measurement taken the instant it becomes visible is short by
+    // exactly its own height and reports an overlap that isn't there.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const toast = document.querySelector("[data-sonner-toast]");
+            const nav = document.querySelector("nav:last-of-type");
+            if (!toast || !nav) return null;
+            return nav.getBoundingClientRect().top - toast.getBoundingClientRect().bottom;
+          }),
+        { message: "the toast overlaps the bottom navigation", timeout: 5_000 },
+      )
+      .toBeGreaterThanOrEqual(0);
+  });
+});
