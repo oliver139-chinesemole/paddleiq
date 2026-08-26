@@ -15,6 +15,11 @@ function toRemotePayload(payload: Record<string, unknown>): Record<string, unkno
   return Object.fromEntries(Object.entries(payload).filter(([k]) => !LOCAL_ONLY.has(k)));
 }
 
+/** Natural keys for tables synced by upsert rather than by row id. */
+const UPSERT_KEYS: Partial<Record<SyncQueueItem["table"], string>> = {
+  personal_records: "user_id,category,distance_m",
+};
+
 let _syncing = false;
 
 export async function enqueue(
@@ -67,6 +72,17 @@ export async function flushQueue(): Promise<void> {
         const remote = toRemotePayload(item.payload);
         if (item.operation === "insert") {
           const { error } = await supabase.from(item.table).insert(remote);
+          if (error) throw error;
+        } else if (item.operation === "upsert") {
+          // A personal record has no client-generated row id, so there is
+          // nothing to .eq("id", …) on. It does have a natural key, and the
+          // table declares UNIQUE(user_id, category, distance_m) — so let the
+          // database resolve it. This also makes a retried insert safe:
+          // without it a re-sent record hit that constraint, returned 23505,
+          // and the retry policy correctly gave up on it forever.
+          const { error } = await supabase
+            .from(item.table)
+            .upsert(remote, { onConflict: UPSERT_KEYS[item.table] ?? "id" });
           if (error) throw error;
         } else if (item.operation === "update") {
           const { id, ...rest } = remote;

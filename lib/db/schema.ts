@@ -7,7 +7,9 @@ import type { ErgSession, WaterSession, TeamSession, DrylandSession, PersonalRec
 export interface SyncQueueItem {
   id?: number;
   table: "erg_sessions" | "water_sessions" | "team_sessions" | "dryland_sessions" | "personal_records";
-  operation: "insert" | "update" | "delete";
+  // "upsert" exists for personal_records, which has a natural key
+  // (user_id, category, distance_m) and no client-side row id to update by.
+  operation: "insert" | "update" | "delete" | "upsert";
   payload: Record<string, unknown>;
   localId: string;            // client-generated id for dedup
   createdAt: number;

@@ -53,12 +53,15 @@ async function recordPRIfSet(
     // One row per distance and category: a record is the current best, not a
     // history. Keeping every attempt would make the Records page pick one at
     // random and would break the "how many PRs" count.
+    // Upsert either way. The server row has a natural key and no id we know,
+    // and the queue's update path matches on id — so queuing an update here
+    // sent .eq("id", undefined) and a beaten record never reached the server.
     if (previous?.localId !== undefined) {
       await db.personalRecords.update(previous.localId, row);
-      await enqueue("personal_records", "update", { ...row, localId: String(previous.localId) });
+      await enqueue("personal_records", "upsert", { ...row, localId: String(previous.localId) });
     } else {
       const id = await db.personalRecords.add(row as LocalPR);
-      await enqueue("personal_records", "insert", { ...row, localId: String(id) });
+      await enqueue("personal_records", "upsert", { ...row, localId: String(id) });
     }
   } catch {
     // Swallowed on purpose — see above. The session is already saved.

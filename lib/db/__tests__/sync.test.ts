@@ -15,12 +15,18 @@ import { MAX_RETRIES } from "../retry-policy";
 // A stand-in Supabase client whose behaviour each test sets.
 let insertResult: { error: unknown } = { error: null };
 let insertCalls = 0;
+let upsertConflict: string | undefined;
 
 vi.mock("@/lib/supabase/client", () => ({
   createClient: () => ({
     from: () => ({
       insert: async () => {
         insertCalls++;
+        return insertResult;
+      },
+      upsert: async (_rows: unknown, opts?: { onConflict?: string }) => {
+        insertCalls++;
+        upsertConflict = opts?.onConflict;
         return insertResult;
       },
       update: () => ({ eq: async () => insertResult }),
@@ -56,6 +62,7 @@ beforeEach(async () => {
   await getLocalDB().syncQueue.clear();
   insertResult = { error: null };
   insertCalls = 0;
+  upsertConflict = undefined;
   // flushQueue bails out unless it believes it's online and configured.
   vi.stubGlobal("navigator", { ...globalThis.navigator, onLine: true });
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
@@ -208,5 +215,35 @@ describe("the retry ceiling", () => {
     const [item] = await db.syncQueue.toArray();
     expect(item.failed, "should have given up by now").toBe(1);
     expect(item.retries).toBeLessThanOrEqual(MAX_RETRIES);
+  });
+});
+
+describe("syncing a personal record", () => {
+  it("upserts on the natural key rather than a row id", async () => {
+    // A personal record has no client-generated id, so the update path's
+    // .eq("id", …) matched nothing and a beaten record never reached the
+    // server. The table declares UNIQUE(user_id, category, distance_m).
+    await enqueue("personal_records", "upsert", {
+      userId: "u1", user_id: "u1", category: "erg", distance_m: 2000,
+      time_sec: 480, date: "2026-06-10", localId: "1",
+    });
+    await settle();
+
+    expect(insertCalls).toBeGreaterThan(0);
+    expect(upsertConflict).toBe("user_id,category,distance_m");
+    expect(await getLocalDB().syncQueue.count()).toBe(0);
+  });
+
+  it("can be re-sent without tripping the unique constraint", async () => {
+    // Without upsert a retried record returned 23505, which the retry policy
+    // correctly treats as permanent — so one transient failure lost it.
+    for (const date of ["2026-06-10", "2026-06-17"]) {
+      await enqueue("personal_records", "upsert", {
+        userId: "u1", user_id: "u1", category: "erg", distance_m: 2000,
+        time_sec: 480, date, localId: "1",
+      });
+      await settle();
+    }
+    expect(await getLocalDB().syncQueue.count()).toBe(0);
   });
 });
