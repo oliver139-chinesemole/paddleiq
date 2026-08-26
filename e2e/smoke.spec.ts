@@ -798,3 +798,60 @@ test.describe("feedback on team actions", () => {
       .toBeGreaterThanOrEqual(0);
   });
 });
+
+test.describe("personal records", () => {
+  async function logErg(page: Page, metres: number, mins: number, secs: number) {
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await page.locator('input[type="number"]').first().fill(String(metres));
+    await page.locator('input[type="number"]').nth(1).fill(String(mins));
+    await page.locator('input[type="number"]').nth(2).fill(String(secs));
+    await page.getByRole("button", { name: /save erg session/i }).click();
+    await page.waitForURL(/dashboard/, { timeout: 15_000 });
+  }
+
+  test("a timed session sets a record", async ({ page }) => {
+    // Regression: db.personalRecords had four readers and no writer, so the
+    // whole Records page stayed empty for a real athlete forever.
+    await logErg(page, 2000, 8, 32);
+
+    await page.goto("/records", { waitUntil: "networkidle" });
+    await expect(page.getByTestId("pr-erg-2000")).toContainText("8:32");
+  });
+
+  test("a faster session beats it and says by how much", async ({ page }) => {
+    await logErg(page, 2000, 8, 32);
+    await logErg(page, 2000, 8, 20);
+
+    await page.goto("/records", { waitUntil: "networkidle" });
+    const card = page.getByTestId("pr-erg-2000");
+    await expect(card).toContainText("8:20");
+    await expect(card).toContainText("Previous: 8:32");
+    await expect(card).toContainText(/12s improvement/);
+  });
+
+  test("a slower session leaves the record alone", async ({ page }) => {
+    await logErg(page, 2000, 8, 20);
+    await logErg(page, 2000, 8, 50);
+
+    await page.goto("/records", { waitUntil: "networkidle" });
+    await expect(page.getByTestId("pr-erg-2000")).toContainText("8:20");
+  });
+
+  test("a non-record distance sets nothing", async ({ page }) => {
+    // A 6k steady piece is not a record at anything.
+    await logErg(page, 6000, 25, 0);
+
+    await page.goto("/records", { waitUntil: "networkidle" });
+    await expect(page.getByTestId("pr-erg-2000")).toContainText("No PR yet");
+  });
+
+  test("real records drive the race projections", async ({ page }) => {
+    // The predictor was dead for real athletes while nothing created PRs.
+    await logErg(page, 2000, 8, 32);
+    await logErg(page, 500, 1, 58);
+
+    await page.goto("/records", { waitUntil: "networkidle" });
+    await expect(page.getByTestId("pr-erg-1000")).toContainText(/~\d+:\d\d/);
+    await expect(page.getByTestId("pr-erg-200")).toContainText("/500m target");
+  });
+});

@@ -65,7 +65,7 @@ beforeEach(async () => {
   await Promise.all([
     db.ergSessions.clear(), db.waterSessions.clear(),
     db.teamSessions.clear(), db.drylandSessions.clear(),
-    db.syncQueue.clear(),
+    db.syncQueue.clear(), db.personalRecords.clear(),
   ]);
 });
 
@@ -89,9 +89,10 @@ describe("saving a session", () => {
 
   it("queues it for the server", async () => {
     await saveErgSession(erg("2026-06-10"));
-    const queued = await getLocalDB().syncQueue.toArray();
+    // Filtered by table: the fixture is a 2000m steady piece, so saving it
+    // also sets a 2k record, which queues an entry of its own.
+    const queued = (await getLocalDB().syncQueue.toArray()).filter(q => q.table === "erg_sessions");
     expect(queued).toHaveLength(1);
-    expect(queued[0].table).toBe("erg_sessions");
     expect(queued[0].operation).toBe("insert");
     expect(queued[0].retries).toBe(0);
   });
@@ -100,7 +101,7 @@ describe("saving a session", () => {
     // markLocalSynced parses this to flip synced -> 1, so a mismatch here
     // means rows stay unsynced forever and re-send on every flush.
     const id = await saveErgSession(erg("2026-06-10"));
-    const [queued] = await getLocalDB().syncQueue.toArray();
+    const [queued] = (await getLocalDB().syncQueue.toArray()).filter(q => q.table === "erg_sessions");
     expect(queued.payload.localId).toBe(String(id));
   });
 
@@ -122,8 +123,8 @@ describe("saving a session", () => {
     expect(await getDrylandSessions(USER)).toHaveLength(1);
 
     const queued = await getLocalDB().syncQueue.toArray();
-    expect(queued.map((q) => q.table).sort()).toEqual([
-      "dryland_sessions", "erg_sessions", "team_sessions", "water_sessions",
+    expect([...new Set(queued.map((q) => q.table))].sort()).toEqual([
+      "dryland_sessions", "erg_sessions", "personal_records", "team_sessions", "water_sessions",
     ]);
   });
 
@@ -198,7 +199,8 @@ describe("the sync queue after writes", () => {
     await saveErgSession(erg("2026-06-11"));
     await saveErgSession(erg("2026-06-12"));
 
-    const queued = await getLocalDB().syncQueue.orderBy("createdAt").toArray();
+    const queued = (await getLocalDB().syncQueue.orderBy("createdAt").toArray())
+      .filter(q => q.table === "erg_sessions");
     expect(queued).toHaveLength(3);
     expect(queued.map((q) => q.payload.date)).toEqual([
       "2026-06-10", "2026-06-11", "2026-06-12",
@@ -207,14 +209,104 @@ describe("the sync queue after writes", () => {
 
   it("gives every entry a unique localId", async () => {
     for (let i = 0; i < 5; i++) await saveErgSession(erg("2026-06-10"));
-    const ids = (await getLocalDB().syncQueue.toArray()).map((q) => q.localId);
+    const ids = (await getLocalDB().syncQueue.toArray())
+      .filter(q => q.table === "erg_sessions").map((q) => q.localId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
   it("starts entries unfailed, so the retry policy sees them", async () => {
     await saveErgSession(erg("2026-06-10"));
-    const [q] = await getLocalDB().syncQueue.toArray();
+    const [q] = (await getLocalDB().syncQueue.toArray()).filter(x => x.table === "erg_sessions");
     expect(q.failed).toBe(0);
     expect(q.retries).toBe(0);
+  });
+});
+
+// ── Personal records ─────────────────────────────────────────────────────────
+
+describe("recording a personal best", () => {
+  const timed = (date: string, distance: number, seconds: number, type = "test") => ({
+    ...erg(date), distance_m: distance, duration_sec: seconds,
+    workout_type: type as "steady" | "intervals" | "test" | "pyramid",
+  });
+
+  it("creates a record from a qualifying session", async () => {
+    // Regression: nothing wrote to this table at all, so the Records page was
+    // permanently empty for a real athlete however hard they trained.
+    await saveErgSession(timed("2026-06-10", 2000, 512));
+
+    const prs = await getLocalDB().personalRecords.toArray();
+    expect(prs).toHaveLength(1);
+    expect(prs[0]).toMatchObject({ category: "erg", distance_m: 2000, time_sec: 512 });
+  });
+
+  it("queues the record for the server too", async () => {
+    await saveErgSession(timed("2026-06-10", 2000, 512));
+    const queued = await getLocalDB().syncQueue.toArray();
+    expect(queued.map((q) => q.table)).toContain("personal_records");
+  });
+
+  it("replaces the record when a faster session beats it", async () => {
+    await saveErgSession(timed("2026-06-10", 2000, 512));
+    await saveErgSession(timed("2026-06-17", 2000, 498));
+
+    const prs = await getLocalDB().personalRecords.toArray();
+    // One row per distance — a record is the current best, not a history.
+    expect(prs).toHaveLength(1);
+    expect(prs[0].time_sec).toBe(498);
+    expect(prs[0].previous_time_sec).toBe(512);
+    expect(prs[0].improvement_sec).toBe(14);
+  });
+
+  it("leaves the record alone after a slower session", async () => {
+    await saveErgSession(timed("2026-06-10", 2000, 498));
+    await saveErgSession(timed("2026-06-17", 2000, 530));
+
+    const [pr] = await getLocalDB().personalRecords.toArray();
+    expect(pr.time_sec).toBe(498);
+    expect(pr.date).toBe("2026-06-10");
+  });
+
+  it("ignores interval work at a record distance", async () => {
+    // 4 x 500m is 2000m on the clock including the rests.
+    await saveErgSession(timed("2026-06-10", 2000, 900, "intervals"));
+    expect(await getLocalDB().personalRecords.count()).toBe(0);
+  });
+
+  it("ignores a distance the app keeps no record at", async () => {
+    await saveErgSession(timed("2026-06-10", 6000, 1500));
+    expect(await getLocalDB().personalRecords.count()).toBe(0);
+  });
+
+  it("keeps a record per distance", async () => {
+    await saveErgSession(timed("2026-06-10", 500, 118));
+    await saveErgSession(timed("2026-06-11", 1000, 248));
+    await saveErgSession(timed("2026-06-12", 2000, 512));
+
+    const prs = await getLocalDB().personalRecords.toArray();
+    expect(prs.map((p) => p.distance_m).sort((a, b) => a - b)).toEqual([500, 1000, 2000]);
+  });
+
+  it("keeps erg and water records apart", async () => {
+    await saveErgSession(timed("2026-06-10", 500, 118));
+    await saveWaterSession({ ...water("2026-06-11"), distance_m: 500, duration_sec: 145 });
+
+    const prs = await getLocalDB().personalRecords.toArray();
+    expect(prs).toHaveLength(2);
+    expect(prs.map((p) => p.category).sort()).toEqual(["erg", "water"]);
+  });
+
+  it("scopes records to the athlete who set them", async () => {
+    await saveErgSession({ ...timed("2026-06-10", 2000, 512), userId: USER, user_id: USER });
+    await saveErgSession({ ...timed("2026-06-10", 2000, 400), userId: OTHER, user_id: OTHER });
+
+    const mine = await getLocalDB().personalRecords.where("userId").equals(USER).toArray();
+    expect(mine).toHaveLength(1);
+    expect(mine[0].time_sec).toBe(512);
+  });
+
+  it("still saves the session when the session isn't a record", async () => {
+    await saveErgSession(timed("2026-06-10", 6000, 1500));
+    expect(await getErgSessions(USER)).toHaveLength(1);
   });
 });
