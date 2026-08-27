@@ -22,11 +22,26 @@ const UPSERT_KEYS: Partial<Record<SyncQueueItem["table"], string>> = {
 
 let _syncing = false;
 
+/** True when there is a server to sync to at all. */
+export function isSyncConfigured(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  );
+}
+
 export async function enqueue(
   table: SyncQueueItem["table"],
   operation: SyncQueueItem["operation"],
   payload: Record<string, unknown>,
 ): Promise<void> {
+  // No server means nothing to queue. Without this the queue grew by two rows
+  // per session forever on a deployment with no Supabase — and worse, those
+  // rows are stamped with the demo user id, so the moment an account was
+  // configured the backlog would be attempted, rejected on the user_id foreign
+  // key, and reported to a brand-new athlete as "N sessions couldn't be saved".
+  // Sessions themselves are still stored locally and still exportable.
+  if (!isSyncConfigured()) return;
+
   const db = getLocalDB();
   const localId = `${table}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   await db.syncQueue.add({

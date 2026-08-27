@@ -5,6 +5,7 @@ import { Download, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toCSV, toExportRows, exportFilename, SESSION_COLUMNS } from "@/lib/export/csv";
 import { toLocalDateStr } from "@/lib/utils";
+import { SyncStatus } from "./SyncStatus";
 
 type State = { kind: "idle" } | { kind: "working" } | { kind: "done"; rows: number } | { kind: "empty" } | { kind: "error" };
 
@@ -103,6 +104,10 @@ export function ExportData({ userId, isDemoMode }: { userId: string; isDemoMode:
           </p>
         )}
       </div>
+
+      {/* Where those sessions actually live right now — the other half of the
+          same question the export answers. */}
+      <SyncStatus />
     </div>
   );
 }

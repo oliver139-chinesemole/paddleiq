@@ -920,3 +920,48 @@ test.describe("record notifications", () => {
     await expect(dot).toHaveCount(0);
   });
 });
+
+test.describe("where your sessions are", () => {
+  test("says plainly that sessions live only in this browser", async ({ page }) => {
+    // Regression: getQueueHealth and retryFailedItems were written so the app
+    // could surface a stuck queue "rather than leaving the athlete to notice
+    // their sessions never appear on another device" — and nothing ever
+    // called them. There was no way to find out where your data was.
+    await page.goto("/profile", { waitUntil: "networkidle" });
+
+    const card = page.getByText("Your Data").locator("..");
+    await expect(card).toContainText("Saved on this device");
+    await expect(card).toContainText(/aren't backed up to an account/i);
+    // It must not read as an error: nothing is wrong, there is just no
+    // account. Crying wolf here would train people to ignore the real thing.
+    await expect(card).not.toContainText(/failed|error|couldn't be saved/i);
+  });
+
+  test("offers no retry when there is nothing to retry", async ({ page }) => {
+    await page.goto("/profile", { waitUntil: "networkidle" });
+    await expect(page.getByRole("button", { name: /try again/i })).toHaveCount(0);
+  });
+
+  test("queues nothing when there is no server to sync to", async ({ page }) => {
+    // Otherwise the queue grows by two rows per session forever, stamped with
+    // the demo user id — a backlog that could only ever be rejected.
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await page.locator('input[type="number"]').first().fill("2000");
+    await page.locator('input[type="number"]').nth(1).fill("8");
+    await page.locator('input[type="number"]').nth(2).fill("0");
+    await page.getByRole("button", { name: /save erg session/i }).click();
+    await page.waitForURL(/dashboard/, { timeout: 15_000 });
+
+    const queued = await page.evaluate(async () => {
+      const req = indexedDB.open("paddleiq");
+      const db: IDBDatabase = await new Promise((res) => { req.onsuccess = () => res(req.result); });
+      if (!db.objectStoreNames.contains("syncQueue")) return 0;
+      const store = db.transaction("syncQueue", "readonly").objectStore("syncQueue");
+      return new Promise<number>((res) => { const c = store.count(); c.onsuccess = () => res(c.result); });
+    });
+    expect(queued).toBe(0);
+
+    // The session itself is still there — that's the part that matters.
+    await expect(page.getByText(/2\.00km|2\.0 km/).first()).toBeVisible();
+  });
+});

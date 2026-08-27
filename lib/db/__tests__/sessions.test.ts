@@ -61,6 +61,11 @@ const dryland = (date: string, userId = USER) => ({
 });
 
 beforeEach(async () => {
+  // enqueue() no longer queues when there's no server to sync to, so these
+  // tests have to say there is one. The unconfigured case has its own test.
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "test-key";
+
   const db = getLocalDB();
   await Promise.all([
     db.ergSessions.clear(), db.waterSessions.clear(),
@@ -334,5 +339,31 @@ describe("waking up views that are already mounted", () => {
       await save();
       expect(getDataRevision()).toBeGreaterThan(before);
     }
+  });
+});
+
+describe("with no server configured", () => {
+  it("saves the session but queues nothing", async () => {
+    // Otherwise the queue grows by two rows per session forever on a
+    // deployment with no Supabase, and every row is stamped with the demo
+    // user id — so configuring an account later would attempt the whole
+    // backlog, have it rejected on the user_id foreign key, and greet a new
+    // athlete with "N sessions couldn't be saved".
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    await saveErgSession(erg("2026-06-10"));
+
+    expect(await getErgSessions(USER), "the session still saves").toHaveLength(1);
+    expect(await getLocalDB().syncQueue.count(), "but nothing is queued").toBe(0);
+  });
+
+  it("still records a personal best locally", async () => {
+    // The record is local data like any other; only the sync is skipped.
+    delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+    delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    await saveErgSession({ ...erg("2026-06-10"), distance_m: 2000, duration_sec: 480 });
+    expect(await getLocalDB().personalRecords.count()).toBe(1);
   });
 });
