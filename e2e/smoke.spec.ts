@@ -1182,3 +1182,56 @@ test.describe("the coach doesn't repeat itself", () => {
     await expect(page.getByText(/No dryland sessions logged yet/i)).toHaveCount(0);
   });
 });
+
+test.describe("technique video", () => {
+  test("doesn't load YouTube until you ask it to", async ({ page }) => {
+    // The embed pulls in several hundred KB of player and sets third-party
+    // cookies on load. Neither should happen to someone who never pressed
+    // play — and an iframe loading on mount would fail on every page view for
+    // an athlete at a boathouse with no signal.
+    const thirdParty: string[] = [];
+    page.on("request", (r) => {
+      const host = new URL(r.url()).host;
+      if (!/localhost|127\.0\.0\.1/.test(host)) thirdParty.push(host);
+    });
+
+    await page.goto("/technique", { waitUntil: "networkidle" });
+
+    await expect(page.locator("iframe")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /play video/i })).toBeVisible();
+    expect(thirdParty.filter((h) => /youtube|google|ggpht/.test(h))).toEqual([]);
+  });
+
+  test("loads the player once you press play", async ({ page }) => {
+    await page.goto("/technique", { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: /play video/i }).click();
+
+    const frame = page.locator("iframe").first();
+    await expect(frame).toBeVisible();
+    // nocookie host, so nothing is set for someone who watches once.
+    expect(await frame.getAttribute("src")).toContain("youtube-nocookie.com");
+  });
+
+  test("credits the channel and links to it", async ({ page }) => {
+    // It's someone else's work.
+    await page.goto("/technique", { waitUntil: "networkidle" });
+    const credit = page.locator('a[href*="@PaddlesUpDB"]');
+    await expect(credit).toBeVisible();
+    await expect(credit).toHaveAttribute("rel", /noopener/);
+  });
+
+  test("explains itself offline instead of showing a broken frame", async ({ page, context }) => {
+    await page.goto("/technique", { waitUntil: "networkidle" });
+    // Toggled while the page is open rather than reloaded: reloading offline
+    // correctly serves the app's /offline fallback, which is a different
+    // behaviour from the one under test here.
+    await context.setOffline(true);
+    try {
+      await expect(page.getByText(/needs a connection/i)).toBeVisible();
+      // And the part that does work offline is still offered.
+      await expect(page.getByText(/written cues, mistakes and drills/i)).toBeVisible();
+    } finally {
+      await context.setOffline(false);
+    }
+  });
+});

@@ -143,6 +143,14 @@ export interface DayWorkout {
   notes?: string;
 }
 
+/** A video hosted elsewhere, credited and linked. */
+export interface LessonVideo {
+  youtubeId: string;
+  title: string;
+  channel: string;
+  channelUrl: string;
+}
+
 export interface TechniqueLesson {
   id: string;
   title: string;
@@ -153,6 +161,11 @@ export interface TechniqueLesson {
   coaching_cues: string[];
   drills: string[];
   difficulty: "beginner" | "intermediate" | "advanced";
+  /**
+   * Optional external video. Kept optional because most lessons have none —
+   * the written cues are the lesson, and a missing video is not a gap.
+   */
+  video?: LessonVideo;
 }
 
 export type RoleInTeam = "paddler" | "drummer" | "steersperson" | "caller" | "coach";

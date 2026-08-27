@@ -81,6 +81,22 @@ export const mockPRs: PersonalRecord[] = [
 // with at most one week of content.
 export const trainingPlans: TrainingPlan[] = PLAN_SPECS.map(buildPlan);
 
+/**
+ * A general beginner overview, shown on the library index rather than pinned
+ * to one lesson. Its title describes the whole stroke, and nobody here has
+ * watched it frame by frame to say which lesson it teaches — presenting it as
+ * the material for a specific lesson would be a claim we can't back.
+ *
+ * Embedded through YouTube's player, which is what their terms allow. The
+ * frames are not ours to lift into stills without asking the channel.
+ */
+export const featuredTechniqueVideo = {
+  youtubeId: "s_cAyAd9M4Y",
+  title: "Dragon Boat Technique For Beginners - How To Paddle",
+  channel: "Paddles Up",
+  channelUrl: "https://www.youtube.com/@PaddlesUpDB",
+};
+
 export const techniqueLessons: TechniqueLesson[] = [
   {
     id: "t1",

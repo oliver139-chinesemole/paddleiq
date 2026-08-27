@@ -6,7 +6,8 @@ import { useSearchParams } from "next/navigation";
 import { BookOpen, ChevronRight, Star, Check, Video, ScanLine, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { techniqueLessons } from "@/lib/data/seed";
+import { techniqueLessons, featuredTechniqueVideo } from "@/lib/data/seed";
+import { VideoEmbed } from "@/components/technique/VideoEmbed";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = ["All", "Stroke Mechanics", "Power & Mechanics", "Team Synchronization", "Race Strategy", "Erg Training", "Technique & Position"];
@@ -167,6 +168,16 @@ function TechniqueLibrary() {
           </button>
         </div>
       )}
+
+      {/* A general beginner overview. Placed here rather than inside a lesson
+          because its title covers the whole stroke, and claiming it teaches a
+          particular lesson would be asserting something nobody has checked. */}
+      <div>
+        <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-3">
+          Start Here
+        </h2>
+        <VideoEmbed video={featuredTechniqueVideo} />
+      </div>
 
       {/* Form Check card */}
       <Link href="/technique/form-check">
