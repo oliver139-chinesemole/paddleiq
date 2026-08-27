@@ -242,8 +242,17 @@ export function checkModalityGaps(
   drylandSessions: DrylandSessionInput[],
   waterSessions: WaterSessionInput[],
   now = new Date(),
+  /** Date of the athlete's first session of any kind, if they have one. */
+  firstSessionDate?: string,
 ): ModalityGapResult[] {
   const results: ModalityGapResult[] = [];
+
+  // Someone who started on Monday has not "gone 999 days without dryland" —
+  // they have been here three days. Reporting a gap shorter than the athlete's
+  // own history tells a beginner their first week is already going wrong, and
+  // it was doing exactly that: with no dryland sessions the rule reported a
+  // 999-day gap and made it the focus of their week.
+  const historyDays = firstSessionDate ? daysSince(firstSessionDate, now) : 0;
 
   const latestDryland = drylandSessions
     .map((s) => s.date)
@@ -254,7 +263,8 @@ export function checkModalityGaps(
     .sort()
     .at(-1);
 
-  if (!latestDryland || daysSince(latestDryland, now) >= THRESHOLDS.drylandGapDays) {
+  if (historyDays >= THRESHOLDS.drylandGapDays &&
+      (!latestDryland || daysSince(latestDryland, now) >= THRESHOLDS.drylandGapDays)) {
     const days = latestDryland ? daysSince(latestDryland, now) : 999;
     results.push({
       kind: "modality-gap",
@@ -265,7 +275,8 @@ export function checkModalityGaps(
     });
   }
 
-  if (!latestWater || daysSince(latestWater, now) >= THRESHOLDS.waterGapDays) {
+  if (historyDays >= THRESHOLDS.waterGapDays &&
+      (!latestWater || daysSince(latestWater, now) >= THRESHOLDS.waterGapDays)) {
     const days = latestWater ? daysSince(latestWater, now) : 999;
     results.push({
       kind: "modality-gap",

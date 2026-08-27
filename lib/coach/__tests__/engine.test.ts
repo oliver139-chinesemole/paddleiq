@@ -118,9 +118,9 @@ describe("PR proximity routing", () => {
       ergSessions: [erg({ date: d(2), distance_m: 500, duration_sec: 127, split_sec: 127 })],
       prs: [{ category: "erg", distance_m: 500, time_sec: 125 }],
     }));
-    const pr = out.suggestions.find((s) => s.kind === "pr-proximity");
-    expect(pr).toBeDefined();
-    expect(pr!.body).toMatch(/within/i);
+    // It's the only insight here, so it's promoted to the focus line rather
+    // than listed. What matters is that it isn't filed as a celebration.
+    expect(out.focusThisWeek).toMatch(/within|PR/i);
     expect(out.positives.find((p) => p.kind === "pr-proximity")).toBeUndefined();
   });
 
@@ -212,7 +212,9 @@ describe("categorisation", () => {
         erg({ date: d(1), rpe: 9 }), erg({ date: d(2), rpe: 9 }), erg({ date: d(3), rpe: 9 }),
       ],
     }));
-    expect(out.warnings.find((w) => w.kind === "high-rpe-streak")).toBeDefined();
+    // Promoted to the focus line when it's the most severe thing going on.
+    expect(out.focusThisWeek).toMatch(/RPE/i);
+    expect(out.suggestions.find((x) => x.kind === "high-rpe-streak")).toBeUndefined();
   });
 
   it("flags a long gap in dryland training", () => {
@@ -252,5 +254,36 @@ describe("categorisation", () => {
       ergSessions: [erg({ date: d(40) }), erg({ date: d(41) })],
     }));
     expect(recent.summary).not.toBe(stale.summary);
+  });
+});
+
+describe("the focus line", () => {
+  it("doesn't repeat itself in the list below", () => {
+    // Regression: focusThisWeek was warnings[0] rendered again, so the page
+    // showed the same sentence under "Focus this week" and immediately again
+    // under "Watch out".
+    const out = runCoachEngine(input({
+      ergSessions: [
+        erg({ date: d(1), rpe: 9 }), erg({ date: d(2), rpe: 9 }), erg({ date: d(3), rpe: 9 }),
+      ],
+    }));
+    const listed = [...out.warnings, ...out.suggestions].map((i) => i.title);
+    expect(listed).not.toContain(out.focusThisWeek);
+  });
+
+  it("still says something when there is nothing to flag", () => {
+    const out = runCoachEngine(input({ ergSessions: [erg({ date: d(1), rpe: 4 })] }));
+    expect(out.focusThisWeek.length).toBeGreaterThan(10);
+  });
+
+  it("leaves the rest of the list intact", () => {
+    // Only the promoted item is removed, not the whole category.
+    const out = runCoachEngine(input({
+      ergSessions: [
+        erg({ date: d(1), rpe: 9 }), erg({ date: d(2), rpe: 9 }), erg({ date: d(3), rpe: 9 }),
+      ],
+      drylandSessions: [dryland({ date: d(60) })],
+    }));
+    expect(out.warnings.length + out.suggestions.length).toBeGreaterThan(0);
   });
 });

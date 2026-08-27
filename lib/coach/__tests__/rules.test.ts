@@ -229,7 +229,9 @@ describe("checkHighRPEStreak", () => {
 describe("checkModalityGaps", () => {
   it("flags dryland gap > 7 days", () => {
     const oldDryland = [makeDryland({ date: d(10) })];
-    const results = checkModalityGaps(oldDryland, [], new Date("2026-06-04"));
+    // The athlete's own history has to be longer than the gap for the gap to
+            // mean anything; d(10) is their first session.
+    const results = checkModalityGaps(oldDryland, [], new Date("2026-06-04"), d(10));
     const drylandGap = results.find((r) => r.modality === "dryland");
     expect(drylandGap).toBeDefined();
     expect(drylandGap!.daysSinceLastSession).toBe(10);
@@ -237,13 +239,13 @@ describe("checkModalityGaps", () => {
 
   it("does not flag dryland within threshold", () => {
     const recent = [makeDryland({ date: d(3) })];
-    const results = checkModalityGaps(recent, [], new Date("2026-06-04"));
+    const results = checkModalityGaps(recent, [], new Date("2026-06-04"), d(30));
     expect(results.find((r) => r.modality === "dryland")).toBeUndefined();
   });
 
   it("flags water gap > 14 days", () => {
     const oldWater = [makeWater({ date: d(20) })];
-    const results = checkModalityGaps([], oldWater, new Date("2026-06-04"));
+    const results = checkModalityGaps([], oldWater, new Date("2026-06-04"), d(20));
     const gap = results.find((r) => r.modality === "water");
     expect(gap).toBeDefined();
     expect(gap!.daysSinceLastSession).toBe(20);
@@ -462,5 +464,33 @@ describe("the split-fade copy", () => {
       makeErg({ distance_m: 2000, split_sec: 125, segment_splits: [118, 122, 125, 131] }),
     ])!;
     expect(insightTitle(result)).toContain("13.0s");
+  });
+});
+
+describe("gaps and how long the athlete has been training", () => {
+  const now = new Date("2026-06-04");
+
+  it("says nothing to someone who only started this week", () => {
+    // Regression: with no dryland at all the rule reported a 999-day gap and
+    // the engine made it the focus of a beginner's first week. Someone who
+    // started on Monday has not gone 999 days without dryland.
+    expect(checkModalityGaps([], [], now, d(3))).toEqual([]);
+  });
+
+  it("says nothing when there is no history at all", () => {
+    expect(checkModalityGaps([], [], now, undefined)).toEqual([]);
+  });
+
+  it("starts flagging dryland once the history is longer than the threshold", () => {
+    const gaps = checkModalityGaps([], [], now, d(30));
+    expect(gaps.find((g) => g.modality === "dryland")).toBeDefined();
+  });
+
+  it("holds off on the water gap longer than the dryland one", () => {
+    // 14 days versus 7 — a fortnight into training there's a dryland gap to
+    // report but not yet a water one.
+    const gaps = checkModalityGaps([], [], now, d(10));
+    expect(gaps.find((g) => g.modality === "dryland")).toBeDefined();
+    expect(gaps.find((g) => g.modality === "water")).toBeUndefined();
   });
 });

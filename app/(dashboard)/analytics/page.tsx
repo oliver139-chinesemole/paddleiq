@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { TrendingUp, Flame, Dumbbell, TrendingDown } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardValue, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,9 @@ import { mockStats, mockErgSessions, weeklyVolumeData, ergProgressData } from "@
 import { formatTime, formatDistance, formatRelativeDate, formatPace } from "@/lib/utils";
 import { Skeleton, SkeletonCard, LoadingAnnouncement } from "@/components/ui/skeleton";
 import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
+import { trainingMix, totalWeekSessions, describeMix, type WeekCounts } from "@/lib/coach/training-mix";
+import { weeklyGoal, goalProgress, goalBasisLabel } from "@/lib/coach/weekly-goal";
+import { storedToEffort, effortLevel } from "@/lib/effort";
 import type { DashboardStats } from "@/lib/types";
 import type { LocalErgSession } from "@/lib/db/schema";
 
@@ -26,6 +29,13 @@ export default function AnalyticsPage() {
   const [ergSessions, setErgSessions] = useState<LocalErgSession[]>(IS_CONFIGURED ? [] : (mockErgSessions as unknown as LocalErgSession[]));
   const [volumeData, setVolumeData] = useState<{ week: string; distance: number }[]>(
     IS_CONFIGURED ? [] : weeklyVolumeData.map(d => ({ week: d.week, distance: d.distance }))
+  );
+  // Sessions this week by modality. The mix card needs all four; the page
+  // previously kept only erg sessions and inferred the rest from nothing.
+  // Seeded for a visitor so the card reflects the sample sessions shown
+  // everywhere else, rather than reading as an empty week.
+  const [weekCounts, setWeekCounts] = useState<WeekCounts>(
+    IS_CONFIGURED ? { erg: 0, water: 0, team: 0, dryland: 0 } : { erg: 3, water: 1, team: 1, dryland: 0 },
   );
   const [progressData, setProgressData] = useState<{ date: string; split: number }[]>(
     IS_CONFIGURED ? [] : ergProgressData.map(d => ({ date: d.date, split: d.split }))
@@ -51,11 +61,30 @@ export default function AnalyticsPage() {
       setVolumeData(computeWeeklyVolume(erg, water, team));
       setErgSessions(erg);
       setProgressData(computeErgProgress(erg));
+
+      const { toLocalDateStr, daysBefore } = await import("@/lib/utils");
+      const weekAgo = toLocalDateStr(daysBefore(new Date(), 6));
+      const thisWeek = (rows: { date: string }[]) => rows.filter((r) => r.date >= weekAgo).length;
+      setWeekCounts({
+        erg: thisWeek(erg), water: thisWeek(water),
+        team: thisWeek(team), dryland: thisWeek(dryland),
+      });
       } finally {
         setLoading(false);
       }
     })();
   }, [userId, isDemoMode]);
+
+  const mix = useMemo(() => trainingMix(weekCounts), [weekCounts]);
+  const mixTotal = totalWeekSessions(weekCounts);
+  const mixNote = useMemo(() => describeMix(weekCounts), [weekCounts]);
+
+  // The same derivation the dashboard uses, so the two screens can't disagree
+  // about the athlete's goal — analytics had its own hardcoded 20km.
+  const goal = useMemo(
+    () => weeklyGoal(volumeData.slice(0, -1).map((d) => d.distance / 1000)),
+    [volumeData],
+  );
 
   // Improvement: compare first vs last split in progress data
   const firstSplit = progressData[0]?.split ?? 0;
@@ -199,7 +228,9 @@ export default function AnalyticsPage() {
                     { label: "Time",  value: formatTime(session.duration_sec) },
                     { label: "Split", value: session.split_sec > 0 ? formatPace(session.split_sec) : "—" },
                     { label: "SPM",   value: session.stroke_rate ? String(session.stroke_rate) : "—" },
-                    { label: "RPE",   value: `${session.rpe}/10` },
+                    // Was "8/10" while every other screen uses the five-level
+                    // picker — the same number on two different scales.
+                    { label: "Effort", value: effortLevel(storedToEffort(session.rpe))?.label ?? "—" },
                   ].map((s) => (
                     <div key={s.label} className="bg-[#111827] rounded-xl p-2 text-center">
                       <div className="text-xs font-bold text-[#F1F5F9]">{s.value}</div>
@@ -225,23 +256,59 @@ export default function AnalyticsPage() {
           </Badge>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {[
-              { label: "Erg Volume",       value: Math.min((stats.weekly_distance_m / 20000) * 100, 100), color: "#0EA5E9" },
-              { label: "Weekly Goal",      value: Math.min((stats.weekly_distance_m / 20000) * 100, 100), color: "#10B981" },
-              { label: "Sessions / Goal",  value: Math.min((stats.weekly_sessions / 5) * 100, 100),       color: "#F59E0B" },
-              { label: "Streak Momentum",  value: Math.min((stats.current_streak / 7) * 100, 100),        color: "#F97316" },
-            ].map(({ label, value, color }) => (
-              <div key={label}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-[#8A98AC]">{label}</span>
-                  <span className="font-semibold text-[#94A3B8]">{Math.round(value)}%</span>
+          {/* What the heading always promised. The four bars here used to be
+              "Erg Volume" and "Weekly Goal" (the identical expression, shown
+              twice under different names), plus a session count over an
+              invented 5 and a streak over an invented 7. */}
+          {mixTotal === 0 ? (
+            <p className="text-xs text-[#8A98AC] leading-relaxed">
+              Nothing logged this week yet. Once you do, this shows how the week
+              was divided between erg, water, team and dryland.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {mix.map(({ modality, label, sessions, share, color }) => (
+                <div key={modality}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span className="text-[#8A98AC]">{label}</span>
+                    <span className="font-semibold text-[#94A3B8]">
+                      {sessions} {sessions === 1 ? "session" : "sessions"}
+                      {sessions > 0 && ` · ${share}%`}
+                    </span>
+                  </div>
+                  <div className="h-2 w-full rounded-full bg-[#1E293B]">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${share}%`, backgroundColor: color }}
+                    />
+                  </div>
                 </div>
-                <div className="h-2 w-full rounded-full bg-[#1E293B]">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${value}%`, backgroundColor: color }} />
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+
+          {mixNote && <p className="text-[11px] text-[#7C8AA0] mt-4">{mixNote}</p>}
+
+          {/* Progress toward the same target the dashboard shows, derived the
+              same way. Analytics had its own hardcoded 20km, so the two
+              screens could report different goals for the same athlete. */}
+          <div className="mt-5 pt-4 border-t border-[#1E293B]">
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-[#8A98AC]">Weekly distance</span>
+              <span className="font-semibold text-[#94A3B8]">
+                {(stats.weekly_distance_m / 1000).toFixed(1)} / {goal.target_km} km
+              </span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-[#1E293B]">
+              <div
+                className="h-full rounded-full transition-all"
+                style={{
+                  width: `${goalProgress(stats.weekly_distance_m / 1000, goal.target_km)}%`,
+                  backgroundColor: "#10B981",
+                }}
+              />
+            </div>
+            <p className="text-[10px] text-[#7C8AA0] mt-1.5">{goalBasisLabel(goal)}</p>
           </div>
         </CardContent>
       </Card>

@@ -55,7 +55,10 @@ export function runCoachEngine(input: EngineInput): RenderedCoachOutput {
   const pacing = checkPacingConsistency(ergSessions);
   const load = calculateTrainingLoad(allSessions, now);
   const streak = checkHighRPEStreak(allSessions);
-  const gaps = checkModalityGaps(drylandSessions, waterSessions, now);
+  // The earliest session of any kind: a gap can't be longer than the athlete
+  // has been training.
+  const firstSessionDate = allSessions.map((s) => s.date).sort()[0];
+  const gaps = checkModalityGaps(drylandSessions, waterSessions, now, firstSessionDate);
   const boatErgGap = checkBoatErgGap(ergSessions, waterSessions);
   // `now` matters here too — without it this rule reads the real clock and
   // ignores the caller's date, which is exactly what made it untestable.
@@ -108,10 +111,15 @@ export function runCoachEngine(input: EngineInput): RenderedCoachOutput {
   );
 
   // ── Focus of the week (highest-severity suggestion) ────────────────────────
-  const topSuggestion = warnings[0] ?? suggestions[0];
-  const focusThisWeek = topSuggestion
-    ? insightTitle(topSuggestion)
+  // Promoted out of its list rather than copied from it. The focus was
+  // previously just warnings[0] rendered again, so the page showed the same
+  // sentence under "Focus this week" and immediately again under "Watch out".
+  const promoted = warnings[0] ?? suggestions[0];
+  const focusThisWeek = promoted
+    ? insightTitle(promoted)
     : "Maintain current training consistency — no issues detected.";
+  const remainingWarnings = promoted ? warnings.filter((w) => w !== promoted) : warnings;
+  const remainingSuggestions = promoted ? suggestions.filter((x) => x !== promoted) : suggestions;
 
   // ── Fixed question answers ────────────────────────────────────────────────
   const questionAnswers: Record<string, string> = {
@@ -141,8 +149,8 @@ export function runCoachEngine(input: EngineInput): RenderedCoachOutput {
       ? insightBody(boatErgGap)
       : "Log both a 500m erg session and a 500m solo water time trial to see your transfer efficiency.",
 
-    "What should I focus on this week?": topSuggestion
-      ? `${insightTitle(topSuggestion)}\n\n${insightBody(topSuggestion)}`
+    "What should I focus on this week?": promoted
+      ? `${insightTitle(promoted)}\n\n${insightBody(promoted)}`
       : "Your training looks balanced — no critical issues. Consider adding a technique video session this week.",
   };
 
@@ -159,8 +167,8 @@ export function runCoachEngine(input: EngineInput): RenderedCoachOutput {
   return {
     summary: summaryText,
     focusThisWeek,
-    warnings: render(warnings),
-    suggestions: render(suggestions),
+    warnings: render(remainingWarnings),
+    suggestions: render(remainingSuggestions),
     positives: render(positives),
     questionAnswers,
   };

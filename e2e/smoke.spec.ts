@@ -1089,3 +1089,96 @@ test.describe("signing up when there are no accounts", () => {
     await page.waitForURL(/onboarding|dashboard/, { timeout: 15_000 });
   });
 });
+
+test.describe("analytics reports real numbers", () => {
+  test("the training mix shows the actual split by modality", async ({ page }) => {
+    // Regression: this card had four bars, and "Erg Volume" and "Weekly Goal"
+    // were the identical expression — weekly_distance_m / 20000 — rendered
+    // twice under different names. "Erg Volume" counted every modality, and
+    // the other two divided by an invented 5 and 7.
+    await page.goto("/analytics", { waitUntil: "networkidle" });
+
+    const card = page.getByText("Weekly Training Mix").locator("..").locator("..");
+    for (const label of ["Erg", "Water", "Team", "Dryland"]) {
+      await expect(card).toContainText(label);
+    }
+    await expect(card).toContainText(/\d+ sessions? · \d+%/);
+    // The bars that measured nothing must be gone.
+    await expect(card).not.toContainText("Streak Momentum");
+    await expect(card).not.toContainText("Sessions / Goal");
+    await expect(card).not.toContainText("Erg Volume");
+  });
+
+  test("shows a modality with nothing logged rather than hiding it", async ({ page }) => {
+    // The gap is the most useful thing on the chart.
+    await page.goto("/analytics", { waitUntil: "networkidle" });
+    const card = page.getByText("Weekly Training Mix").locator("..").locator("..");
+    await expect(card).toContainText(/Dryland\s*0 sessions/);
+  });
+
+  test("agrees with the dashboard about the weekly goal", async ({ page }) => {
+    // Analytics had its own hardcoded 20km, so the two screens could report
+    // different goals for the same athlete on the same day.
+    await page.goto("/dashboard", { waitUntil: "networkidle" });
+    const onDashboard = (await page.getByText(/\d+\.\d \/ [\d.]+ km/).first().innerText()).trim();
+
+    await page.goto("/analytics", { waitUntil: "networkidle" });
+    const onAnalytics = (await page.getByText(/\d+\.\d \/ [\d.]+ km/).first().innerText()).trim();
+
+    expect(onAnalytics).toBe(onDashboard);
+  });
+
+  test("reports effort on the same scale as the rest of the app", async ({ page }) => {
+    // Was "8/10" while every other screen uses the five-level picker.
+    await page.goto("/analytics", { waitUntil: "networkidle" });
+    const log = page.getByText("Erg Session Log").locator("..").locator("..");
+    await expect(log).toContainText(/Easy|Moderate|Hard|Very hard|Max/);
+    await expect(log).not.toContainText(/\d+\/10/);
+  });
+});
+
+test.describe("the coach doesn't repeat itself", () => {
+  test("this week's focus isn't listed again below", async ({ page }) => {
+    // Regression: focusThisWeek was the top warning rendered a second time,
+    // so the same sentence appeared under "Focus this week" and immediately
+    // again under "Watch out".
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await page.locator('input[type="number"]').first().fill("2000");
+    await page.locator('input[type="number"]').nth(1).fill("8");
+    await page.locator('input[type="number"]').nth(2).fill("0");
+    await page.getByRole("button", { name: /save erg session/i }).click();
+    await page.waitForURL(/dashboard/, { timeout: 15_000 });
+
+    await page.goto("/ai-coach", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+
+    const lines = (await page.locator("body").innerText())
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
+
+    const headingAt = lines.findIndex((l) => /^focus this week$/i.test(l));
+    expect(headingAt, "the focus heading should be on the page").toBeGreaterThan(-1);
+
+    const headline = lines[headingAt + 1];
+    expect(headline, "there should be a focus line").toBeTruthy();
+
+    const occurrences = lines.filter((l) => l === headline).length;
+    expect(occurrences, `"${headline}" appears ${occurrences} times`).toBe(1);
+  });
+
+  test("doesn't tell a brand-new athlete they have a training gap", async ({ page }) => {
+    // Regression: with no dryland sessions the rule reported a 999-day gap,
+    // and the engine made it the focus of a beginner's first week.
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await page.locator('input[type="number"]').first().fill("2000");
+    await page.locator('input[type="number"]').nth(1).fill("8");
+    await page.locator('input[type="number"]').nth(2).fill("0");
+    await page.getByRole("button", { name: /save erg session/i }).click();
+    await page.waitForURL(/dashboard/, { timeout: 15_000 });
+
+    await page.goto("/ai-coach", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+    await expect(page.getByText(/No dryland sessions logged yet/i)).toHaveCount(0);
+  });
+});
