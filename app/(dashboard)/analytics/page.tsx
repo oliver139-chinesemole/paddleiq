@@ -11,6 +11,7 @@ import { formatTime, formatDistance, formatRelativeDate, formatPace } from "@/li
 import { Skeleton, SkeletonCard, LoadingAnnouncement } from "@/components/ui/skeleton";
 import { useUser, IS_CONFIGURED } from "@/hooks/useUser";
 import { trainingMix, totalWeekSessions, describeMix, type WeekCounts } from "@/lib/coach/training-mix";
+import { sampleWeekCounts } from "@/lib/data/seed";
 import { weeklyGoal, goalProgress, goalBasisLabel } from "@/lib/coach/weekly-goal";
 import { storedToEffort, effortLevel } from "@/lib/effort";
 import type { DashboardStats } from "@/lib/types";
@@ -32,10 +33,10 @@ export default function AnalyticsPage() {
   );
   // Sessions this week by modality. The mix card needs all four; the page
   // previously kept only erg sessions and inferred the rest from nothing.
-  // Seeded for a visitor so the card reflects the sample sessions shown
-  // everywhere else, rather than reading as an empty week.
+  // Counted from the sample sessions for a visitor rather than typed in, so
+  // this card can't disagree with the session log it sits above.
   const [weekCounts, setWeekCounts] = useState<WeekCounts>(
-    IS_CONFIGURED ? { erg: 0, water: 0, team: 0, dryland: 0 } : { erg: 3, water: 1, team: 1, dryland: 0 },
+    IS_CONFIGURED ? { erg: 0, water: 0, team: 0, dryland: 0 } : sampleWeekCounts(),
   );
   const [progressData, setProgressData] = useState<{ date: string; split: number }[]>(
     IS_CONFIGURED ? [] : ergProgressData.map(d => ({ date: d.date, split: d.split }))

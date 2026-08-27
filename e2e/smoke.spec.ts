@@ -695,8 +695,17 @@ test.describe("sample data gives way to real data", () => {
   test("shows sample data to a visitor who has logged nothing", async ({ page }) => {
     // The placeholder is fine — it's what makes the app legible to someone
     // who has just arrived.
+    // Asserted on the shape, not on a magic number: the sample figures are
+    // derived from the sample sessions now, so hardcoding one here just
+    // couples the suite to whatever those happen to add up to today.
     await page.goto("/dashboard", { waitUntil: "networkidle" });
-    await expect(page.getByText(/18\.5/).first()).toBeVisible();
+    const card = page.getByText("km this week").locator("..");
+    await expect(card).toContainText(/\d+\.\d/);
+
+    // A visitor should see a populated app, not an empty one.
+    await expect(page.getByText(/day streak/i).first()).toBeVisible();
+    const streak = await page.getByText(/day streak/i).first().locator("..").innerText();
+    expect(Number(streak.match(/(\d+)/)?.[1] ?? 0)).toBeGreaterThan(0);
   });
 
   test("replaces it the moment a session is logged", async ({ page }) => {
@@ -708,9 +717,13 @@ test.describe("sample data gives way to real data", () => {
     await logAnErgSession(page, "1234");
     await page.waitForTimeout(1000);
 
+    // The sample athlete trains far more than one 1.23km session, so a weekly
+    // total in single figures is proof the sample data gave way.
     const body = await page.locator("body").innerText();
-    expect(body, "sample weekly volume should be gone").not.toContain("18.5");
     expect(body, "the logged session should be here").toContain("1.23");
+
+    const weekly = Number(body.match(/([\d.]+)\s*\n?\s*km this week/)?.[1] ?? 999);
+    expect(weekly, "weekly distance should be the athlete's own").toBeLessThan(5);
   });
 
   test("the coach stops claiming you have no sessions", async ({ page }) => {

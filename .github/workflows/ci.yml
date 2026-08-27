@@ -35,15 +35,21 @@ jobs:
 
       - name: Lint
         run: npm run lint
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
-      - name: Build
+      # Deliberately built without Supabase credentials.
+      #
+      # NEXT_PUBLIC_* values are inlined at build time, so supplying them here
+      # produces a *configured* app — one where an unauthenticated visitor is
+      # redirected to /login. The smoke suite signs nobody in: it exercises the
+      # app the way the deployed site currently runs, logging sessions to
+      # IndexedDB with no account. Handing it a configured build failed 82 of
+      # its 127 tests, which is what "all checks have failed" was.
+      #
+      # Signing in for real would need a live Supabase project and a seeded
+      # user; until there is one, the configured runtime path is verified by
+      # hand rather than pretended at here.
+      - name: Build (no Supabase — matches the smoke suite)
         run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
       # Only chromium — the suite asserts behaviour, not cross-browser
       # rendering, and the other engines would triple install time.
@@ -55,6 +61,13 @@ jobs:
       # calculation over a wrong input.
       - name: Smoke tests
         run: npm run test:e2e
+
+      # The credentials still need to survive a build — a configured build
+      # takes different code paths, and Render will use exactly this one. Run
+      # after the smoke tests so a compile failure here can't be mistaken for
+      # a behavioural one.
+      - name: Build with Supabase configured
+        run: npm run build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}

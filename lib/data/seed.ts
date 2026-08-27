@@ -1,6 +1,11 @@
 import { buildPlan } from "@/lib/plans/generate";
 import { PLAN_SPECS } from "@/lib/plans/specs";
-import type { ErgSession, WaterSession, PersonalRecord, TrainingPlan, TechniqueLesson, DashboardStats } from "@/lib/types";
+import type {
+  ErgSession, WaterSession, TeamSession, DrylandSession,
+  PersonalRecord, TrainingPlan, TechniqueLesson, DashboardStats,
+} from "@/lib/types";
+import type { LocalErgSession, LocalWaterSession, LocalTeamSession, LocalDrylandSession } from "@/lib/db/schema";
+import { computeDashboardStats, computeWeeklyVolume, computeErgProgress } from "@/lib/db/stats";
 
 /**
  * Sample-data dates, relative to today.
@@ -23,15 +28,6 @@ function daysAgo(n: number): string {
   const day = String(d.getDate()).padStart(2, "0");
   return `${d.getFullYear()}-${m}-${day}`;
 }
-
-export const mockStats: DashboardStats = {
-  weekly_distance_m: 18500,
-  weekly_time_min: 312,
-  weekly_sessions: 5,
-  avg_stroke_rate: 72,
-  current_streak: 8,
-  total_sessions: 147,
-};
 
 export const mockErgSessions: ErgSession[] = [
   {
@@ -89,6 +85,109 @@ export const mockWaterSessions: WaterSession[] = [
     created_at: "2026-05-31T07:00:00Z",
   },
 ];
+
+
+/**
+ * Eight weeks of training behind the handwritten sessions above.
+ *
+ * mockStats used to be a hardcoded object — 147 sessions, 18.5km this week, an
+ * 8-day streak — sitting next to a sample log containing seven sessions. Every
+ * headline figure on the dashboard was a number typed by hand, agreeing with
+ * nothing else on screen, and the coach (which computes from the sessions) was
+ * left contradicting the dashboard next to it.
+ *
+ * Generating a real history and deriving the figures from it means the demo
+ * is internally consistent: the streak, the weekly volume, the charts and the
+ * coach all describe the same athlete.
+ *
+ * Deterministic on purpose. Math.random() here would produce different markup
+ * on the server and the client and break hydration.
+ */
+function generateHistory() {
+  const erg: ErgSession[] = [];
+  const water: WaterSession[] = [];
+  const team: TeamSession[] = [];
+  const dryland: DrylandSession[] = [];
+
+  // Oldest week first, so splits can improve as the weeks approach today.
+  for (let week = 8; week >= 1; week--) {
+    const base = week * 7;
+    // ~1.5s per week of improvement, which is what the progress chart shows.
+    const split = 128 + Math.round(week * 1.5);
+
+    erg.push({
+      id: `gen-e${week}a`, user_id: "demo", date: daysAgo(base + 1),
+      distance_m: 2000, duration_sec: split * 4, split_sec: split,
+      stroke_rate: 74, rpe: 8, paddle_side: week % 2 === 0 ? "left" : "right",
+      workout_type: "test", created_at: "",
+    });
+    erg.push({
+      id: `gen-e${week}b`, user_id: "demo", date: daysAgo(base + 4),
+      distance_m: 5000, duration_sec: (split + 6) * 10, split_sec: split + 6,
+      stroke_rate: 66, rpe: 6, paddle_side: "left",
+      workout_type: "steady", created_at: "",
+    });
+    water.push({
+      id: `gen-w${week}`, user_id: "demo", date: daysAgo(base + 2),
+      distance_m: 6000, duration_sec: (split + 28) * 12, avg_pace_sec: split + 28,
+      avg_speed_kmh: 11.2, max_speed_kmh: 13.8,
+      stroke_rate: 68, rpe: 6, boat_type: "OC-1",
+      water_condition: "flat", created_at: "",
+    });
+    team.push({
+      id: `gen-t${week}`, user_id: "demo", team_id: "demo-team", date: daysAgo(base + 5),
+      duration_min: 90, distance_m: 8000, practice_type: "endurance",
+      paddle_side: "left", role_in_boat: "paddler", rpe: 6, created_at: "",
+    });
+    // Not every week — a perfectly regular athlete is its own kind of fiction.
+    if (week % 2 === 1) {
+      dryland.push({
+        id: `gen-d${week}`, user_id: "demo", date: daysAgo(base + 6),
+        duration_min: 45, rpe: 5, created_at: "",
+        exercises: [
+          { name: "Bench Pull", sets: 4, reps: 8 },
+          { name: "Deadlift", sets: 3, reps: 5 },
+          { name: "Core Circuit", sets: 3, reps: 20 },
+        ],
+      });
+    }
+  }
+
+  return { erg, water, team, dryland };
+}
+
+const history = generateHistory();
+
+// The handwritten sessions above are the recent, detailed ones an athlete
+// would see at the top of their log; the generated weeks sit behind them.
+mockErgSessions.push(...history.erg);
+mockWaterSessions.push(...history.water);
+
+export const mockTeamSessions: TeamSession[] = history.team;
+export const mockDrylandSessions: DrylandSession[] = history.dryland;
+
+// Derived from the sample sessions, not typed by hand. These are the same
+// functions the app runs on a real athlete's data, so the demo cannot drift
+// away from what its own session log says.
+export const mockStats: DashboardStats = computeDashboardStats(
+  mockErgSessions as unknown as LocalErgSession[],
+  mockWaterSessions as unknown as LocalWaterSession[],
+  mockTeamSessions as unknown as LocalTeamSession[],
+  mockDrylandSessions as unknown as LocalDrylandSession[],
+);
+
+
+/** Sessions in the last 7 days, by modality, from the sample data. */
+export function sampleWeekCounts() {
+  const since = daysAgo(6);
+  const count = (rows: { date: string }[]) => rows.filter((r) => r.date >= since).length;
+  return {
+    erg: count(mockErgSessions),
+    water: count(mockWaterSessions),
+    team: count(mockTeamSessions),
+    dryland: count(mockDrylandSessions),
+  };
+}
 
 export const mockPRs: PersonalRecord[] = [
   { id: "pr1", user_id: "demo", category: "erg", distance_m: 500, time_sec: 118, date: daysAgo(5), previous_time_sec: 122, improvement_sec: 4 },
@@ -338,17 +437,14 @@ export const techniqueLessons: TechniqueLesson[] = [
   },
 ];
 
-export const weeklyVolumeData = [
-  { week: "May 12", distance: 12400, time: 210, sessions: 4 },
-  { week: "May 19", distance: 15200, time: 255, sessions: 5 },
-  { week: "May 26", distance: 16800, time: 290, sessions: 5 },
-  { week: "Jun 2", distance: 18500, time: 312, sessions: 5 },
-];
+// Derived, like mockStats — the chart and the headline figure above it now
+// describe the same weeks.
+export const weeklyVolumeData = computeWeeklyVolume(
+  mockErgSessions as unknown as LocalErgSession[],
+  mockWaterSessions as unknown as LocalWaterSession[],
+  mockTeamSessions as unknown as LocalTeamSession[],
+);
 
-export const ergProgressData = [
-  { date: "Apr 7", split: 138, strokeRate: 72, distance: 2000 },
-  { date: "Apr 21", split: 135, strokeRate: 73, distance: 2000 },
-  { date: "May 5", split: 133, strokeRate: 74, distance: 2000 },
-  { date: "May 19", split: 131, strokeRate: 75, distance: 2000 },
-  { date: "Jun 3", split: 128, strokeRate: 76, distance: 2000 },
-];
+export const ergProgressData = computeErgProgress(
+  mockErgSessions as unknown as LocalErgSession[],
+);
