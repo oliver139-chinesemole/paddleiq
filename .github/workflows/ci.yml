@@ -18,7 +18,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          # 22, not 20. Node 20 reached end of life in April 2026, and jsdom 30
+          # — which the IndexedDB and localStorage tests run under — needs a
+          # newer undici than it ships: on 20 those three files fail to start
+          # with "webidl.util.markAsUncloneable is not a function", taking the
+          # Test step and the whole run with them. Matches .nvmrc.
+          node-version: "22"
           cache: "npm"
 
       - name: Install dependencies
