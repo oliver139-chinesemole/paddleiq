@@ -53,33 +53,81 @@ const makeDryland = (overrides: Partial<DrylandSessionInput> = {}): DrylandSessi
 
 // ── Rule 1: Split fade ────────────────────────────────────────────────────────
 describe("checkSplitFade", () => {
-  it("returns null when no 2k sessions", () => {
+  const withSplits = (splits: number[], extra: Record<string, unknown> = {}) =>
+    makeErg({ distance_m: 2000, split_sec: 130, segment_splits: splits, ...extra });
+
+  it("says nothing without recorded splits", () => {
+    // Regression: this used to invent the segments from the overall split as
+    // [s-2, s-1, s+1, s+2], so the fade was arithmetically always 4.0s. Every
+    // athlete was told their 2k faded 4.0s in the last 500m and given pacing
+    // advice about their anaerobic reserves, from no evidence at all.
     expect(checkSplitFade([])).toBeNull();
-    expect(checkSplitFade([makeErg({ distance_m: 500 })])).toBeNull();
+    expect(checkSplitFade([makeErg({ distance_m: 2000, split_sec: 130 })])).toBeNull();
   });
 
-  it("returns a result for a 2k session", () => {
-    const result = checkSplitFade([makeErg({ distance_m: 2000, split_sec: 130 })]);
+  it("ignores a piece with only one segment recorded", () => {
+    // One number can't show a fade.
+    expect(checkSplitFade([withSplits([128])])).toBeNull();
+  });
+
+  it("measures the fade actually recorded", () => {
+    const result = checkSplitFade([withSplits([120, 124, 126, 130])]);
     expect(result).not.toBeNull();
-    expect(result!.kind).toBe("split-fade");
-    expect(result!.splitsSec).toHaveLength(4);
-    expect(result!.fadeSec).toBeGreaterThan(0);
+    expect(result!.fadeSec).toBe(10);
+    expect(result!.splitsSec).toEqual([120, 124, 126, 130]);
+    expect(result!.fadingSegment).toBe("1500–2000m");
   });
 
-  it("fade ≤ 3s is ok severity", () => {
-    // splitFadeWarnSec = 3; our model always uses the same 4s fade
-    const result = checkSplitFade([makeErg({ distance_m: 2000, split_sec: 130 })]);
-    // The model produces 4s fade (segments: -2, -1, +1, +2 from baseSplit)
-    expect(result!.severity).toBe("warn"); // 4s > 3s threshold → warn
+  it("reports a different fade for a different athlete", () => {
+    // The whole point: the number has to depend on the input.
+    const a = checkSplitFade([withSplits([120, 121, 122, 123])])!;
+    const b = checkSplitFade([withSplits([120, 130, 135, 140])])!;
+    expect(a.fadeSec).not.toBe(b.fadeSec);
+    expect(b.fadeSec).toBeGreaterThan(a.fadeSec);
   });
 
-  it("uses the most recent 2k session", () => {
-    const sessions = [
-      makeErg({ date: d(10), distance_m: 2000, split_sec: 140 }),
-      makeErg({ date: d(1),  distance_m: 2000, split_sec: 130 }),
-    ];
-    const result = checkSplitFade(sessions);
-    expect(result!.splitsSec[0]).toBe(128); // based on baseSplit 130: 130-2=128
+  it("names whichever segment is worst, not always the last", () => {
+    const result = checkSplitFade([withSplits([120, 132, 126, 124])]);
+    expect(result!.fadingSegment).toBe("500–1000m");
+    expect(result!.fadeSec).toBe(12);
+  });
+
+  it("measures against the opening segment, which is what fade means", () => {
+    // Not against the fastest: a quick third 500 shouldn't invent a fade.
+    const result = checkSplitFade([withSplits([120, 122, 118, 121])]);
+    expect(result!.fadeSec).toBe(2);
+  });
+
+  it("reports nothing for a negative split", () => {
+    // Finishing faster than you started is the opposite of fading.
+    expect(checkSplitFade([withSplits([130, 128, 126, 124])])).toBeNull();
+  });
+
+  it("grades severity from the real fade", () => {
+    expect(checkSplitFade([withSplits([120, 121, 121, 122])])!.severity).toBe("ok");
+    expect(checkSplitFade([withSplits([120, 124, 126, 130])])!.severity).toBe("severe");
+  });
+
+  it("handles a piece recorded in two or three segments", () => {
+    expect(checkSplitFade([withSplits([120, 128])])!.fadeSec).toBe(8);
+    const three = checkSplitFade([withSplits([120, 124, 129])])!;
+    expect(three.segmentLabels).toEqual(["0–500m", "500–1000m", "1000–1500m"]);
+  });
+
+  it("uses the most recent piece that has splits", () => {
+    const result = checkSplitFade([
+      withSplits([120, 140, 140, 140], { date: d(10) }),
+      withSplits([120, 121, 122, 123], { date: d(1) }),
+    ]);
+    expect(result!.fadeSec).toBe(3);
+  });
+
+  it("skips a session whose splits are unusable", () => {
+    const result = checkSplitFade([
+      withSplits([0, 0, 0, 0], { date: d(1) }),
+      withSplits([120, 126, 128, 132], { date: d(5) }),
+    ]);
+    expect(result!.fadeSec).toBe(12);
   });
 });
 
@@ -393,5 +441,26 @@ describe("computePRTrend", () => {
     );
     const result = computePRTrend(sessions, 2000);
     expect(Math.abs(result!.improvementSec)).toBeLessThan(1);
+  });
+});
+
+describe("the split-fade copy", () => {
+  it("names the distance the splits actually came from", async () => {
+    // Was hardcoded to "2k" whatever the piece was.
+    const { insightTitle } = await import("../templates");
+    const oneK = checkSplitFade([
+      makeErg({ distance_m: 1000, split_sec: 120, segment_splits: [118, 126] }),
+    ])!;
+    expect(oneK.distanceM).toBe(1000);
+    expect(insightTitle(oneK)).toContain("1k");
+    expect(insightTitle(oneK)).not.toContain("2k");
+  });
+
+  it("reports the fade it measured, not a fixed number", async () => {
+    const { insightTitle } = await import("../templates");
+    const result = checkSplitFade([
+      makeErg({ distance_m: 2000, split_sec: 125, segment_splits: [118, 122, 125, 131] }),
+    ])!;
+    expect(insightTitle(result)).toContain("13.0s");
   });
 });

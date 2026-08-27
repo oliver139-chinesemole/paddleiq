@@ -95,6 +95,9 @@ export default function AICoachPage() {
           distance_m: s.distance_m,
           duration_sec: s.duration_sec,
           split_sec: s.split_sec,
+          // Without this the fade rule has nothing to read and stays quiet,
+          // which is the correct behaviour but not the useful one.
+          segment_splits: s.segment_splits,
         })),
         waterSessions: water.map((s) => ({
           date: s.date,

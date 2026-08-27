@@ -17,8 +17,7 @@ import {
   calcPacePer500m,
   strokeRateLabel,
   rpeLabel,
-  rpeColor,
-} from "../utils";
+  rpeColor, parseSplit } from "../utils";
 
 const at = (iso: string) => new Date(`${iso}T12:00:00`);
 
@@ -226,5 +225,38 @@ describe("rpeColor", () => {
   it("gets redder as effort climbs", () => {
     expect(rpeColor(2)).not.toBe(rpeColor(6));
     expect(rpeColor(10)).toBe("#EF4444");
+  });
+});
+
+describe("parseSplit", () => {
+  it("reads the m:ss an erg monitor displays", () => {
+    expect(parseSplit("1:58")).toBe(118);
+    expect(parseSplit("2:05")).toBe(125);
+    expect(parseSplit("0:45")).toBe(45);
+  });
+
+  it("also accepts raw seconds", () => {
+    expect(parseSplit("118")).toBe(118);
+    expect(parseSplit("118.5")).toBe(118.5);
+  });
+
+  it("tolerates surrounding spaces", () => {
+    expect(parseSplit("  1:58 ")).toBe(118);
+  });
+
+  it("returns null for an empty or unfinished entry", () => {
+    expect(parseSplit("")).toBeNull();
+    expect(parseSplit("   ")).toBeNull();
+    expect(parseSplit("1:")).toBeNull();
+    expect(parseSplit(":58")).toBe(58);
+  });
+
+  it("rejects nonsense rather than guessing", () => {
+    // A wrong split silently poisons the coach's fade analysis.
+    expect(parseSplit("abc")).toBeNull();
+    expect(parseSplit("1:75")).toBeNull();
+    expect(parseSplit("-2:00")).toBeNull();
+    expect(parseSplit("0")).toBeNull();
+    expect(parseSplit("0:00")).toBeNull();
   });
 });

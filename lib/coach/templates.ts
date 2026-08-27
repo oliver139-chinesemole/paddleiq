@@ -14,7 +14,8 @@ function distLabel(m: number): string {
 // ── Per-insight short description ─────────────────────────────────────────────
 export function insightTitle(i: CoachInsight): string {
   switch (i.kind) {
-    case "split-fade": return `2k split fades ${i.fadeSec.toFixed(1)}s in the ${i.fadingSegment}`;
+    // Was hardcoded to "2k" whatever the piece actually was.
+    case "split-fade": return `${pieceLabel(i.distanceM)} split fades ${i.fadeSec.toFixed(1)}s in the ${i.fadingSegment}`;
     case "pacing-consistency": return `Split variance ±${i.stdDevSec}s/500m across ${i.sampleCount} sessions`;
     case "training-load":
       // Until there's a chronic base, the ratio is arithmetic rather than
@@ -45,7 +46,7 @@ export function insightTitle(i: CoachInsight): string {
 export function insightBody(i: CoachInsight): string {
   switch (i.kind) {
     case "split-fade":
-      return `Your ${i.fadingSegment} segment runs ${i.fadeSec.toFixed(1)}s per 500m slower than your opening pace. This is the most common pattern in 2k races — anaerobic reserves deplete around 800–1200m. Fix: add pacing interval work where the first half is deliberately 4–5s/500m slower than max. Your goal is a flat or negative split.`;
+      return `Your ${i.fadingSegment} segment runs ${i.fadeSec.toFixed(1)}s per 500m slower than your opening pace, from the splits you recorded. Fading late is the most common pattern over a ${pieceLabel(i.distanceM)} — anaerobic reserves deplete well before the end. Fix: add pacing interval work where the first half is deliberately 4–5s/500m slower than max. Your goal is a flat or negative split.`;
     case "pacing-consistency":
       return `Your splits have a standard deviation of ±${i.stdDevSec}s/500m. ${i.stdDevSec >= 8 ? "This is high — your effort varies a lot session to session, which makes it hard to track real improvement." : "This is moderate — consistent pacing will help you know your true capability."} Try 4–5 steady-state pieces at the same target split without looking at the display.`;
     case "training-load":
@@ -72,6 +73,12 @@ export function insightBody(i: CoachInsight): string {
 }
 
 // Inline copy of thresholds to avoid circular import in templates
+
+/** "2k" / "1k" / "1500m" — how a paddler refers to the piece. */
+function pieceLabel(distanceM: number): string {
+  if (!Number.isFinite(distanceM) || distanceM <= 0) return "the piece";
+  return distanceM % 1000 === 0 ? `${distanceM / 1000}k` : `${distanceM}m`;
+}
 const THRESHOLDS_INLINE = { acwrHigh: 1.3, acwrLow: 0.8, highRpeMinimum: 8, waterGapDays: 14 };
 
 // ── Weekly summary (synthesised plain-language string) ────────────────────────

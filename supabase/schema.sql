@@ -57,6 +57,10 @@ CREATE TABLE IF NOT EXISTS erg_sessions (
   resistance INTEGER,
   paddle_side TEXT CHECK (paddle_side IN ('left','right','both')),
   workout_type TEXT CHECK (workout_type IN ('steady','intervals','test','pyramid')) DEFAULT 'steady',
+  -- Seconds per 500m for each 500m of the piece, in order. The coach's
+  -- split-fade analysis reads this; without it the rule used to fabricate the
+  -- segments and report the same 4.0s fade to every athlete.
+  segment_splits DECIMAL(6,2)[],
   interval_template TEXT,
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()

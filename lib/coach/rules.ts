@@ -26,6 +26,8 @@ export interface ErgSessionInput extends SessionBase {
   distance_m: number;
   duration_sec: number;
   split_sec: number;
+  /** Seconds per 500m for each recorded segment, in order. Optional. */
+  segment_splits?: number[];
 }
 
 export interface WaterSessionInput extends SessionBase {
@@ -74,39 +76,60 @@ function severity(value: number, warnThreshold: number, severeThreshold: number)
   return "ok";
 }
 
-// ── Rule 1: Split fade (within a single 2k erg) ───────────────────────────────
+// ── Rule 1: Split fade (within a single timed erg) ────────────────────────────
 /**
- * Given a 2k erg session where we have the overall split, we estimate
- * segment splits from a simple fade model.  When per-segment data is
- * available (future: store segment_splits[]), use that directly.
- * For now we require at least two 500m-distance erg sessions to compare.
+ * How much the athlete slows across a timed piece, measured from the splits
+ * they actually recorded.
+ *
+ * This used to invent the segments. Given only an overall split it produced
+ * [split-2, split-1, split+1, split+2] from a "typical 3% fade model", so the
+ * fade was arithmetically always exactly 4.0s — every athlete was told their
+ * 2k faded 4.0s in the final 500m, and then given a paragraph of pacing advice
+ * about their anaerobic reserves, on the basis of no evidence whatsoever. A
+ * diagnosis the app cannot support is worse than no diagnosis: the athlete
+ * can act on it.
+ *
+ * It now requires real per-segment splits and returns null without them, so
+ * the coach stays quiet until there is something to say.
  */
 export function checkSplitFade(
   ergSessions: ErgSessionInput[],
 ): SplitFadeResult | null {
-  // Use 2k sessions only
-  const twoK = ergSessions
-    .filter((s) => s.distance_m === 2000 && s.split_sec > 0)
+  // Only sessions where the athlete recorded each 500m, newest first. Two
+  // segments is the minimum that can show a fade at all.
+  const withSplits = ergSessions
+    .filter((s) => Array.isArray(s.segment_splits) && s.segment_splits.length >= 2)
+    .filter((s) => s.segment_splits!.every((v) => typeof v === "number" && v > 0))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-  if (twoK.length === 0) return null;
+  if (withSplits.length === 0) return null;
 
-  const latest = twoK[0];
-  // Without per-segment data, approximate fade from the typical 3% fade model:
-  // segment 1 ≈ split - 2s, segment 2 ≈ split - 1s, segment 3 ≈ split + 1s, segment 4 ≈ split + 2s
-  const baseSplit = latest.split_sec;
-  const segments = [baseSplit - 2, baseSplit - 1, baseSplit + 1, baseSplit + 2];
-  const fadeSec = segments[3] - segments[0];
+  const latest = withSplits[0];
+  const segments = latest.segment_splits!;
 
-  const sev = severity(fadeSec, THRESHOLDS.splitFadeWarnSec, THRESHOLDS.splitFadeSevereSec);
+  // Compared against the opening segment, which is what "fade" means — not
+  // against the fastest, or a piece with a quick third 500 would report a
+  // fade it didn't have.
+  const first = segments[0];
+  let worstIndex = 0;
+  for (let i = 1; i < segments.length; i++) {
+    if (segments[i] > segments[worstIndex]) worstIndex = i;
+  }
+  const fadeSec = segments[worstIndex] - first;
+
+  // A negative split is the opposite of fade and shouldn't be reported as one.
+  if (fadeSec <= 0) return null;
+
+  const labels = segments.map((_, i) => `${i * 500}–${(i + 1) * 500}m`);
 
   return {
     kind: "split-fade",
-    severity: sev,
-    segmentLabels: ["0–500m", "500–1000m", "1000–1500m", "1500–2000m"],
+    severity: severity(fadeSec, THRESHOLDS.splitFadeWarnSec, THRESHOLDS.splitFadeSevereSec),
+    distanceM: latest.distance_m,
+    segmentLabels: labels,
     splitsSec: segments,
     fadeSec,
-    fadingSegment: "1500–2000m",
+    fadingSegment: labels[worstIndex],
   };
 }
 

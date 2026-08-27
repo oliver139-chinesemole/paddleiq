@@ -33,6 +33,12 @@ export interface ErgSession {
   resistance?: number;
   paddle_side: PaddleSide;
   workout_type: "steady" | "intervals" | "test" | "pyramid";
+  /**
+   * Seconds per 500m for each 500m of the piece, in order.
+   * Optional — only a timed test is usually recorded this way — and the
+   * coach's split-fade rule needs it, having previously invented it.
+   */
+  segment_splits?: number[];
   notes?: string;
   created_at: string;
 }

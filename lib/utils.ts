@@ -155,3 +155,31 @@ export function rpeColor(rpe: number): string {
   if (rpe <= 7) return "#F97316";
   return "#EF4444";
 }
+
+/**
+ * Parse a 500m split as an athlete would type it.
+ *
+ * Ergs display splits as m:ss, so that is what people copy across — but
+ * plenty will type raw seconds instead. Both are accepted; anything else
+ * returns null rather than a plausible-looking wrong number.
+ */
+export function parseSplit(input: string): number | null {
+  const text = input.trim();
+  if (!text) return null;
+
+  // Matched rather than coerced: Number() accepts "1e3", "0x10" and "1:" (as
+  // 60, mid-typing), any of which would quietly poison the fade analysis.
+  const mmss = /^(\d*):([0-5]?\d(?:\.\d+)?)$/.exec(text);
+  if (mmss) {
+    const minutes = mmss[1] === "" ? 0 : Number(mmss[1]);
+    const total = minutes * 60 + Number(mmss[2]);
+    return total > 0 ? total : null;
+  }
+
+  if (/^\d+(\.\d+)?$/.test(text)) {
+    const seconds = Number(text);
+    return seconds > 0 ? seconds : null;
+  }
+
+  return null;
+}

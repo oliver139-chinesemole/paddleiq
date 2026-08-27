@@ -999,3 +999,93 @@ test.describe("weekly distance goal", () => {
     await expect(card).not.toContainText("/ 20 km");
   });
 });
+
+test.describe("split fade analysis", () => {
+  async function logTwoK(page: Page, splits: string[] | null) {
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await page.locator('input[type="number"]').first().fill("2000");
+    if (splits) {
+      const boxes = page.locator('input[placeholder="1:58"]');
+      await expect(boxes).toHaveCount(4);
+      for (const [i, v] of splits.entries()) await boxes.nth(i).fill(v);
+    }
+    await page.locator('input[type="number"]').nth(1).fill("8");
+    await page.locator('input[type="number"]').nth(2).fill("16");
+    await page.getByRole("button", { name: /save erg session/i }).click();
+    await page.waitForURL(/dashboard/, { timeout: 15_000 });
+  }
+
+  test("says nothing about fade when no splits were recorded", async ({ page }) => {
+    // Regression: the rule invented the four segments from the overall split,
+    // so the fade was always exactly 4.0s. Every athlete was told their 2k
+    // faded 4.0s in the last 500m — and given pacing advice for it — from a
+    // session where they had entered only a total time.
+    await logTwoK(page, null);
+
+    await page.goto("/ai-coach", { waitUntil: "networkidle" });
+    await expect(page.getByText(/split fades/i)).toHaveCount(0);
+  });
+
+  test("reports the fade the athlete actually recorded", async ({ page }) => {
+    await logTwoK(page, ["1:58", "2:02", "2:05", "2:11"]);
+
+    await page.goto("/ai-coach", { waitUntil: "networkidle" });
+    // 1:58 → 2:11 is 13 seconds, and it must say 13, not 4.
+    await expect(page.getByText(/2k split fades 13\.0s in the 1500–2000m/).first()).toBeVisible();
+  });
+
+  test("a different athlete gets a different number", async ({ page }) => {
+    // The number has to depend on the input — that was the whole defect.
+    await logTwoK(page, ["1:58", "1:59", "2:00", "2:01"]);
+
+    await page.goto("/ai-coach", { waitUntil: "networkidle" });
+    await expect(page.getByText(/split fades 3\.0s/).first()).toBeVisible();
+    await expect(page.getByText(/split fades 4\.0s/)).toHaveCount(0);
+  });
+
+  test("offers the split fields only where they make sense", async ({ page }) => {
+    // Intervals total time includes the rests, so per-500 figures wouldn't
+    // line up with anything.
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await page.locator('input[type="number"]').first().fill("6000");
+    await expect(page.getByText("500m Splits (optional)")).toHaveCount(0);
+
+    await page.locator('input[type="number"]').first().fill("2000");
+    await expect(page.getByText("500m Splits (optional)")).toBeVisible();
+  });
+});
+
+test.describe("signing up when there are no accounts", () => {
+  test("says plainly that no account is created", async ({ page }) => {
+    // Regression: /login carried a demo-mode notice and /signup didn't. So a
+    // visitor filled in a name, email and password under "Create your athlete
+    // profile", was sent to onboarding, and had every reason to think they
+    // had an account — when nothing was created and their training would live
+    // in this browser alone.
+    await page.goto("/signup", { waitUntil: "networkidle" });
+
+    await expect(page.getByText(/No accounts yet/i)).toBeVisible();
+    await expect(page.getByText(/won't follow you to another device/i)).toBeVisible();
+  });
+
+  test("the button doesn't promise an account either", async ({ page }) => {
+    await page.goto("/signup", { waitUntil: "networkidle" });
+    await expect(page.getByRole("button", { name: /continue without an account/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^create account$/i })).toHaveCount(0);
+  });
+
+  test("doesn't ask for a password it throws away", async ({ page }) => {
+    // Asking for one and discarding it teaches people it protects something.
+    await page.goto("/signup", { waitUntil: "networkidle" });
+    await expect(page.locator('input[type="password"]')).toHaveCount(0);
+  });
+
+  test("still lets you through to the app", async ({ page }) => {
+    // The demo has to stay usable — this is the front door of the live site.
+    await page.goto("/signup", { waitUntil: "networkidle" });
+    await page.locator("input").first().fill("Test Athlete");
+    await page.locator('input[type="email"]').fill("test@example.com");
+    await page.getByRole("button", { name: /continue without an account/i }).click();
+    await page.waitForURL(/onboarding|dashboard/, { timeout: 15_000 });
+  });
+});

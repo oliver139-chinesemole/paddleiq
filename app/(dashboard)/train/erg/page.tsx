@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { EffortPicker } from "@/components/ui/effort-picker";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { formatTime, formatPace, toLocalDateStr } from "@/lib/utils";
+import { formatTime, formatPace, toLocalDateStr, parseSplit } from "@/lib/utils";
 import { validateErgForm, isValid, type FieldErrors } from "@/lib/validation/session";
 
 type WorkoutType = "steady" | "intervals" | "test" | "pyramid";
@@ -49,6 +49,25 @@ export default function ErgSessionPage() {
     intervalTemplate: "",
     notes: "",
   });
+
+  // Seconds per 500m for each 500m, as typed. Kept as strings so a
+  // half-filled row doesn't become a 0 and read as an impossibly fast split.
+  const [splits, setSplits] = useState<string[]>([]);
+
+  // A piece is worth splitting only when it divides into whole 500s and is
+  // long enough for a fade to mean anything. Intervals are excluded: their
+  // total time includes the rests, so per-500 figures wouldn't line up.
+  const distanceM = parseInt(form.distanceM) || 0;
+  const segmentCount =
+    form.workoutType === "intervals" || form.workoutType === "pyramid"
+      ? 0
+      : distanceM >= 1000 && distanceM % 500 === 0 && distanceM <= 5000
+        ? distanceM / 500
+        : 0;
+  const parsedSplits = splits
+    .slice(0, segmentCount)
+    .map((v) => parseSplit(v))
+    .filter((v): v is number => v !== null);
 
   // The screen must stay awake while an athlete is on the erg with the form
   // open. release() was already called on save, but nothing ever acquired the
@@ -94,6 +113,11 @@ export default function ErgSessionPage() {
         resistance: parseInt(form.resistance),
         paddle_side: form.paddleSide as "left" | "right" | "both",
         workout_type: form.workoutType,
+        // Only sent when every segment was filled in. A partial set would
+        // make the coach compare a real split against a missing one.
+        segment_splits: parsedSplits.length === segmentCount && segmentCount > 0
+          ? parsedSplits
+          : undefined,
         notes: form.notes,
         created_at: new Date().toISOString(),
       });
@@ -218,6 +242,44 @@ export default function ErgSessionPage() {
           </div>
         )}
       </div>
+
+      {/* Per-500m splits — optional, and only for a continuous piece that
+          divides into whole 500s. The coach's fade analysis needs these; it
+          used to invent them and tell every athlete the same thing. */}
+      {segmentCount > 0 && (
+        <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">
+          <h2 className="text-xs font-semibold text-[#8A98AC] uppercase tracking-wider mb-1">
+            500m Splits (optional)
+          </h2>
+          <p className="text-xs text-[#8A98AC] leading-relaxed mb-4">
+            Copy them off the monitor and the coach can tell you where you fade.
+            Leave blank if you didn&apos;t record them.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: segmentCount }, (_, i) => (
+              <Input
+                key={i}
+                label={`${i * 500}–${(i + 1) * 500}m`}
+                type="text"
+                inputMode="numeric"
+                placeholder="1:58"
+                value={splits[i] ?? ""}
+                onChange={(e) => {
+                  const next = [...splits];
+                  next[i] = e.target.value;
+                  setSplits(next);
+                }}
+              />
+            ))}
+          </div>
+          {parsedSplits.length > 0 && parsedSplits.length < segmentCount && (
+            <p className="text-[11px] text-[#7C8AA0] mt-3">
+              Fill in all {segmentCount} to include them — a partial set would
+              compare a real split against a missing one.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Performance Details */}
       <div className="rounded-2xl border border-[#1E293B] bg-[#0D1528] p-5">

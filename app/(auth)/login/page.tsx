@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { authErrorMessage } from "@/lib/auth/errors";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
@@ -37,13 +38,16 @@ export default function LoginPage() {
         password: form.password,
       });
       if (authError) {
-        setError(authError.message);
+        // Not authError.message: a network failure arrives here as
+        // "Failed to fetch", which is the message an athlete on bad signal
+        // would actually see.
+        setError(authErrorMessage(authError));
         setLoading(false);
       } else {
         router.push("/dashboard");
       }
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      setError(authErrorMessage(err));
       setLoading(false);
     }
   }

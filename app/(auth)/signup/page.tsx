@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { authErrorMessage } from "@/lib/auth/errors";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowRight, CheckCircle } from "lucide-react";
@@ -41,14 +42,17 @@ function SignupForm() {
         options: { data: { full_name: form.name } },
       });
       if (authError) {
-        setError(authError.message);
+        // Not authError.message: a network failure arrives here as
+        // "Failed to fetch", which is the message an athlete on bad signal
+        // would actually see.
+        setError(authErrorMessage(authError));
         setLoading(false);
       } else {
         setDone(true);
         setTimeout(() => router.push(afterSignup), 1500);
       }
-    } catch {
-      setError("Something went wrong. Please try again.");
+    } catch (err) {
+      setError(authErrorMessage(err));
       setLoading(false);
     }
   }
@@ -86,8 +90,13 @@ function SignupForm() {
               onChange={(e) => setForm({ ...form, name: e.target.value })} required />
             <Input label="Email" type="email" placeholder="you@example.com" value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-            <Input label="Password" type="password" placeholder="At least 8 characters"
-              value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+            {/* Only collected when there's somewhere to send it. Asking for a
+                password that is discarded teaches people it protects something. */}
+            {supabaseConfigured && (
+              <Input label="Password" type="password" placeholder="At least 8 characters"
+                minLength={8}
+                value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
+            )}
 
             {error && (
               <div className="rounded-xl bg-[#EF4444]/10 border border-[#EF4444]/20 px-4 py-3 text-sm text-[#EF4444]">{error}</div>
@@ -96,7 +105,7 @@ function SignupForm() {
             <Button type="submit" disabled={loading} className="w-full mt-1">
               {loading
                 ? <><span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Creating account…</>
-                : <>Create Account <ArrowRight size={16} /></>}
+                : <>{supabaseConfigured ? "Create Account" : "Continue without an account"} <ArrowRight size={16} /></>}
             </Button>
 
             <p className="text-center text-xs text-[#7C8AA0]">
@@ -107,6 +116,21 @@ function SignupForm() {
             </p>
           </form>
         </div>
+
+        {/* Login has carried this notice for a while; signup never did. So a
+            visitor filled in a name, an email and a password under "Create
+            your athlete profile", was sent to onboarding, and had every reason
+            to believe they had an account — when nothing was created, nothing
+            was stored, and their training would live in this browser alone
+            until they found that out the hard way on another device. */}
+        {!supabaseConfigured && (
+          <div className="mt-4 rounded-xl border border-[#F59E0B]/20 bg-[#F59E0B]/5 px-4 py-3 text-sm text-[#8A98AC]">
+            <span className="text-[#F59E0B] font-semibold">No accounts yet</span>{" "}
+            — this deployment has no database connected, so nothing here creates a login. You can
+            still use the whole app: sessions are saved in this browser and can be exported
+            from your profile, but they won&apos;t follow you to another device.
+          </div>
+        )}
 
         <p className="text-center text-sm text-[#7C8AA0] mt-6">
           Already have an account?{" "}

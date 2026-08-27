@@ -3,6 +3,8 @@ export type Severity = "ok" | "warn" | "severe";
 export interface SplitFadeResult {
   kind: "split-fade";
   severity: Severity;
+  /** Distance of the piece the splits came from, in metres. */
+  distanceM: number;
   segmentLabels: string[];         // e.g. ["500m", "1000m", "1500m", "2000m"]
   splitsSec: number[];             // mean split for each segment
   fadeSec: number;                 // slowest segment - first segment
