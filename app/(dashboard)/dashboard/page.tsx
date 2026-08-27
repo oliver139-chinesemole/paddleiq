@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Flame, TrendingUp, Zap, Target, ChevronRight,
@@ -9,6 +9,7 @@ import {
 import { Card, CardHeader, CardTitle, CardValue, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { weeklyGoal, goalProgress, goalBasisLabel } from "@/lib/coach/weekly-goal";
 import { mockStats, mockErgSessions, mockPRs, weeklyVolumeData, trainingPlans } from "@/lib/data/seed";
 import {
   useActivePlan, useActivePlanStart, dashboardPrompt, currentPlanWeek, trainingDayOfWeek,
@@ -60,7 +61,10 @@ const SESSION_CONFIG = {
   dryland: { Icon: Activity, color: "#10B981", label: "Dryland" },
 } as const;
 
-const WEEKLY_GOAL_KM = 20;
+// The weekly target used to be a constant 20 here — the same number for a
+// beginner in their first month and a racer peaking for a 500m, chosen by
+// nobody. It's derived from the athlete's own recent weeks now; see
+// lib/coach/weekly-goal.ts.
 
 export default function DashboardPage() {
   const { userId, isDemoMode } = useUser();
@@ -142,7 +146,15 @@ export default function DashboardPage() {
   }, [userId, isDemoMode]);
 
   const weeklyDistanceKm = stats.weekly_distance_m / 1000;
-  const weeklyProgress = (weeklyDistanceKm / WEEKLY_GOAL_KM) * 100;
+
+  // volumeData runs oldest-first and its last bucket is the week in progress,
+  // which is dropped: a target built partly from a two-day-old week would sink
+  // every Monday and climb through the weekend.
+  const goal = useMemo(
+    () => weeklyGoal(volumeData.slice(0, -1).map((d) => d.distance / 1000)),
+    [volumeData],
+  );
+  const weeklyProgress = goalProgress(weeklyDistanceKm, goal.target_km);
 
   if (loading) {
     return (
@@ -270,11 +282,14 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle>Weekly Distance Goal</CardTitle>
           <span className="text-xs text-[#8A98AC]">
-            {weeklyDistanceKm.toFixed(1)} / {WEEKLY_GOAL_KM} km
+            {weeklyDistanceKm.toFixed(1)} / {goal.target_km} km
           </span>
         </CardHeader>
         <CardContent>
           <Progress value={weeklyProgress} color={weeklyProgress >= 100 ? "#10B981" : "#0EA5E9"} className="mb-3" />
+          {/* Where the number came from. A target you can't account for is
+              just a number to feel bad about. */}
+          <p className="text-[10px] text-[#7C8AA0] -mt-1 mb-3">{goalBasisLabel(goal)}</p>
           <VolumeChart data={volumeData} />
         </CardContent>
       </Card>

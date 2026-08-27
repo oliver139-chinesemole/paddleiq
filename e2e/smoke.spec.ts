@@ -965,3 +965,37 @@ test.describe("where your sessions are", () => {
     await expect(page.getByText(/2\.00km|2\.0 km/).first()).toBeVisible();
   });
 });
+
+test.describe("weekly distance goal", () => {
+  test("says where the target came from", async ({ page }) => {
+    // Regression: the target was a module constant of 20km — the same number
+    // for a beginner in their first month and a racer peaking for a 500m, and
+    // chosen by nobody. A progress bar against an arbitrary figure tells some
+    // athletes they're failing and others they're finished by Tuesday.
+    await page.goto("/dashboard", { waitUntil: "networkidle" });
+
+    const card = page.getByText("Weekly Distance Goal").locator("..").locator("..");
+    await expect(card).toContainText(/10% above your usual \d+-week volume|A starting target/);
+  });
+
+  test("gives a new athlete a starter target, and says so", async ({ page }) => {
+    await page.goto("/train/erg", { waitUntil: "networkidle" });
+    await page.locator('input[type="number"]').first().fill("5000");
+    await page.locator('input[type="number"]').nth(1).fill("22");
+    await page.locator('input[type="number"]').nth(2).fill("0");
+    await page.getByRole("button", { name: /save erg session/i }).click();
+    await page.waitForURL(/dashboard/, { timeout: 15_000 });
+
+    const card = page.getByText("Weekly Distance Goal").locator("..").locator("..");
+    await expect(card).toContainText("5.0 / 10 km");
+    // One week is a data point, not a pattern — it must not claim otherwise.
+    await expect(card).toContainText(/A starting target/);
+  });
+
+  test("the target is never the old hardcoded 20", async ({ page }) => {
+    // Not a proof of correctness, but this exact string was the bug.
+    await page.goto("/dashboard", { waitUntil: "networkidle" });
+    const card = page.getByText("Weekly Distance Goal").locator("..").locator("..");
+    await expect(card).not.toContainText("/ 20 km");
+  });
+});
