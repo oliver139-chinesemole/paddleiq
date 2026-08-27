@@ -1235,3 +1235,49 @@ test.describe("technique video", () => {
     }
   });
 });
+
+test.describe("the coach on sample data", () => {
+  test("gives a visitor real insights, not an empty state", async ({ page }) => {
+    // Regression: every other screen falls back to the sample data for a
+    // visitor — the dashboard's 147 sessions, the sample records, the charts.
+    // The coach was the one page that didn't, so someone exploring a fully
+    // populated app arrived here and was told "no sessions logged yet". That
+    // reads as the coach being broken, and is how it was reported.
+    await page.goto("/ai-coach", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+
+    await expect(page.getByText(/No sessions logged yet/i)).toHaveCount(0);
+    await expect(page.getByText(/You logged \d+ sessions? this week/i)).toBeVisible();
+  });
+
+  test("the sample athlete has trained recently", async ({ page }) => {
+    // Regression: the seed dates were fixed strings, newest 3 June 2026. By
+    // late August the demo showed someone who hadn't trained in twelve weeks
+    // — invisible on screens whose figures come from hardcoded mockStats, and
+    // glaring on the coach, which computes from the dates.
+    await page.goto("/ai-coach", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+
+    await expect(page.getByText(/No sessions logged this week yet/i)).toHaveCount(0);
+    await expect(page.getByText(/day training streak/i)).toBeVisible();
+  });
+
+  test("never claims a record was beaten by 0.0s", async ({ page }) => {
+    // A PR is created from a session, so that session's time equals the PR
+    // exactly and the gap is zero — which rendered as "New 500m PR! Beat old
+    // best by 0.0s", three times over on the sample data.
+    await page.goto("/ai-coach", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+
+    await expect(page.getByText(/beat old best by 0\.0s/i)).toHaveCount(0);
+  });
+
+  test("a question opens an answer drawn from the data", async ({ page }) => {
+    await page.goto("/ai-coach", { waitUntil: "networkidle" });
+    await page.waitForTimeout(1200);
+
+    await page.locator("button").filter({ hasText: /Which distance am I improving/ }).first().click();
+    const panel = page.locator("body");
+    await expect(panel).toContainText(/2k|1k|500m|log/i);
+  });
+});

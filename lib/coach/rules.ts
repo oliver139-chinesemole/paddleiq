@@ -348,6 +348,16 @@ export function checkPRProximity(
     // Negative = faster than the PR, i.e. beaten it; positive = still short of
     // it. templates.ts and the severity below both read the sign this way.
     const gap = bestRecent - pr.time_sec;
+
+    // A gap of zero means the athlete's best recent session *is* the one that
+    // set this record — the usual case, since a PR is created from a session.
+    // Reported as a beaten PR it produced "New 500m PR! Beat old best by
+    // 0.0s", three times over on the sample data. Equalling your own record
+    // isn't beating it, and there is nothing here the Records page doesn't
+    // already show. The tolerance covers times stored with sub-second
+    // precision, where the subtraction won't land exactly on zero.
+    if (Math.abs(gap) < 0.05) continue;
+
     const fraction = Math.abs(gap) / pr.time_sec;
 
     if (fraction <= THRESHOLDS.prProximityFraction || gap <= 0) {

@@ -410,12 +410,14 @@ describe("checkPRProximity", () => {
 
   it("scales split to total time for distances other than 500m", () => {
     const prs = [{ category: "erg" as const, distance_m: 2000, time_sec: 520 }];
-    // 130s per 500m over 2000m => 520s total, exactly on the PR.
-    const erg = [makeErg({ date: d(2), distance_m: 2000, duration_sec: 520, split_sec: 130 })];
+    // 128s per 500m over 2000m => 512s total, 8s inside the PR. Deliberately
+    // off the boundary: a session landing exactly on the PR is the one that
+    // set it, and is skipped rather than reported as beating itself by 0.0s.
+    const erg = [makeErg({ date: d(2), distance_m: 2000, duration_sec: 512, split_sec: 128 })];
     const [result] = checkPRProximity(erg, [], prs, NOW);
     expect(result).toBeDefined();
-    expect(result.recentTimeSec).toBeCloseTo(520, 0);
-    expect(result.gapSec).toBeCloseTo(0, 0);
+    expect(result.recentTimeSec).toBeCloseTo(512, 0);
+    expect(result.gapSec).toBeCloseTo(-8, 0);
   });
 });
 
@@ -492,5 +494,54 @@ describe("gaps and how long the athlete has been training", () => {
     const gaps = checkModalityGaps([], [], now, d(10));
     expect(gaps.find((g) => g.modality === "dryland")).toBeDefined();
     expect(gaps.find((g) => g.modality === "water")).toBeUndefined();
+  });
+});
+
+describe("PR proximity when the session set the record", () => {
+  it("doesn't claim you beat a record by 0.0s", () => {
+    // Regression: a PR is created from a session, so that session's time
+    // equals the PR exactly and the gap is zero — which rendered as "New
+    // 500m PR! Beat old best by 0.0s". The sample data showed three at once.
+    const results = checkPRProximity(
+      [makeErg({ date: d(1), distance_m: 500, duration_sec: 118, split_sec: 118 })],
+      [],
+      [{ category: "erg", distance_m: 500, time_sec: 118 }],
+      new Date(TODAY),
+    );
+    expect(results).toEqual([]);
+  });
+
+  it("still celebrates a session that genuinely beat the record", () => {
+    const results = checkPRProximity(
+      [makeErg({ date: d(1), distance_m: 500, duration_sec: 114, split_sec: 114 })],
+      [],
+      [{ category: "erg", distance_m: 500, time_sec: 118 }],
+      new Date(TODAY),
+    );
+    expect(results).toHaveLength(1);
+    expect(results[0].gapSec).toBeLessThan(0);
+  });
+
+  it("still reports a near miss", () => {
+    const results = checkPRProximity(
+      [makeErg({ date: d(1), distance_m: 500, duration_sec: 120, split_sec: 120 })],
+      [],
+      [{ category: "erg", distance_m: 500, time_sec: 118 }],
+      new Date(TODAY),
+    );
+    expect(results).toHaveLength(1);
+    expect(results[0].gapSec).toBeGreaterThan(0);
+  });
+
+  it("ignores a sub-second rounding difference either way", () => {
+    for (const t of [118.02, 117.98]) {
+      const results = checkPRProximity(
+        [makeErg({ date: d(1), distance_m: 500, duration_sec: t, split_sec: t })],
+        [],
+        [{ category: "erg", distance_m: 500, time_sec: 118 }],
+        new Date(TODAY),
+      );
+      expect(results, `${t}`).toEqual([]);
+    }
   });
 });

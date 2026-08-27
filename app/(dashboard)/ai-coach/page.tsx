@@ -55,32 +55,63 @@ const EMPTY_OUTPUT: CoachData = {
 };
 
 export default function AICoachPage() {
-  const { userId } = useUser();
+  const { userId, isDemoMode } = useUser();
   const [data, setData] = useState<CoachData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeQ, setActiveQ] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const loadInsights = useCallback(async () => {
+    type SessionRows = Awaited<ReturnType<
+      typeof import("@/lib/db/sessions").getAllSessionsForUser
+    >>;
     try {
       // Load sessions from Dexie (offline-safe). This used to return the
       // "no sessions logged yet" placeholder for anyone in demo mode without
       // looking — so on the deployed site the coach told an athlete with ten
       // logged sessions that they had none.
       const { getAllSessionsForUser } = await import("@/lib/db/sessions");
-      const { erg, water, dryland, team } = await getAllSessionsForUser(userId);
+      const bundle = await getAllSessionsForUser(userId);
 
       // Get PRs from Dexie
       const { getLocalDB } = await import("@/lib/db/schema");
       const db = getLocalDB();
       const localPRs = await db.personalRecords.where("userId").equals(userId).toArray();
 
-      const prs = localPRs.map((p) => ({
-        category: p.category as "erg" | "water",
-        distance_m: p.distance_m,
-        time_sec: p.time_sec,
-      }));
+      // Every other screen shows the sample data to a visitor who hasn't
+      // logged anything — the dashboard's 147 sessions, the sample records,
+      // the charts. The coach was the one page that didn't, so someone
+      // exploring a fully populated app arrived here and was told "no
+      // sessions logged yet". That reads as the coach being broken, which is
+      // exactly how it was reported.
+      const { shouldUseSampleData } = await import("@/lib/data/source");
+      const useSample = shouldUseSampleData(bundle, isDemoMode);
 
+      let erg: SessionRows["erg"], water: SessionRows["water"];
+      let team: SessionRows["team"], dryland: SessionRows["dryland"];
+      let prs: { category: "erg" | "water"; distance_m: number; time_sec: number }[];
+
+      if (useSample) {
+        const { mockErgSessions, mockWaterSessions, mockPRs } = await import("@/lib/data/seed");
+        erg = mockErgSessions as unknown as SessionRows["erg"];
+        water = mockWaterSessions as unknown as SessionRows["water"];
+        team = [];
+        dryland = [];
+        prs = mockPRs.map((p) => ({
+          category: p.category as "erg" | "water",
+          distance_m: p.distance_m,
+          time_sec: p.time_sec,
+        }));
+      } else {
+        ({ erg, water, team, dryland } = bundle);
+        prs = localPRs.map((p) => ({
+          category: p.category as "erg" | "water",
+          distance_m: p.distance_m,
+          time_sec: p.time_sec,
+        }));
+      }
+
+      // Genuinely nothing to work from — a real account with no history.
       if (erg.length === 0 && water.length === 0) {
         setData(EMPTY_OUTPUT);
         return;
@@ -128,7 +159,7 @@ export default function AICoachPage() {
     // Depends only on identity inputs; everything else it reads is a constant
     // or a setter. Declaring it lets the effect track it honestly instead of
     // silently capturing whichever render defined it.
-  }, [userId]);
+  }, [userId, isDemoMode]);
 
   // Wrapped rather than called directly: loadInsights runs synchronously up to
   // its first await, so a bare call sets state during the effect and cascades

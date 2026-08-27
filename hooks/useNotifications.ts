@@ -76,12 +76,21 @@ export function useNotifications(isDemoMode: boolean, userId?: string) {
           improvement_sec: pr.improvement_sec,
         }));
 
+        // Sample records are a placeholder and give way the moment the athlete
+        // has data of their own — the same rule as every other screen. Keyed
+        // on whether they have *sessions*, not whether they have records: an
+        // athlete who has logged a 6k (which sets no record) still has their
+        // own history, and was being shown three sample PRs alongside it.
+        const { shouldUseSampleData } = await import("@/lib/data/source");
+        const { getAllSessionsForUser } = await import("@/lib/db/sessions");
+        const useSample = userId
+          ? shouldUseSampleData(await getAllSessionsForUser(userId), isDemoMode)
+          : isDemoMode;
+
         if (isDemoMode) {
           const { mockPRs } = await import("@/lib/data/seed");
           sources = {
-            // Sample records are a placeholder and give way to real ones, the
-            // same rule the dashboard and records page follow.
-            prs: ownPRs.length > 0 ? ownPRs : mockPRs,
+            prs: useSample ? mockPRs : ownPRs,
             announcements: [
               {
                 id: "demo-ann-1",

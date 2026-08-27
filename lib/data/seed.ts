@@ -2,6 +2,28 @@ import { buildPlan } from "@/lib/plans/generate";
 import { PLAN_SPECS } from "@/lib/plans/specs";
 import type { ErgSession, WaterSession, PersonalRecord, TrainingPlan, TechniqueLesson, DashboardStats } from "@/lib/types";
 
+/**
+ * Sample-data dates, relative to today.
+ *
+ * These were fixed strings — the newest session was dated 3 June 2026. Which
+ * was fine in June, and by late August meant the demo showed an athlete who
+ * had not trained in twelve weeks. Most screens hid that, because their
+ * headline figures come from mockStats, a hardcoded object that ignores these
+ * dates entirely. The coach doesn't: it computes from the dates, so it
+ * correctly announced "no sessions logged this week" and "no water session in
+ * 86 days" while the dashboard next door claimed 18.5km this week.
+ *
+ * Anchoring to today keeps the sample data honest, and stops it decaying again
+ * next month.
+ */
+function daysAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
 export const mockStats: DashboardStats = {
   weekly_distance_m: 18500,
   weekly_time_min: 312,
@@ -13,35 +35,35 @@ export const mockStats: DashboardStats = {
 
 export const mockErgSessions: ErgSession[] = [
   {
-    id: "e1", user_id: "demo", date: "2026-06-03",
+    id: "e1", user_id: "demo", date: daysAgo(1),
     distance_m: 2000, duration_sec: 512, split_sec: 128,
     stroke_rate: 76, watts: 210, rpe: 8, paddle_side: "left",
     workout_type: "test", notes: "New 2k PR attempt. Felt strong in first 500m, faded slightly in 3rd 500m. Exit timing improved.",
     created_at: "2026-06-03T08:30:00Z",
   },
   {
-    id: "e2", user_id: "demo", date: "2026-06-01",
+    id: "e2", user_id: "demo", date: daysAgo(3),
     distance_m: 5000, duration_sec: 1320, split_sec: 132,
     stroke_rate: 68, rpe: 6, paddle_side: "left",
     workout_type: "steady", notes: "Easy 5k — kept stroke rate controlled at 68.",
     created_at: "2026-06-01T07:15:00Z",
   },
   {
-    id: "e3", user_id: "demo", date: "2026-05-30",
+    id: "e3", user_id: "demo", date: daysAgo(5),
     distance_m: 500, duration_sec: 118, split_sec: 118,
     stroke_rate: 86, watts: 285, rpe: 10, paddle_side: "left",
     workout_type: "test", notes: "500m all-out. Legs gave out at 400m but held on.",
     created_at: "2026-05-30T09:00:00Z",
   },
   {
-    id: "e4", user_id: "demo", date: "2026-05-28",
+    id: "e4", user_id: "demo", date: daysAgo(7),
     distance_m: 4000, duration_sec: 1080, split_sec: 135,
     stroke_rate: 70, rpe: 7, paddle_side: "right",
     workout_type: "intervals", notes: "8x500m intervals. Right-side today to even out muscle development.",
     created_at: "2026-05-28T17:30:00Z",
   },
   {
-    id: "e5", user_id: "demo", date: "2026-05-26",
+    id: "e5", user_id: "demo", date: daysAgo(9),
     distance_m: 2000, duration_sec: 524, split_sec: 131,
     stroke_rate: 74, rpe: 8, paddle_side: "left",
     workout_type: "test", notes: "2k at race pace simulation.",
@@ -51,7 +73,7 @@ export const mockErgSessions: ErgSession[] = [
 
 export const mockWaterSessions: WaterSession[] = [
   {
-    id: "w1", user_id: "demo", date: "2026-06-02",
+    id: "w1", user_id: "demo", date: daysAgo(2),
     distance_m: 5000, duration_sec: 1560, avg_pace_sec: 156,
     avg_speed_kmh: 11.5, max_speed_kmh: 14.2,
     stroke_rate: 70, rpe: 6, boat_type: "OC-1",
@@ -59,7 +81,7 @@ export const mockWaterSessions: WaterSession[] = [
     created_at: "2026-06-02T06:45:00Z",
   },
   {
-    id: "w2", user_id: "demo", date: "2026-05-31",
+    id: "w2", user_id: "demo", date: daysAgo(4),
     distance_m: 500, duration_sec: 145, avg_pace_sec: 145,
     avg_speed_kmh: 12.4, max_speed_kmh: 15.1,
     stroke_rate: 88, rpe: 9, boat_type: "OC-1",
@@ -69,11 +91,11 @@ export const mockWaterSessions: WaterSession[] = [
 ];
 
 export const mockPRs: PersonalRecord[] = [
-  { id: "pr1", user_id: "demo", category: "erg", distance_m: 500, time_sec: 118, date: "2026-05-30", previous_time_sec: 122, improvement_sec: 4 },
-  { id: "pr2", user_id: "demo", category: "erg", distance_m: 1000, time_sec: 248, date: "2026-05-14", previous_time_sec: 253, improvement_sec: 5 },
-  { id: "pr3", user_id: "demo", category: "erg", distance_m: 2000, time_sec: 512, date: "2026-06-03", previous_time_sec: 524, improvement_sec: 12 },
-  { id: "pr4", user_id: "demo", category: "water", distance_m: 500, time_sec: 145, date: "2026-05-31", previous_time_sec: 151, improvement_sec: 6 },
-  { id: "pr5", user_id: "demo", category: "water", distance_m: 1000, time_sec: 310, date: "2026-04-20", previous_time_sec: 318, improvement_sec: 8 },
+  { id: "pr1", user_id: "demo", category: "erg", distance_m: 500, time_sec: 118, date: daysAgo(5), previous_time_sec: 122, improvement_sec: 4 },
+  { id: "pr2", user_id: "demo", category: "erg", distance_m: 1000, time_sec: 248, date: daysAgo(21), previous_time_sec: 253, improvement_sec: 5 },
+  { id: "pr3", user_id: "demo", category: "erg", distance_m: 2000, time_sec: 512, date: daysAgo(1), previous_time_sec: 524, improvement_sec: 12 },
+  { id: "pr4", user_id: "demo", category: "water", distance_m: 500, time_sec: 145, date: daysAgo(4), previous_time_sec: 151, improvement_sec: 6 },
+  { id: "pr5", user_id: "demo", category: "water", distance_m: 1000, time_sec: 310, date: daysAgo(45), previous_time_sec: 318, improvement_sec: 8 },
 ];
 
 // Generated from the phase specs in lib/plans/specs.ts rather than written out
